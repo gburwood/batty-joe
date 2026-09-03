@@ -1,0 +1,62 @@
+id: IA-0001-01
+change: CHG-0001
+revision: 1
+created_at: '2026-09-03T16:10:00+01:00'
+affected:
+  requirements: []
+  components:
+  - repository-governance
+  - bootstrap
+  - authoritative-specification
+  - historical-provenance
+  - validation
+  artifacts:
+  - SPECFORGE.md
+  - specforge.yaml
+  - batty-joe-dev-spec-v1.5.0.yaml
+  - schemas/
+  - rules/
+  - workflows/
+  - tools/
+  - changes/
+  - history/
+  tests:
+    existing:
+    - batty-joe-tests.html
+    - batty-joe-tests.js
+    required:
+    - specforge-project-validates
+    - authoritative-batty-joe-specification-resolves
+    - existing-product-artifacts-remain-byte-identical-during-adoption
+    - pre-adoption-history-is-not-fabricated
+    - fresh-session-can-bootstrap-from-repository
+compatibility:
+  breaking: false
+  notes: No gameplay or product behaviour change is proposed.
+migration:
+  required: true
+  notes: Existing Batty Joe becomes an imported baseline. Governance metadata is added
+    around, not retroactively inside, its prior history.
+risks:
+- id: RISK-0001-01
+  description: Treating reconstructed conversation history as canonical pre-adoption
+    evidence.
+  severity: high
+  mitigation: Mark v1.5.0 source/spec as imported baseline; only preserve historical
+    claims backed by repository or supplied evidence.
+- id: RISK-0001-02
+  description: Large YAML product spec is mechanically converted into requirements
+    and accidentally changes meaning.
+  severity: high
+  mitigation: Do not perform requirement decomposition during adoption. Handle requirement
+    normalisation as a later approved change.
+- id: RISK-0001-03
+  description: SpecForge adoption accidentally modifies working game files.
+  severity: medium
+  mitigation: Hash baseline product artifacts before implementation and verify they
+    remain byte-identical during CHG-0001.
+open_changes:
+  overlaps_with: []
+summary: Adoption is governance/infrastructure only. Batty Joe v1.5.0 remains the
+  authoritative product specification and current source is treated as an imported
+  baseline. Requirement decomposition and gameplay changes are explicitly out of scope.

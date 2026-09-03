@@ -1,0 +1,69 @@
+id: PROP-0001-01
+change: CHG-0001
+revision: 1
+status: approved
+created_at: '2026-09-03T16:10:00+01:00'
+based_on_impact_analysis:
+- IA-0001-01
+proposed_specification_version: 1.5.0
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+behaviour_summary: Adopt Batty Joe into SpecForge without changing gameplay or rewriting
+  its existing v1.5.0 product intent. Install the SpecForge Core project contract,
+  treat the existing repository as an imported baseline, preserve the current Batty
+  Joe specification as authoritative, and explicitly record that pre-adoption forensic
+  history is incomplete unless supported by evidence.
+baseline_artifact_hashes:
+  batty-joe-dev-spec-v1.5.0.yaml: 4ba34e8d4e8e29356defc2b539f4b5205f0c5bd7858f077678726c1e9c780f14
+  batty-joe.html: 3afeb67084c628fe595b291163af9f8466a5d9bbf63d85113f0dcf97a336e7fd
+  batty-joe.css: 99cfb50fcac9b1a892fb36dcfb20e69bc9d90c4ce3193123d549329554dfc810
+  batty-joe.js: 18bcc9133c7faa2af1dfb32b5ca8613bd1064600a6325b0c35c07bc805ac4b76
+  batty-joe-game.js: 9104a48f5659b3067ae28c4b944c8cccc59b6efd05cca5b005a3dcfcb100aea3
+  batty-joe-physics.js: cf3d6acb8571e5a55647c577c59539d9341f18b40d089c441320de5fd2a9bbcb
+  batty-joe-levels.js: c1e61d4cff973656c4a69149d812d9b1b23a4b56bfe56ea643c3d42c3972437c
+  batty-joe-audio.js: dcfc29b40db4f8167eaef30172db75846c4c023384807b76a84d683c6f08fa28
+  batty-joe-storage.js: 7d4eca59ab65643b944cd5722a7ba6d78062bde250475ed53408ae9d34745779
+  batty-joe-config.js: 719119614e243d9f7f5ef6d56c797c6a8cc79964e15defad064d10d803863dd6
+  batty-joe-tests.html: 0f7a3963e656519d800f8ced8a14270df8bc720e8fc289fd48c199dbe3263a6b
+  batty-joe-tests.js: 74dde7b40fecacb506aa4c91fe69b4f3dcba907913c9debe06dd7ea3f1d3baa7
+artifacts_expected:
+  add:
+  - SPECFORGE.md
+  - specforge.yaml
+  - docs/specforge-core-canonical-data-model-0.1.0-alpha.1.md
+  - schemas/
+  - rules/
+  - workflows/
+  - tools/
+  - changes/
+  - history/
+  - tests/
+  modify: []
+  preserve_byte_identical:
+  - batty-joe-dev-spec-v1.5.0.yaml
+  - batty-joe.html
+  - batty-joe.css
+  - batty-joe.js
+  - batty-joe-game.js
+  - batty-joe-physics.js
+  - batty-joe-levels.js
+  - batty-joe-audio.js
+  - batty-joe-storage.js
+  - batty-joe-config.js
+  - batty-joe-tests.html
+  - batty-joe-tests.js
+implementation_constraints:
+- Do not change Batty Joe gameplay, source code, tests or v1.5.0 product specification
+  during CHG-0001.
+- Do not fabricate pre-SpecForge requests, proposals, approvals, implementation attempts
+  or forensic events.
+- Record the user's existing Git baseline commit SHA before CHG-0001 is completed.
+- Do not decompose the v1.5.0 YAML into canonical requirements in this change.
+- Controlled approval mode applies immediately after adoption.
+- A fresh session must be able to identify Batty Joe v1.5.0 as the authoritative product
+  specification and CHG-0001 as the active adoption change.
+approvals:
+- APR-0001

@@ -1,0 +1,14 @@
+id: EVT-000001
+timestamp: '2026-09-03T16:10:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0001
+related:
+  change: CHG-0001
+  impact_analysis: IA-0001-01
+resulting_state:
+  change_status: awaiting_approval

@@ -1,0 +1,22 @@
+id: IMP-0001-01
+change: CHG-0001
+proposal: PROP-0001-01
+attempt: 1
+started_at: '2026-09-03T17:07:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+approach: Adopt existing Batty Joe into SpecForge; verify baseline artifacts remain
+  byte-identical and do not fabricate pre-adoption history.
+source_revision:
+  before: pending-user-baseline-commit-sha
+  after: pending-user-adoption-commit-sha
+outcome: passed
+tests:
+  passed:
+  - specforge-project-validates
+  - authoritative-batty-joe-specification-resolves
+  - existing-product-artifacts-remain-byte-identical-during-adoption
+  - pre-adoption-history-is-not-fabricated
+  - fresh-session-can-bootstrap-from-repository
+  failed: []

@@ -1,0 +1,15 @@
+id: EVT-000004
+timestamp: '2026-09-03T17:07:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: implementation_started
+entity:
+  type: change
+  id: CHG-0001
+related:
+  change: CHG-0001
+  proposal: PROP-0001-01
+  implementation_attempt: IMP-0001-01
+resulting_state:
+  change_status: in_progress

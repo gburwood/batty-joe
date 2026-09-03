@@ -1,0 +1,14 @@
+id: EVT-000005
+timestamp: '2026-09-03T17:07:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0001
+related:
+  change: CHG-0001
+  implementation_attempt: IMP-0001-01
+resulting_state:
+  change_status: validated
