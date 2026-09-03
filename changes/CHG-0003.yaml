@@ -2,7 +2,7 @@ id: CHG-0003
 title: Retire surplus frenzies, improve level-complete pacing, and add Grid Runner
   Frenzy
 classification: behaviour_change
-status: validated
+status: completed
 priority: high
 sources:
 - type: conversation
@@ -45,3 +45,4 @@ metadata:
   created_by:
     type: ai
     id: chatgpt
+completed_at: '2026-09-03T23:34:00+01:00'

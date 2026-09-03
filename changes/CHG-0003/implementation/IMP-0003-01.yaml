@@ -2,11 +2,11 @@ id: IMP-0003-01
 change: CHG-0003
 proposal: PROP-0003-01
 started_at: '2026-09-03T22:31:00+01:00'
-completed_at: '2026-09-03T22:40:00+01:00'
+completed_at: '2026-09-03T23:34:00+01:00'
 outcome: passed
 source_revision:
   before: 5f5dc9647a7d45536e4f32ea7bd22de57144dd64
-  after: pending-user-implementation-commit-sha
+  after: 3e28090df00e27f9c10bea919a1720bb868163c9
 artifacts_modified:
 - batty-joe-dev-spec-v1.7.0.yaml
 - batty-joe-config.js
