@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.6.0 */
 (function (global) {
   'use strict';
 
@@ -402,6 +402,59 @@
     const leftBall = { x: 150, y: 100, r: 8, vx: 0, vy: 400, spin: 0 };
     BJ.Physics.bounceFromPaddle(leftBall, { x: 100, y: 100, w: 100, h: 18, vx: -500 });
     assert(leftBall.spin < 0, 'Left-moving paddle should impart negative spin');
+  });
+
+  test('moving paddle temporarily boosts ball speed', function () {
+    const target = 400;
+    const ball = { x: 200, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    const result = BJ.Physics.bounceFromPaddle(ball, { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed }, target);
+    assert(result.boostPercent > 0, 'Moving paddle should create a temporary boost');
+    assert(BJ.Physics.length(ball.vx, ball.vy) > target, 'Boosted ball must exceed target speed');
+    assert(BJ.Physics.length(ball.vx, ball.vy) <= target * (1 + BJ.Config.physics.paddleVelocityTransfer.maxBoostPercent) + 0.001, 'Boost must respect configured cap');
+  });
+
+  test('faster paddle produces greater temporary speed boost', function () {
+    const target = 400;
+    const slow = { x: 200, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    const fast = { x: 200, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    BJ.Physics.bounceFromPaddle(slow, { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed * 0.25 }, target);
+    BJ.Physics.bounceFromPaddle(fast, { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed }, target);
+    assert(BJ.Physics.length(fast.vx, fast.vy) > BJ.Physics.length(slow.vx, slow.vy), 'Faster paddle should create more speed');
+  });
+
+  test('edge paddle contact boosts more than centre contact', function () {
+    const target = 400, paddle = { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed };
+    const centre = { x: 150, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    const edge = { x: 198, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    BJ.Physics.bounceFromPaddle(centre, paddle, target);
+    BJ.Physics.bounceFromPaddle(edge, paddle, target);
+    assert(BJ.Physics.length(edge.vx, edge.vy) > BJ.Physics.length(centre.vx, centre.vy), 'Edge contact should use larger configured contact factor');
+  });
+
+  test('stationary paddle creates no motion-derived speed boost', function () {
+    const target = 400, ball = { x: 150, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+    const result = BJ.Physics.bounceFromPaddle(ball, { x: 100, y: 100, w: 100, h: 18, vx: 0 }, target);
+    approx(result.boostPercent, 0, 0.000001);
+    approx(BJ.Physics.length(ball.vx, ball.vy), target, 0.001);
+  });
+
+  test('temporary paddle speed boost decays toward current target speed', function () {
+    const target = 400, ball = { vx: 0, vy: -500, spin: 0, paddleSpeedBoost: 0.25 };
+    const before = BJ.Physics.length(ball.vx, ball.vy);
+    BJ.Physics.decayPaddleSpeedBoost(ball, BJ.Config.physics.paddleVelocityTransfer.decayHalfLifeSeconds, target, BJ.Config.physics.paddleVelocityTransfer);
+    const after = BJ.Physics.length(ball.vx, ball.vy);
+    assert(after < before && after > target, 'Boost should decay without snapping immediately to target');
+    approx(after, 450, 0.01, 'One half-life should halve excess speed');
+  });
+
+  test('disabled paddle velocity transfer restores no-boost behaviour', function () {
+    const cfg = BJ.Config.physics.paddleVelocityTransfer, old = cfg.enabled;
+    cfg.enabled = false;
+    try {
+      const target = 400, ball = { x: 198, y: 100, r: 8, vx: 0, vy: target, spin: 0 };
+      BJ.Physics.bounceFromPaddle(ball, { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed }, target);
+      approx(BJ.Physics.length(ball.vx, ball.vy), target, 0.001);
+    } finally { cfg.enabled = old; }
   });
 
   test('spin curves flight, decays, and preserves speed', function () {

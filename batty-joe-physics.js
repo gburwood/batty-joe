@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.6.0 */
 (function (global) {
   'use strict';
 
@@ -175,17 +175,33 @@
     return { relative: relative, angleDegrees: angle * 180 / Math.PI };
   }
 
-  function bounceFromPaddle(ball, paddle) {
+  function bounceFromPaddle(ball, paddle, targetSpeed) {
     const relative = U.clamp((ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2), -1, 1);
-    const speed = Math.max(1, length(ball.vx, ball.vy));
+    const currentSpeed = Math.max(1, length(ball.vx, ball.vy));
+    const effectiveTargetSpeed = Math.max(1, Number(targetSpeed) || currentSpeed);
     const inheritedSpin = ball.spin || 0;
     const spinCfg = BJ.Config && BJ.Config.spin;
+    const transferCfg = BJ.Config && BJ.Config.physics && BJ.Config.physics.paddleVelocityTransfer;
     const inheritedDeflection = spinCfg && spinCfg.enabled ? inheritedSpin * (spinCfg.paddleBounceDeflectionDegrees || 0) * Math.PI / 180 : 0;
     const maxAngle = Math.PI * 0.39;
     const angle = relative * maxAngle + inheritedDeflection;
-    ball.vx = Math.sin(angle) * speed + paddle.vx * 0.10;
-    ball.vy = -Math.abs(Math.cos(angle) * speed);
-    normalizeVelocity(ball, speed);
+    ball.vx = Math.sin(angle) * currentSpeed + paddle.vx * 0.10;
+    ball.vy = -Math.abs(Math.cos(angle) * currentSpeed);
+
+    let boostedSpeed = effectiveTargetSpeed;
+    let boostPercent = 0;
+    if (transferCfg && transferCfg.enabled) {
+      const maxPaddleSpeed = Math.max(1, BJ.Config.paddle.maxSpeed);
+      const motionFactor = U.clamp(Math.abs(paddle.vx || 0) / maxPaddleSpeed, 0, 1);
+      const centreFactor = Number.isFinite(transferCfg.centreContactFactor) ? transferCfg.centreContactFactor : 0.55;
+      const edgeFactor = Number.isFinite(transferCfg.edgeContactFactor) ? transferCfg.edgeContactFactor : 1;
+      const contactFactor = centreFactor + (edgeFactor - centreFactor) * Math.abs(relative);
+      const maxBoost = Math.max(0, Number(transferCfg.maxBoostPercent) || 0);
+      boostPercent = maxBoost * motionFactor * contactFactor;
+      boostedSpeed = effectiveTargetSpeed * (1 + Math.min(maxBoost, boostPercent));
+    }
+    ball.paddleSpeedBoost = boostPercent;
+    normalizeVelocity(ball, boostedSpeed);
 
     if (spinCfg && spinCfg.enabled) {
       const velocityPart = U.clamp((paddle.vx || 0) / Math.max(1, BJ.Config.paddle.maxSpeed), -1, 1) * spinCfg.paddleVelocityContribution;
@@ -193,6 +209,30 @@
       const maxAbs = spinCfg.maxAbs || 1;
       ball.spin = U.clamp(velocityPart + offsetPart, -maxAbs, maxAbs);
     }
+    return { relative: relative, boostPercent: boostPercent, speed: boostedSpeed };
+  }
+
+  function decayPaddleSpeedBoost(ball, dt, targetSpeed, config) {
+    if (!ball) return 0;
+    config = config || (BJ.Config && BJ.Config.physics && BJ.Config.physics.paddleVelocityTransfer);
+    const target = Math.max(1, Number(targetSpeed) || length(ball.vx, ball.vy));
+    if (!config || !config.enabled) {
+      ball.paddleSpeedBoost = 0;
+      normalizeVelocity(ball, target);
+      return target;
+    }
+    const current = Math.max(1, length(ball.vx, ball.vy));
+    if (current <= target + 0.001) {
+      ball.paddleSpeedBoost = 0;
+      normalizeVelocity(ball, target);
+      return target;
+    }
+    const halfLife = Math.max(0.001, Number(config.decayHalfLifeSeconds) || 0.65);
+    const decay = Math.pow(0.5, Math.max(0, dt) / halfLife);
+    const next = target + (current - target) * decay;
+    ball.paddleSpeedBoost = Math.max(0, next / target - 1);
+    normalizeVelocity(ball, next);
+    return next;
   }
 
   function integrateBall(ball, dt, width, height) {
@@ -277,6 +317,7 @@
     resolveBallRect,
     releaseFromPaddle,
     bounceFromPaddle,
+    decayPaddleSpeedBoost,
     integrateBall,
     applySpin,
     retainSpin,

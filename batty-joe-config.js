@@ -1,10 +1,10 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.6.0 */
 (function (global) {
   'use strict';
 
   const BJ = global.BattyJoe = global.BattyJoe || {};
 
-  BJ.VERSION = '1.5.0';
+  BJ.VERSION = '1.6.0';
   BJ.WIDTH = 960;
   BJ.HEIGHT = 720;
 
@@ -34,6 +34,15 @@
     lives: { start: 3, max: 9 },
     continues: { max: 3, countdownSeconds: 10 },
     balls: { max: 6, radius: 8, releaseMaxAngleDegrees: 60 },
+    physics: {
+      paddleVelocityTransfer: {
+        enabled: true,
+        maxBoostPercent: 0.25,
+        decayHalfLifeSeconds: 0.65,
+        centreContactFactor: 0.55,
+        edgeContactFactor: 1.0
+      }
+    },
     spin: {
       enabled: true,
       maxAbs: 1.25,

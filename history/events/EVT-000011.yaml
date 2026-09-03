@@ -1,0 +1,14 @@
+id: EVT-000011
+timestamp: '2026-09-03T17:50:00+01:00'
+actor:
+  type: human
+  id: product-owner
+event_type: proposal_approved
+entity:
+  type: proposal
+  id: PROP-0002-02
+related:
+  change: CHG-0002
+  approval: APR-0002
+resulting_state:
+  proposal_status: approved

@@ -1,0 +1,63 @@
+id: IA-0002-01
+change: CHG-0002
+revision: 1
+created_at: '2026-09-03T17:30:00+01:00'
+affected:
+  requirements: []
+  components:
+  - physics.ball
+  - physics.paddle_collision
+  - runtime_config
+  - gameplay_tests
+  artifacts:
+  - batty-joe-dev-spec-v1.5.0.yaml
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-config.js
+  - batty-joe-tests.js
+  tests:
+    existing:
+    - moving paddle imparts signed ball spin
+    - v1.4 moving paddle imparts dominant stronger spin
+    - spin curves flight, decays, and preserves speed
+    required:
+    - moving paddle contact temporarily increases ball speed
+    - faster paddle movement produces greater temporary speed increase
+    - contact position modulates paddle-hit boost
+    - stationary paddle does not create motion-derived speed boost
+    - temporary boost decays deterministically toward normal target speed
+    - boost does not destroy existing spin behaviour
+    - minimum vertical component remains enforced
+    - multiball tracks temporary boost independently
+compatibility:
+  breaking: false
+  notes: Existing paddle-angle and spin behaviour are retained but paddle rebounds
+    become more energetic while the temporary boost is active.
+migration:
+  required: false
+risks:
+- id: RISK-0002-01
+  description: Repeated paddle hits could compound speed until the ball becomes uncontrollable.
+  severity: high
+  mitigation: Use a hard configurable boost cap relative to the ball's normal target
+    speed and decay back toward that target.
+- id: RISK-0002-02
+  description: Velocity transfer could weaken or distort the established spin/contact-angle
+    model.
+  severity: medium
+  mitigation: Apply existing contact-angle and spin calculation first, then apply
+    bounded speed transfer without changing spin sign/formula.
+- id: RISK-0002-03
+  description: Temporary acceleration could increase tunnelling risk.
+  severity: high
+  mitigation: Keep existing continuous-collision protections and cap maximum boosted
+    speed; add high-speed collision regression coverage.
+- id: RISK-0002-04
+  description: Fast-ball/slow-ball power-ups or level speed progression could conflict
+    with boost decay.
+  severity: medium
+  mitigation: Decay toward the current effective target ball speed, not a fixed global
+    base speed.
+summary: The change is local to normal paddle-ball collision physics, but it interacts
+  with speed progression, power-up speed modifiers, continuous collision protection,
+  spin and multiball state.

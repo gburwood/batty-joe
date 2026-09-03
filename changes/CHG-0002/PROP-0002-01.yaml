@@ -1,0 +1,69 @@
+id: PROP-0002-01
+change: CHG-0002
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-03T17:30:00+01:00'
+based_on_impact_analysis:
+- IA-0002-01
+proposed_specification_version: 1.6.0
+behaviour_summary: A normal paddle strike transfers some paddle motion into the ball.
+  Contact position still determines the basic rebound angle and paddle velocity still
+  drives spin, but a moving paddle now also produces a bounded temporary speed boost.
+  The boost is strongest for fast paddle movement and contacts away from the bat centre,
+  then decays smoothly back to the ball's current normal target speed.
+proposed_physics:
+  contact_inputs:
+    relative_contact_offset: normalised -1.0 at left edge, 0 at centre, +1.0 at right
+      edge
+    paddle_speed_ratio: abs(paddle.vx) / paddle.maxSpeed, clamped 0..1
+  direction:
+    existing_contact_angle_mapping: preserved
+    paddle_horizontal_velocity_transfer: preserved and made explicit before final
+      speed magnitude is applied
+    spin_model: existing signed paddle-velocity plus contact-offset model preserved
+  temporary_speed_boost:
+    principle: motion-derived; a stationary paddle creates no extra speed solely from
+      this new rule
+    contact_factor: 0.55 + 0.45 * abs(relative_contact_offset)
+    motion_factor: paddle_speed_ratio
+    maximum_boost_percent_at_full_speed_edge_contact: 25
+    formula: boostPercent = 0.25 * motion_factor * contact_factor
+    application: target post-contact speed = current effective target speed * (1 +
+      boostPercent), capped at 1.25 * current effective target speed
+    decay_model: exponential toward current effective target speed
+    decay_half_life_seconds: 0.65
+    per_ball_transient_state: true
+    repeated_hits: recalculate from current contact and cap against the current effective
+      target speed; do not compound beyond the cap
+  constraints:
+  - minimum vertical component rule remains active
+  - spin remains independent per ball
+  - boost must not disable continuous collision protection
+  - fast/slow-ball and level progression redefine the effective target speed that
+    the temporary boost decays toward
+  - non-ball frenzy modes are unaffected
+specification_changes:
+- Bump Batty Joe product specification from 1.5.0 to 1.6.0.
+- Extend physics.ball paddle-hit behaviour with paddle-motion velocity transfer and
+  temporary boost semantics.
+- Add configuration mappings for max paddle-hit boost and boost decay half-life.
+- Add transient per-ball boost state to save/restore rules where transient ball state
+  is preserved.
+artifacts_expected:
+  modify:
+  - batty-joe-dev-spec-v1.5.0.yaml
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-config.js
+  - batty-joe-tests.js
+  add: []
+implementation_constraints:
+- Do not change the established spin formula except where required to separate spin
+  from speed transfer.
+- Do not allow the new boost to permanently raise the normal target ball speed.
+- Use deterministic calculations only.
+- Centralise tuning values in BattyJoe.Config and expose them through the existing
+  config override pattern.
+- Implement the approved specification first; code must not silently become the source
+  of product intent.
+approvals: []

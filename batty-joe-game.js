@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.6.0 */
 (function (global) {
   'use strict';
 
@@ -189,7 +189,8 @@
       launched: false,
       held: true,
       holdRemaining: Infinity,
-      spin: 0
+      spin: 0,
+      paddleSpeedBoost: 0
     }];
   };
 
@@ -416,10 +417,11 @@
         if (Number.isFinite(ball.holdRemaining) && ball.holdRemaining <= 0) self.releaseBall(ball);
         return;
       }
-      P.normalizeVelocity(ball, targetSpeed);
+      P.decayPaddleSpeedBoost(ball, dt, targetSpeed, C.physics.paddleVelocityTransfer);
       const spinTurn = P.applySpin(ball, dt, C.spin);
       self.applyFinalAssaultMagnetism(ball, dt, spinTurn);
-      P.normalizeVelocity(ball, targetSpeed);
+      const currentSpeed = Math.max(targetSpeed, P.length(ball.vx, ball.vy));
+      P.normalizeVelocity(ball, currentSpeed);
       const previous = P.integrateBall(ball, dt, C.playfield.width, C.playfield.height);
       self.updateFinalAssaultBallTrail(ball);
       if (previous.hitWallX || previous.hitWallY) P.retainSpin(ball, C.spin.wallRetention);
@@ -437,7 +439,7 @@
           ball.launched = true;
           ball.holdRemaining = C.powerups.sticky.maxHold;
         } else {
-          P.bounceFromPaddle(ball, self.paddle);
+          P.bounceFromPaddle(ball, self.paddle, targetSpeed);
           self.applyFinalAssaultAssist(ball);
         }
         self.combo = 1;
@@ -463,6 +465,7 @@
     ball.held = false;
     ball.launched = true;
     ball.holdRemaining = 0;
+    ball.paddleSpeedBoost = 0;
     P.releaseFromPaddle(ball, this.paddle, speed, C.balls.releaseMaxAngleDegrees);
   };
 

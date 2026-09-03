@@ -1,0 +1,26 @@
+id: IMP-0002-01
+change: CHG-0002
+proposal: PROP-0002-02
+attempt: 1
+started_at: '2026-09-03T17:50:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+approach: Implement configurable paddle-motion temporary speed transfer while preserving
+  spin, contact-angle behaviour, minimum vertical velocity and effective target-speed
+  modifiers.
+source_revision:
+  before: 2ae5596fb2e884c93c583bd72a98a88252f1f171
+  after: pending-user-implementation-commit-sha
+outcome: passed
+tests:
+  passed:
+  - JavaScript syntax checks for config, physics, game and browser test suite
+  - SpecForge repository validation
+  - 'Node physics harness: moving-paddle boost, speed scaling, edge/contact scaling,
+    cap, stationary paddle, half-life decay, spin preservation, disabled fallback'
+  failed: []
+notes: Headless Chromium was unavailable reliably in the execution environment, so
+  the focused physics behaviour was validated with a deterministic Node harness in
+  addition to syntax and SpecForge validation. Existing browser test suite was extended
+  for the new behaviour.
