@@ -9,8 +9,8 @@ actor:
 approach: Adopt existing Batty Joe into SpecForge; verify baseline artifacts remain
   byte-identical and do not fabricate pre-adoption history.
 source_revision:
-  before: pending-user-baseline-commit-sha
-  after: pending-user-adoption-commit-sha
+  before: c70352f7e446b167623cdaf0e9f15bc26bd95a90
+  after: 2ae5596fb2e884c93c583bd72a98a88252f1f171
 outcome: passed
 tests:
   passed:
@@ -20,3 +20,6 @@ tests:
   - pre-adoption-history-is-not-fabricated
   - fresh-session-can-bootstrap-from-repository
   failed: []
+notes: Batty Joe baseline and first SpecForge-managed implementation source revisions
+  recorded from user-supplied full Git SHAs. No recursive tracking is required for
+  the later metadata-only completion commit.

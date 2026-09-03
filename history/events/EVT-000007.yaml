@@ -1,0 +1,14 @@
+id: EVT-000007
+timestamp: '2026-09-03T17:20:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: change_completed
+entity:
+  type: change
+  id: CHG-0001
+related:
+  change: CHG-0001
+  implementation_attempt: IMP-0001-01
+resulting_state:
+  change_status: completed

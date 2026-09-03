@@ -28,5 +28,5 @@ policy:
 adoption:
   mode: existing_project_baseline
   baseline_specification: batty-joe-dev-spec-v1.5.0.yaml
-  baseline_source_revision: pending_user_commit_sha
+  baseline_source_revision: c70352f7e446b167623cdaf0e9f15bc26bd95a90
   historical_forensic_reconstruction: not_permitted_without_evidence

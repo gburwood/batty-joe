@@ -1,0 +1,15 @@
+id: EVT-000006
+timestamp: '2026-09-03T17:20:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: source_revision_recorded
+entity:
+  type: implementation_attempt
+  id: IMP-0001-01
+related:
+  change: CHG-0001
+  implementation_attempt: IMP-0001-01
+resulting_state:
+  source_revision_before: c70352f7e446b167623cdaf0e9f15bc26bd95a90
+  source_revision_after: 2ae5596fb2e884c93c583bd72a98a88252f1f171
