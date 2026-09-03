@@ -1,0 +1,175 @@
+<!doctype html>
+<!-- Batty Joe Development Specification v1.5.0 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Batty Joe</title>
+  <link rel="stylesheet" href="batty-joe.css">
+</head>
+<body>
+  <main id="gameShell" class="game-shell" aria-label="Batty Joe arcade game">
+    <canvas id="gameCanvas" width="960" height="720" aria-label="Batty Joe game area"></canvas>
+
+    <button id="musicToggleQuick" class="quick-music arcade-button mini" type="button" aria-label="Toggle music">MUSIC ON</button>
+
+    <div id="overlay" class="overlay visible">
+      <section id="mainMenuPanel" class="panel active menu-panel" aria-labelledby="gameTitle">
+        <div class="title-lockup">
+          <div class="title-kicker">INSERT COIN*</div>
+          <h1 id="gameTitle">BATTY JOE</h1>
+          <p class="tagline">BRICKS. BALLS. OCCASIONAL ALIEN ADMINISTRATION.</p>
+        </div>
+        <div class="menu-buttons">
+          <button id="newGameBtn" class="arcade-button primary" type="button">NEW GAME</button>
+          <button id="continueBtn" class="arcade-button" type="button">CONTINUE</button>
+          <button id="highScoresBtn" class="arcade-button" type="button">HIGH SCORES</button>
+          <button id="howToBtn" class="arcade-button" type="button">HOW TO PLAY</button>
+          <button id="settingsBtn" class="arcade-button" type="button">SETTINGS</button>
+        </div>
+        <p class="tiny-note">*No actual coin required. Joe has overheads, but not those overheads.</p>
+      </section>
+
+      <section id="newGamePanel" class="panel card-panel" aria-labelledby="newGameHeading">
+        <h2 id="newGameHeading">NEW GAME</h2>
+        <label class="field-label" for="difficultySelect">DIFFICULTY</label>
+        <select id="difficultySelect" class="arcade-input">
+          <option value="easy">EASY</option>
+          <option value="normal" selected>NORMAL</option>
+          <option value="hard">HARD</option>
+        </select>
+
+        <label class="field-label" for="seedInput">CAMPAIGN SEED</label>
+        <div class="inline-field">
+          <input id="seedInput" class="arcade-input" type="text" maxlength="32" autocomplete="off" spellcheck="false" placeholder="RANDOM">
+          <button id="randomSeedBtn" class="arcade-button compact" type="button">RANDOM</button>
+        </div>
+        <p class="help-text">Same seed + difficulty = same campaign and seeded drops.</p>
+        <div class="button-row">
+          <button class="arcade-button" type="button" data-back="menu">BACK</button>
+          <button id="startGameBtn" class="arcade-button primary" type="button">START</button>
+        </div>
+      </section>
+
+      <section id="pausePanel" class="panel card-panel" aria-labelledby="pauseHeading">
+        <h2 id="pauseHeading">PAUSED</h2>
+        <p class="panel-status">SEED <strong id="pauseSeed">-</strong></p>
+        <div class="menu-buttons narrow">
+          <button id="resumeBtn" class="arcade-button primary" type="button">RESUME</button>
+          <button id="restartLevelBtn" class="arcade-button" type="button">RESTART LEVEL</button>
+          <button id="pauseSettingsBtn" class="arcade-button" type="button">SETTINGS</button>
+          <button id="quitMenuBtn" class="arcade-button danger" type="button">QUIT TO MENU</button>
+        </div>
+      </section>
+
+      <section id="settingsPanel" class="panel card-panel wide-panel" aria-labelledby="settingsHeading">
+        <h2 id="settingsHeading">SETTINGS</h2>
+        <div class="settings-grid">
+          <label class="toggle-row"><span>MUSIC</span><input id="musicEnabled" type="checkbox"></label>
+          <label class="toggle-row"><span>SOUND FX</span><input id="sfxEnabled" type="checkbox"></label>
+          <label class="toggle-row"><span>GLOBAL MUTE</span><input id="globalMute" type="checkbox"></label>
+          <label class="slider-row"><span>MUSIC VOLUME</span><input id="musicVolume" type="range" min="0" max="1" step="0.05"></label>
+          <label class="slider-row"><span>SFX VOLUME</span><input id="sfxVolume" type="range" min="0" max="1" step="0.05"></label>
+          <label class="toggle-row"><span>REDUCED SHAKE</span><input id="reducedShake" type="checkbox"></label>
+          <label class="toggle-row"><span>REDUCED FLASHING</span><input id="reducedFlashing" type="checkbox"></label>
+          <label class="toggle-row"><span>COLOUR-BLIND CUES</span><input id="colourBlindCues" type="checkbox"></label>
+          <label class="toggle-row"><span>PAUSE ON WINDOW BLUR</span><input id="pauseOnBlur" type="checkbox"></label>
+        </div>
+
+        <h3>KEYS</h3>
+        <div class="keys-grid">
+          <span>LEFT</span><button id="key-left" class="arcade-button key-button" type="button">LEFT</button>
+          <span>RIGHT</span><button id="key-right" class="arcade-button key-button" type="button">RIGHT</button>
+          <span>ACTION / FIRE</span><button id="key-action" class="arcade-button key-button" type="button">SPACE</button>
+          <span>BIG BOMB</span><button id="key-bigBomb" class="arcade-button key-button" type="button">DOWN</button>
+          <span>PAUSE</span><button id="key-pause" class="arcade-button key-button" type="button">ESCAPE</button>
+          <span>FULLSCREEN</span><button id="key-fullscreen" class="arcade-button key-button" type="button">F</button>
+        </div>
+        <div class="button-row">
+          <button id="saveSettingsBtn" class="arcade-button primary" type="button">SAVE SETTINGS</button>
+        </div>
+      </section>
+
+      <section id="highScoresPanel" class="panel card-panel wide-panel" aria-labelledby="highScoresHeading">
+        <h2 id="highScoresHeading">HIGH SCORES</h2>
+        <div class="table-scroll">
+          <table class="score-table">
+            <thead><tr><th>#</th><th>INI</th><th>SCORE</th><th>MODE</th><th>LVL</th><th>SEED</th></tr></thead>
+            <tbody id="highScoresBody"></tbody>
+          </table>
+        </div>
+        <div class="button-row"><button class="arcade-button" type="button" data-back="menu">BACK</button></div>
+      </section>
+
+      <section id="howToPanel" class="panel card-panel wide-panel" aria-labelledby="howToHeading">
+        <h2 id="howToHeading">HOW TO PLAY</h2>
+        <div class="how-grid">
+          <div><h3>MOVE</h3><p>Use <strong>← / →</strong> or <strong>A / D</strong>. The paddle has a little inertia, because apparently even paddles need character development.</p></div>
+          <div><h3>LAUNCH / FIRE</h3><p><strong>Space</strong> launches a held ball, releases Sticky, fires Laser, fires the Invaders ship, and fires the FPS rifle. While a ball is held, slide the bat underneath it: release near the centre for a near-vertical launch or nearer an edge to aim toward that side.</p></div>
+          <div><h3>BRICKS</h3><p>Colours, symbols and damage marks reveal brick properties. Grey diamond bricks are indestructible during ordinary play.</p></div>
+          <div><h3>POWER-UPS</h3><p>Catch falling capsules. Some stack, some replace incompatible effects, and some are spectacularly unhelpful.</p></div>
+          <div><h3>FRENZY</h3><p>Rare Frenzy capsules temporarily turn Batty Joe into another arcade game: <strong>Invaders</strong>, <strong>FPS</strong>, <strong>Pinball</strong>, <strong>Asteroids</strong>, <strong>Missile Command</strong>, <strong>Arkanoid Revenge</strong>, <strong>10-Pin</strong> or <strong>Bomber</strong>. In FPS Frenzy, watch for telegraphed bricks dropping vertically from above and strafe with the arrow keys. Each mode preserves the surviving brick state when normal play returns. A level can normally contain up to two Frenzies.</p></div>
+          <div><h3>SPIN & FINAL ASSAULT</h3><p>Move the bat as you strike the ball to impart spin and curve its flight. During Final Assault the ball accelerates and the remaining bricks exert increasingly obvious magnetic pull. BIG BOMB power is separate: special BIG BOMB POWER pickups appear independently during a level. Collect enough segments to arm the bomb, then press <strong>Down Arrow</strong> to deal two damage to every remaining destructible brick.</p></div>
+          <div><h3>PAUSE</h3><p><strong>Escape</strong> pauses. <strong>F</strong> toggles fullscreen. Three lives, up to three continues, twenty levels, one very large final brick.</p></div>
+        </div>
+        <div class="button-row"><button class="arcade-button" type="button" data-back="menu">BACK</button></div>
+      </section>
+
+      <section id="intermissionPanel" class="panel card-panel" aria-labelledby="intermissionTitle">
+        <h2 id="intermissionTitle">LEVEL COMPLETE</h2>
+        <dl class="result-list">
+          <div><dt>SCORE</dt><dd id="intermissionScore">0</dd></div>
+          <div><dt>TIME</dt><dd id="intermissionTime">00:00</dd></div>
+          <div><dt>BONUS</dt><dd id="intermissionBonus">0</dd></div>
+        </dl>
+        <button id="intermissionNextBtn" class="arcade-button primary" type="button">NEXT</button>
+      </section>
+
+      <section id="continuePanel" class="panel card-panel danger-panel" aria-labelledby="continueHeading">
+        <h2 id="continueHeading">CONTINUE?</h2>
+        <div id="continueCountdown" class="countdown">10</div>
+        <p>CONTINUES LEFT: <strong id="continuesLeft">3</strong></p>
+        <p class="help-text">Continuing restarts this level and resets your score to zero.</p>
+        <button id="continueNowBtn" class="arcade-button primary" type="button">CONTINUE NOW</button>
+      </section>
+
+      <section id="initialsPanel" class="panel card-panel" aria-labelledby="initialsHeading">
+        <h2 id="initialsHeading">HIGH SCORE</h2>
+        <p>SCORE <strong id="initialsScore">0</strong></p>
+        <form id="initialsForm">
+          <label class="field-label" for="initialsInput">ENTER 3 INITIALS</label>
+          <input id="initialsInput" class="initials-input" type="text" maxlength="3" autocomplete="off" spellcheck="false" pattern="[A-Za-z0-9]{1,3}" required>
+          <button class="arcade-button primary" type="submit">SAVE SCORE</button>
+        </form>
+      </section>
+
+      <section id="gameOverPanel" class="panel card-panel" aria-labelledby="gameOverHeading">
+        <h2 id="gameOverHeading">GAME OVER</h2>
+        <p>FINAL SCORE <strong id="gameOverScore">0</strong></p>
+        <p>LEVEL REACHED <strong id="gameOverLevel">1</strong></p>
+        <p class="flavour">THE BRICKS HAVE FILED A VICTORY REPORT.</p>
+        <button id="gameOverMenuBtn" class="arcade-button primary" type="button">MAIN MENU</button>
+      </section>
+
+      <section id="victoryPanel" class="panel card-panel victory-panel" aria-labelledby="victoryHeading">
+        <h2 id="victoryHeading">BATTY JOE WINS</h2>
+        <p>FINAL SCORE <strong id="victoryScore">0</strong></p>
+        <p>SEED <strong id="victorySeed">-</strong></p>
+        <p class="flavour">TWENTY LEVELS. ONE PADDLE. AN UNREASONABLE NUMBER OF BRICKS.</p>
+        <div class="button-row stacked">
+          <button id="hardLoopBtn" class="arcade-button primary" type="button">START HARDER LOOP</button>
+          <button id="victoryMenuBtn" class="arcade-button" type="button">MAIN MENU</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="batty-joe-config.js"></script>
+  <script src="batty-joe-storage.js"></script>
+  <script src="batty-joe-physics.js"></script>
+  <script src="batty-joe-levels.js"></script>
+  <script src="batty-joe-audio.js"></script>
+  <script src="batty-joe-game.js"></script>
+  <script src="batty-joe.js"></script>
+</body>
+</html>

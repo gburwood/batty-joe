@@ -1,0 +1,306 @@
+/* Batty Joe Development Specification v1.5.0 */
+:root {
+  color-scheme: dark;
+  --bg: #02050b;
+  --panel: rgba(4, 12, 23, 0.94);
+  --panel-2: rgba(8, 22, 37, 0.96);
+  --cyan: #4de8ff;
+  --green: #72ff9f;
+  --pink: #ff5ca8;
+  --yellow: #ffe85f;
+  --red: #ff6573;
+  --text: #ecfbff;
+  --muted: #91aab8;
+  --line: rgba(77, 232, 255, 0.35);
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; }
+body {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(42, 93, 135, 0.22), transparent 34%),
+    radial-gradient(circle at 80% 78%, rgba(82, 31, 112, 0.19), transparent 36%),
+    #010307;
+  color: var(--text);
+  font-family: "Courier New", Consolas, monospace;
+}
+
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+.game-shell {
+  position: relative;
+  width: min(100vw, calc(100vh * 4 / 3));
+  height: min(100vh, calc(100vw * 3 / 4));
+  aspect-ratio: 4 / 3;
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #02050b;
+  border: 1px solid rgba(77, 232, 255, 0.32);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 28px rgba(77, 232, 255, 0.1);
+  overflow: hidden;
+}
+
+.is-fullscreen .game-shell,
+.game-shell:fullscreen {
+  width: min(100vw, calc(100vh * 4 / 3));
+  height: min(100vh, calc(100vw * 3 / 4));
+  border: 0;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 3vw, 34px);
+  background: linear-gradient(rgba(0, 3, 8, 0.22), rgba(0, 3, 8, 0.48));
+}
+.overlay.visible { display: flex; }
+
+.panel {
+  display: none;
+  width: min(92%, 610px);
+  max-height: 92%;
+  overflow: auto;
+  text-align: center;
+}
+.panel.active { display: block; }
+
+.menu-panel {
+  padding: 18px 20px 22px;
+  background: linear-gradient(180deg, rgba(3, 10, 20, 0.74), rgba(3, 10, 20, 0.88));
+  border: 1px solid rgba(77, 232, 255, 0.24);
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.44);
+}
+
+.card-panel {
+  padding: clamp(18px, 3.2vw, 34px);
+  background: var(--panel);
+  border: 2px solid var(--cyan);
+  box-shadow: 0 0 0 4px rgba(77, 232, 255, 0.08), 0 0 36px rgba(77, 232, 255, 0.16);
+}
+.wide-panel { width: min(94%, 780px); }
+.danger-panel { border-color: var(--red); box-shadow: 0 0 0 4px rgba(255,101,115,.08), 0 0 40px rgba(255,101,115,.13); }
+.victory-panel { border-color: var(--yellow); box-shadow: 0 0 0 4px rgba(255,232,95,.08), 0 0 42px rgba(255,232,95,.15); }
+
+.title-lockup { margin-bottom: 18px; }
+.title-kicker {
+  color: var(--yellow);
+  font-size: clamp(10px, 1.7vw, 14px);
+  letter-spacing: 0.3em;
+  animation: blink-soft 1.25s steps(2, end) infinite;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 4px 0 3px;
+  color: white;
+  font-size: clamp(46px, 9vw, 100px);
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  text-shadow: 4px 0 0 var(--pink), -4px 0 0 var(--cyan), 0 0 18px rgba(255,255,255,.35);
+}
+h2 {
+  color: var(--cyan);
+  font-size: clamp(24px, 4vw, 40px);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 13px rgba(77,232,255,.35);
+}
+h3 {
+  margin-bottom: 8px;
+  color: var(--yellow);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.tagline { margin-bottom: 0; color: var(--muted); font-size: clamp(10px, 1.5vw, 14px); }
+.tiny-note, .help-text { color: var(--muted); font-size: 12px; }
+.tiny-note { margin: 14px 0 0; }
+.flavour { color: var(--yellow); }
+.panel-status { color: var(--muted); }
+
+.menu-buttons {
+  display: grid;
+  gap: 9px;
+  width: min(100%, 330px);
+  margin: 0 auto;
+}
+.menu-buttons.narrow { width: min(100%, 300px); }
+
+.arcade-button {
+  appearance: none;
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid rgba(77,232,255,.65);
+  background: rgba(7, 22, 35, .92);
+  color: var(--text);
+  cursor: pointer;
+  letter-spacing: .08em;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
+  transition: transform .08s ease, background .08s ease, border-color .08s ease;
+}
+.arcade-button:hover:not(:disabled), .arcade-button:focus-visible {
+  background: rgba(15, 47, 66, .98);
+  border-color: var(--cyan);
+  outline: 2px solid rgba(77,232,255,.22);
+  outline-offset: 2px;
+}
+.arcade-button:active:not(:disabled) { transform: translateY(1px); }
+.arcade-button:disabled { opacity: .35; cursor: not-allowed; }
+.arcade-button.primary { color: #021014; background: var(--cyan); border-color: white; }
+.arcade-button.primary:hover:not(:disabled) { background: #86f1ff; }
+.arcade-button.danger { border-color: var(--red); color: #ffd7db; }
+.arcade-button.compact { min-height: 39px; padding: 7px 11px; }
+.arcade-button.mini { min-height: 28px; padding: 5px 8px; font-size: 10px; }
+.key-button { min-height: 32px; padding: 5px 8px; font-size: 12px; }
+
+.quick-music {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  right: 10px;
+  opacity: .72;
+}
+
+.field-label {
+  display: block;
+  margin: 16px 0 6px;
+  color: var(--yellow);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.arcade-input {
+  width: 100%;
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid rgba(77,232,255,.6);
+  background: #06111d;
+  color: white;
+  outline: none;
+}
+.arcade-input:focus { border-color: white; box-shadow: 0 0 0 2px rgba(77,232,255,.18); }
+.inline-field { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+.button-row.stacked { flex-direction: column; width: min(100%, 330px); margin-inline: auto; }
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 16px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+.toggle-row, .slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+  color: #d6edf5;
+  font-size: 12px;
+}
+.slider-row { grid-column: 1 / -1; }
+.slider-row input { flex: 1; accent-color: var(--cyan); }
+.toggle-row input { accent-color: var(--cyan); width: 18px; height: 18px; }
+
+.keys-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 6px 12px;
+  align-items: center;
+  text-align: left;
+  font-size: 12px;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  text-align: left;
+}
+.how-grid > div {
+  padding: 12px;
+  border: 1px solid rgba(77,232,255,.18);
+  background: rgba(4, 18, 29, .66);
+}
+.how-grid p { margin-bottom: 0; color: #c4d7df; font-size: 12px; line-height: 1.45; }
+
+.table-scroll { overflow-x: auto; }
+.score-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.score-table th, .score-table td { padding: 8px 7px; border-bottom: 1px solid rgba(77,232,255,.15); text-align: left; }
+.score-table th { color: var(--yellow); }
+.score-table tbody tr:first-child td { color: var(--green); }
+
+.result-list {
+  width: min(100%, 380px);
+  margin: 0 auto;
+}
+.result-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(77,232,255,.16);
+}
+.result-list dt { color: var(--muted); }
+.result-list dd { margin: 0; color: white; font-weight: 700; }
+
+.countdown {
+  color: var(--red);
+  font-size: clamp(64px, 13vw, 120px);
+  line-height: 1;
+  text-shadow: 0 0 22px rgba(255,101,115,.5);
+}
+.initials-input {
+  display: block;
+  width: 170px;
+  margin: 8px auto 20px;
+  padding: 9px;
+  border: 2px solid var(--yellow);
+  background: #050a10;
+  color: var(--yellow);
+  text-align: center;
+  font: 700 42px/1 "Courier New", monospace;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  outline: none;
+}
+
+@keyframes blink-soft { 0%, 48% { opacity: 1; } 49%, 100% { opacity: .34; } }
+
+@media (max-width: 700px), (max-height: 600px) {
+  .panel { max-height: 96%; }
+  .card-panel { padding: 14px 18px; }
+  .settings-grid, .how-grid { grid-template-columns: 1fr; }
+  .slider-row { grid-column: auto; }
+  .title-kicker, .tiny-note { display: none; }
+  h1 { font-size: clamp(40px, 8.5vw, 72px); }
+  .menu-buttons { gap: 6px; }
+  .arcade-button { min-height: 34px; padding: 6px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+  .title-kicker { animation: none; }
+  .arcade-button { transition: none; }
+}
