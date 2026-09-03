@@ -1,0 +1,18 @@
+id: EVT-000015
+timestamp: '2026-09-03T22:23:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: change_completed
+entity:
+  type: change
+  id: CHG-0002
+related:
+  change: CHG-0002
+  proposal: PROP-0002-02
+  approval: APR-0002
+  implementation_attempt: IMP-0002-01
+  source_revision: 5f5dc9647a7d45536e4f32ea7bd22de57144dd64
+resulting_state:
+  change_status: completed
+  specification_version: 1.6.0

@@ -11,7 +11,7 @@ approach: Implement configurable paddle-motion temporary speed transfer while pr
   modifiers.
 source_revision:
   before: 2ae5596fb2e884c93c583bd72a98a88252f1f171
-  after: pending-user-implementation-commit-sha
+  after: 5f5dc9647a7d45536e4f32ea7bd22de57144dd64
 outcome: passed
 tests:
   passed:
@@ -24,3 +24,4 @@ notes: Headless Chromium was unavailable reliably in the execution environment, 
   the focused physics behaviour was validated with a deterministic Node harness in
   addition to syntax and SpecForge validation. Existing browser test suite was extended
   for the new behaviour.
+completed_at: '2026-09-03T22:23:00+01:00'

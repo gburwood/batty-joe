@@ -1,7 +1,7 @@
 id: CHG-0002
 title: Upgrade paddle-hit ball velocity transfer
 classification: behaviour_change
-status: validated
+status: completed
 priority: high
 sources:
 - type: conversation
@@ -44,3 +44,4 @@ metadata:
   created_by:
     type: ai
     id: chatgpt
+completed_at: '2026-09-03T22:23:00+01:00'
