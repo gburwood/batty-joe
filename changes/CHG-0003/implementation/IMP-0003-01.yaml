@@ -1,0 +1,31 @@
+id: IMP-0003-01
+change: CHG-0003
+proposal: PROP-0003-01
+started_at: '2026-09-03T22:31:00+01:00'
+completed_at: '2026-09-03T22:40:00+01:00'
+outcome: passed
+source_revision:
+  before: 5f5dc9647a7d45536e4f32ea7bd22de57144dd64
+  after: pending-user-implementation-commit-sha
+artifacts_modified:
+- batty-joe-dev-spec-v1.7.0.yaml
+- batty-joe-config.js
+- batty-joe-levels.js
+- batty-joe-game.js
+- batty-joe.js
+- batty-joe-tests.js
+- specforge.yaml
+- tests/run-v170-tests.js
+notes: Implemented approved removal, level-complete pacing, and Grid Runner Frenzy.
+attempt: 1
+actor:
+  type: ai
+  id: chatgpt
+approach: Implement approved Frenzy retirement, two-phase level completion, and deterministic
+  Grid Runner Frenzy.
+tests:
+  passed:
+  - JavaScript syntax checks
+  - SpecForge validator
+  - focused v1.7 static/runtime harness
+  failed: []

@@ -1,0 +1,100 @@
+id: IA-0003-01
+change: CHG-0003
+revision: 1
+created_at: '2026-09-03T22:24:00+01:00'
+affected:
+  requirements: []
+  components:
+  - frenzy_framework
+  - powerup_drop_tables
+  - difficulty_frenzy_weights
+  - debug_frenzy_selection
+  - frenzy_rendering
+  - frenzy_controls
+  - frenzy_scoring
+  - frenzy_persistence
+  - level_transitions
+  - intermission_ui
+  - runtime_config
+  - gameplay_tests
+  - audio_cues
+  artifacts:
+  - batty-joe-dev-spec-v1.6.0.yaml
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe.js
+  - batty-joe-storage.js
+  - batty-joe-audio.js
+  - batty-joe-tests.js
+  - batty-joe-tests.html
+  tests:
+    existing:
+    - all frenzy modes complete transition lifecycle safely
+    - frenzy per-type and total occurrence caps are enforced
+    - level complete state advances campaign
+    required:
+    - Ten-Pin and Bomber cannot spawn or be debug-selected after removal
+    - legacy saved state referring to Ten-Pin or Bomber recovers safely without crashing
+    - level-complete celebration phase lasts configured hold duration before NEXT
+      LEVEL prompt appears
+    - player action cannot accidentally skip the protected celebration phase
+    - NEXT LEVEL prompt phase can be advanced by action and auto-advances after configured
+      prompt duration
+    - final campaign completion does not display a misleading NEXT LEVEL prompt
+    - Grid Runner transformation is deterministic for the same level state and seed
+    - Grid Runner continuously advances on the grid and left/right inputs turn exactly
+      90 degrees
+    - Grid Runner trail collision, boundary collision and blocker collision terminate
+      the frenzy safely
+    - Grid Runner crossing a transformed destructible brick-node applies destruction
+      to the corresponding canonical brick
+    - Grid Runner surviving bricks restore correctly through the shared Frenzy restoration
+      contract
+    - Grid Runner participates in occurrence caps, scoring, debug selection, pause/resume
+      and Frenzy transition tests
+compatibility:
+  breaking: true
+  notes: Two previously selectable Frenzy identifiers are removed. Runtime/save compatibility
+    must fail safe for old Ten-Pin/Bomber references.
+migration:
+  required: true
+  notes: Legacy persisted frenzy identifiers tenpin and bomber must be treated as
+    retired modes. If encountered on reload, restore the canonical pre-frenzy state
+    where available and continue normal play rather than trying to instantiate removed
+    mode code.
+risks:
+- id: RISK-0003-01
+  description: Deleting Frenzy code may leave stale powerup, debug, scoring, rendering
+    or persistence references.
+  severity: high
+  mitigation: Remove by identifier across config/spec/runtime/tests and add explicit
+    retired-mode compatibility tests.
+- id: RISK-0003-02
+  description: A delayed level transition could feel sluggish or allow accidental
+    skipping.
+  severity: medium
+  mitigation: Use a short protected celebration phase followed by a separately configurable
+    prompt phase; ignore advance input during the protected phase.
+- id: RISK-0003-03
+  description: Grid Runner could duplicate existing shooting modes or become too complex
+    for a short Frenzy.
+  severity: medium
+  mitigation: Use continuous movement and route-planning with only left/right 90-degree
+    turns; no shooting.
+- id: RISK-0003-04
+  description: Trail/grid collision logic could produce non-deterministic or impossible
+    states.
+  severity: high
+  mitigation: Use fixed grid cells, deterministic starting direction/placement, bounded
+    tick movement and explicit collision regression tests.
+- id: RISK-0003-05
+  description: Removing two Frenzies and adding one could unintentionally change total
+    Frenzy frequency.
+  severity: medium
+  mitigation: Preserve the existing aggregate Frenzy drop probability per difficulty
+    by redistributing retired-mode weight across the retained roster including Grid
+    Runner.
+summary: This is a cross-cutting gameplay cleanup and replacement. Removing two established
+  modes touches every Frenzy registry and compatibility path; level pacing affects
+  state/UI timing; Grid Runner adds a new non-shooter Frenzy using deterministic grid
+  movement and trail collision.

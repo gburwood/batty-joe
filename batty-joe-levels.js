@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
@@ -83,8 +83,7 @@
         ['asteroids_frenzy', diff.asteroidsFrenzyWeight * 6],
         ['missile_command_frenzy', diff.missileFrenzyWeight * 6],
         ['arkanoid_revenge_frenzy', diff.revengeFrenzyWeight * 6],
-        ['ten_pin_frenzy', diff.tenPinFrenzyWeight * 6],
-        ['bomber_frenzy', diff.bomberFrenzyWeight * 6]
+        ['grid_runner_frenzy', diff.gridRunnerFrenzyWeight * 6]
       ];
       let cumulative = 0;
       for (let i = 0; i < frenzyWeights.length; i += 1) {

@@ -1,0 +1,13 @@
+id: EVT-000018
+timestamp: '2026-09-03T22:30:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+event_type: proposal_approved
+entity:
+  type: proposal
+  id: PROP-0003-01
+related:
+  change: CHG-0003
+resulting_state:
+  proposal_status: approved

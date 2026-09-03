@@ -1,0 +1,2757 @@
+application:
+  name: Batty Joe
+  type: browser_arcade_brick_breaker
+  genre:
+  - brick_breaker
+  - arcade
+  - action
+  version: 1.7.0
+  status: active_development_specification
+  source_of_truth: true
+specification_governance:
+  authority: 'This development specification is the authoritative source of truth. Generated code must conform to the current
+    specification and must not silently introduce requirements absent from it.
+
+    '
+  workflow:
+  - change_request
+  - impact_analysis
+  - updated_specification_sections
+  - semantic_version_bump
+  - full_yaml_when_requested
+  - regenerated_artifacts
+  versioning:
+    patch: Corrections, bug fixes and specification clarifications.
+    minor: Backward-compatible features and gameplay additions.
+    major: Substantial architectural or gameplay changes.
+  generated_artifact_header:
+    required: true
+    format: Batty Joe Development Specification v{version}
+  changelog_required: true
+platform:
+  host: desktop_web_browser
+  supported_browsers:
+  - Google Chrome
+  - Microsoft Edge
+  - Mozilla Firefox
+  mobile_support: false
+  primary_input: keyboard
+  build_process: none
+  npm_required: false
+  node_required: false
+  internet_dependency: false
+  offline_capable: true
+  deployment_style: drop_in_browser_files
+technology:
+  html5: true
+  css3: true
+  javascript: true
+  canvas:
+    enabled: true
+    purpose: gameplay_rendering
+  dom_ui:
+    enabled: true
+    purpose:
+    - menus
+    - hud_overlays
+    - settings
+    - dialogs
+    - high_score_entry
+  web_audio:
+    enabled: true
+    use_for_generated_sfx: true
+  third_party_game_framework: false
+  physics_engine: false
+  libraries:
+    policy: 'Prefer vanilla browser APIs. Add a lightweight third-party library only when it clearly solves a problem that
+      would otherwise add unnecessary complexity, and only if it can be bundled locally for offline use.
+
+      '
+artifacts:
+  required:
+  - batty-joe.html
+  - batty-joe.css
+  - batty-joe.js
+  - batty-joe-game.js
+  - batty-joe-physics.js
+  - batty-joe-levels.js
+  - batty-joe-audio.js
+  - batty-joe-storage.js
+  - batty-joe-config.js
+  - batty-joe-tests.html
+  - batty-joe-tests.js
+  architecture:
+    script_style: plain_browser_scripts
+    es_modules_required: false
+    global_namespace:
+      required: true
+      name: BattyJoe
+    rule: 'Keep responsibilities modular and avoid a single monolithic JavaScript file. Files must work when copied together
+      and opened from a static host without a build step.
+
+      '
+game_identity:
+  title: Batty Joe
+  visual_style: classic_arcade
+  mascot_character: false
+  humour:
+    enabled: true
+    allowed_in:
+    - level_titles
+    - death_messages
+    - frenzy_announcements
+    - boss_taunts
+    - menu_flavour_text
+    constraint: Humour must not obscure important gameplay information.
+core_gameplay:
+  objective: 'Control a paddle, keep one or more balls in play, destroy all required bricks, and advance through a campaign
+    of up to 20 levels.
+
+    '
+  starting_lives: 3
+  max_lives: 9
+  simultaneous_ball_cap: 6
+  lose_life_when: last_active_ball_exits_bottom
+  level_complete_when: all_non_indestructible_required_bricks_are_destroyed
+  campaign_levels: 20
+  finite_campaign: true
+  post_victory:
+    show_victory_sequence: true
+    offer_harder_loop_from_level_1: true
+game_states:
+  centrally_managed: true
+  states:
+  - BOOT
+  - MENU
+  - ATTRACT
+  - PLAYING
+  - PAUSED
+  - LIFE_LOST
+  - LEVEL_COMPLETE
+  - FRENZY_TRANSITION_IN
+  - FRENZY_ACTIVE
+  - FRENZY_TRANSITION_OUT
+  - BOSS
+  - GAME_OVER
+  - CONTINUE
+  - VICTORY
+  transitions:
+    rule: 'State changes must be performed through a central state controller rather than by unrelated modules mutating screen
+      and gameplay state independently.
+
+      '
+  modal_overrides:
+    frenzy:
+      enabled: true
+      priority: above_normal_gameplay_and_powerup_effects
+      reentrant_activation_allowed: false
+      normal_gameplay_simulation_suspended_while_active: true
+controls:
+  movement:
+    left:
+    - ArrowLeft
+    - KeyA
+    right:
+    - ArrowRight
+    - KeyD
+    movement_model: slight_inertia
+    behaviour: 'Paddle acceleration and deceleration should create a mild inertia effect while remaining responsive enough
+      for arcade play.
+
+      '
+  action:
+    launch_or_fire: Space
+    pause: Escape
+    fullscreen: KeyF
+  remappable:
+    enabled: true
+  context_sensitive_space:
+    pre_launch: launch_ball
+    sticky_ball_held: release_ball
+    laser_active: fire_laser
+    frenzy_active: fire_current_frenzy_weapon
+  fps_frenzy:
+    aiming:
+      mouse: true
+      keyboard: true
+      keyboard_keys:
+        left: KeyA
+        right: KeyD
+        up: KeyW
+        down: KeyS
+      mouse_controls_full_crosshair: true
+      keyboard_controls_crosshair: true
+    strafe:
+      left: ArrowLeft
+      right: ArrowRight
+      vertical_strafe: false
+    fire:
+      keyboard: Space
+      mouse: MousePrimary
+  pinball_frenzy:
+    left_flipper:
+    - ArrowLeft
+    - KeyA
+    right_flipper:
+    - ArrowRight
+    - KeyD
+    both_flippers: Space
+    nudge:
+      enabled: true
+      key: ArrowUp
+      cooldown_seconds: 1.0
+      strength: small
+  asteroids_frenzy:
+    rotate_left:
+    - ArrowLeft
+    - KeyA
+    rotate_right:
+    - ArrowRight
+    - KeyD
+    thrust:
+    - ArrowUp
+    - KeyW
+    fire: Space
+  missile_command_frenzy:
+    aiming:
+      mouse: true
+      keyboard: true
+      keyboard_keys:
+        left: KeyA
+        right: KeyD
+        up: KeyW
+        down: KeyS
+    fire:
+    - Space
+    - MousePrimary
+  arkanoid_revenge_frenzy:
+    move_left:
+    - ArrowLeft
+    - KeyA
+    move_right:
+    - ArrowRight
+    - KeyD
+    serve_or_release: Space
+  final_assault: {}
+  big_bomb:
+    default_key: ArrowDown
+    remappable: true
+    available_during_level_gameplay_when_ready: true
+display:
+  playfield:
+    layout: fixed_aspect_ratio
+    centered: true
+    scalable: true
+    fullscreen_supported: true
+    reference_width: 960
+    reference_height: 720
+  scaling:
+    preserve_gameplay_proportions: true
+    high_dpi_aware: true
+    high_refresh_display_support: true
+  target_fps: 60
+  rendering:
+    request_animation_frame: true
+    delta_time_based: true
+    refresh_rate_independent_simulation: true
+  backgrounds:
+    style: simple
+    options:
+    - solid
+    - subtle_gradient
+    animated_backgrounds: false
+  ball_visual:
+    style: traditional
+  paddle_visual:
+    style: techie
+    should_support_ship_transformation: true
+    should_support_pinball_flipper_transformation: true
+    should_support_asteroids_ship_transformation: true
+    should_support_revenge_top_paddle_transformation: true
+  bricks:
+    graphical: true
+    appearance_must_communicate:
+    - type
+    - durability
+    - damage_state
+  effects:
+    particles:
+      enabled: true
+      intensity: restrained
+    screen_shake:
+      enabled: true
+      default_intensity: low
+      used_for:
+      - explosions
+      - boss_hits
+      - frenzy_transition_in
+      - frenzy_transition_out
+  accessibility_visual_cues:
+    never_rely_on_colour_alone: true
+  frenzy_transitions:
+    default_enter_seconds: 2.5
+    default_exit_seconds: 2.0
+    screen_shake: pronounced_but_bounded
+    particles: true
+    morphing_required: true
+    reduced_motion_fallback: short_fade_and_slide_without_heavy_shake_or_flashing
+  pseudo_3d:
+    enabled_for_fps_frenzy: true
+    renderer: canvas_2d_perspective_projection
+    webgl_required: false
+    brick_rendering: solid_extruded_cuboids_at_deterministically_varied_depths
+    depth_is_visually_significant: true
+    occlusion_required: true
+    depth_sorting_required: true
+  fps_frenzy_view:
+    presentation: first_person_down_the_barrel
+    reference_style: early_1990s_corridor_fps
+    normal_paddle_visible: false
+    normal_paddle_entity_used_for_rendering_or_aiming: false
+    weapon_rendering:
+      visible: true
+      type: rifle
+      position: lower_centre_of_view
+      perspective: down_the_barrel
+      independent_of_normal_paddle_entity: true
+      muzzle_flash: true
+      recoil_animation: true
+    crosshair_visible: true
+    camera:
+      first_person: true
+      horizontal_strafe: true
+      forward_backward_movement: false
+      vertical_movement: false
+  frenzy_mode_visual_identity:
+    pinball: neon_arcade_pinball_table_with_flippers_bumpers_and_lanes
+    asteroids: vector_inspired_spacefield_with_wrapping_ship_and_chunky_asteroids
+    missile_command: radar_defence_view_with_missile_trails_and_expanding_interception_blasts
+    arkanoid_revenge: inverted_brick_breaker_duel_with_enemy_brick_paddle
+physics:
+  engine: custom_deterministic
+  timestep:
+    delta_time_based: true
+    clamp_large_frame_gaps: true
+  ball:
+    launches_from_paddle: true
+    launch_trigger: any_launch_action_key
+    auto_launch: false
+    paddle_hit_angle_control: true
+    paddle_hit_rule: 'Ball reflection angle is influenced by the horizontal impact position on the paddle. Centre hits are
+      shallower; edge hits create more lateral motion.
+
+      '
+    minimum_vertical_component_required: true
+    prevent_near_horizontal_lock: true
+    speed_progression:
+      increases_during_level: true
+      higher_base_speed_on_later_levels: true
+      tuning:
+        easy:
+          base_speed_multiplier: 0.9
+          in_level_acceleration_multiplier: 0.85
+        normal:
+          base_speed_multiplier: 1.0
+          in_level_acceleration_multiplier: 1.0
+        hard:
+          base_speed_multiplier: 1.12
+          in_level_acceleration_multiplier: 1.15
+    spin_and_swerve:
+      enabled: true
+      principle: Horizontal paddle velocity at paddle contact is the dominant source of ball spin. Spin affects both in-flight
+        curvature and the angle produced by subsequent collisions.
+      spin_state_per_ball: true
+      spin_range:
+      - -1.25
+      - 1.25
+      imparted_on_paddle_contact:
+        paddle_velocity_contribution: 0.9
+        contact_offset_contribution: 0.1
+        moving_paddle_is_primary_source: true
+        stationary_paddle_can_impart_small_spin_from_edge_contact: true
+        paddle_velocity_is_normalised_against_maximum_paddle_speed: true
+        fast_opposite_direction_paddle_motion_can_reverse_existing_spin: true
+      flight_effect:
+        model: perpendicular_heading_curvature
+        maximum_heading_change_degrees_per_second: 18
+        preserve_target_ball_speed: true
+        minimum_vertical_component_rule_still_applies: true
+        visual_cue: visible_but_restrained_curved_trail_or_ball_rotation
+      decay:
+        enabled: true
+        half_life_seconds: 2.4
+        near_zero_snap_threshold: 0.02
+      collision_retention:
+        wall: 0.82
+        brick: 0.78
+        paddle: recalculate_from_current_contact
+        explosion: 0.7
+      deterministic: true
+      applies_to_multiball_independently: true
+      disabled_when_frenzy_mode_uses_non_ball_gameplay: true
+      collision_angle_effect:
+        enabled: true
+        principle: Spin modifies the ideal reflected heading after wall and brick collisions, producing visible English rather
+          than a mathematically perfect mirror reflection.
+        maximum_spin_deflection_degrees:
+          brick: 12
+          screen_edge: 9
+          paddle: 15
+        direction: spin_sign_controls_tangential_deflection
+        applied_after_geometric_reflection: true
+        applied_before_minimum_vertical_component_and_speed_normalisation: true
+        spin_is_not_consumed_by_the_deflection: true
+    bat_release_angle:
+      enabled: true
+      applies_to:
+      - initial_level_launch
+      - life_restart_launch
+      - sticky_paddle_release
+      principle: The horizontal position of the held ball on the bat determines the release angle. Centre releases are nearly
+        vertical; releases nearer an edge angle toward that side.
+      mapping:
+        input: normalised_ball_offset_from_bat_centre
+        input_range:
+        - -1.0
+        - 1.0
+        output: launch_angle_from_vertical_degrees
+        output_range_degrees:
+        - -60
+        - 60
+        curve: linear
+        left_side_launches_left: true
+        right_side_launches_right: true
+        centre_launches_vertical: true
+      constraints:
+        minimum_vertical_component_rule_still_applies: true
+        release_speed_uses_current_target_ball_speed: true
+        spin_does_not_change_initial_release_mapping_until_after_release: true
+    paddle_velocity_transfer:
+      enabled: true
+      principle: Paddle contact transfers a bounded amount of paddle motion into temporary ball speed as well as spin.
+      inputs:
+        paddle_speed_ratio: absolute paddle horizontal velocity divided by configured maximum paddle speed, clamped 0..1
+        contact_offset: normalised ball contact offset from paddle centre, -1..1
+      configuration:
+        runtime_path: BattyJoe.Config.physics.paddleVelocityTransfer
+        maxBoostPercent: 0.25
+        decayHalfLifeSeconds: 0.65
+        centreContactFactor: 0.55
+        edgeContactFactor: 1.0
+      boost_formula: maxBoostPercent * paddle_speed_ratio * lerp(centreContactFactor, edgeContactFactor, abs(contact_offset))
+      stationary_paddle_adds_no_motion_boost: true
+      boost_is_per_ball_transient_state: true
+      repeated_hits_do_not_compound_beyond_configured_cap: true
+      decay: exponential toward the current effective target ball speed
+      effective_target_speed_includes:
+      - difficulty_and_level_progression
+      - slow_ball_powerup
+      - fast_ball_powerup
+      - final_assault_speed_multiplier
+      minimum_vertical_component_rule_still_applies: true
+      spin_model_remains_independent: true
+      disabled_behaviour: No temporary paddle-derived speed boost; existing spin/contact-angle behaviour remains.
+  collision:
+    deterministic_for_same_state: true
+    continuous_collision_protection: true
+    resolve_corner_cases: true
+    spin_must_not_create_tunnelling: true
+    combined_steering_order:
+    - base_geometric_collision_reflection
+    - deterministic_imperfect_rebound_variation
+    - spin_collision_angle_deflection
+    - ball_spin_in_flight_swerve
+    - final_assault_magnetism_if_active
+    - minimum_vertical_component_enforcement
+    - target_speed_normalisation
+    imperfect_rebound:
+      enabled: true
+      purpose: Avoid sterile mathematically perfect brick and screen-edge rebounds while keeping gameplay deterministic and
+        learnable.
+      deterministic: true
+      source: seeded_collision_signature_not_unseeded_random
+      brick:
+        maximum_variation_degrees: 3.5
+        variation_changes_by_collision_event: true
+      screen_edge:
+        maximum_variation_degrees: 2.0
+        variation_changes_by_collision_event: true
+      paddle:
+        uses_existing_contact_position_plus_spin_model: true
+        additional_random_variation_degrees: 0
+      constraints:
+        must_not_reverse_resolved_collision_normal: true
+        must_not_create_near_horizontal_lock: true
+        minimum_vertical_component_rule_still_applies: true
+        target_ball_speed_is_preserved: true
+    paddle_velocity_transfer_is_applied_on_paddle_contact: true
+difficulty:
+  modes:
+  - easy
+  - normal
+  - hard
+  selected_on_new_game: true
+  affects:
+  - starting_ball_speed
+  - in_level_ball_acceleration
+  - brick_toughness
+  - moving_brick_frequency
+  - indestructible_brick_frequency
+  - positive_powerup_frequency
+  - negative_powerup_frequency
+  - layout_complexity
+  - regenerating_brick_frequency
+  - invisible_brick_frequency
+  - boss_pressure
+  score_multiplier_by_difficulty: false
+campaign_generation:
+  style:
+  - templates
+  - symmetry
+  - controlled_randomness
+  deterministic: true
+  campaign_seed:
+    one_seed_generates_entire_campaign: true
+    user_can_enter_seed: true
+    random_seed_option: true
+    visible_in_pause_ui: true
+    visible_in_game_ui: true
+    stored_with_high_score: true
+  seeded_randomness:
+    level_layouts: true
+    powerup_drops: true
+    gameplay_random_events: true
+    requirement: 'The same campaign seed plus the same difficulty and versioned generation rules must reproduce the same campaign
+      and seeded gameplay randomness across supported browsers.
+
+      '
+  future_support:
+    handcrafted_levels: true
+  generation_constraints:
+    always_playable: true
+    avoid_unreachable_required_bricks: true
+    template_parameters_data_driven: true
+    symmetry_options:
+    - horizontal
+    - vertical
+    - rotational
+    - none
+    randomness_must_be_bounded: true
+  level_progression:
+    difficulty_increases_with_level: true
+    max_level: 20
+brick_system:
+  types:
+    normal:
+      destructible: true
+      base_hits: 1
+      score_weight: 1.0
+    multi_hit:
+      destructible: true
+      hits_scale_with_level: true
+      initial_hits_min: 2
+      initial_hits_max: 3
+      later_level_hits_max: 6
+      appearance_shows_strength: true
+      score_weight: 1.4
+    indestructible:
+      destructible_in_normal_play: false
+      destructible_by_penetrating_ball: false
+      destructible_in_frenzy: true
+      required_for_normal_level_completion: false
+      score_weight_when_destroyed_in_frenzy: 2.0
+    explosive:
+      destructible: true
+      explosion:
+        destroys_adjacent_destructible_bricks: true
+        damages_or_destroys_by_target_rules: true
+        chain_reaction: true
+        chain_distance: adjacent_or_close_enough_for_explosion_radius
+        default_radius_in_brick_units: 1.25
+      score_weight: 1.6
+    moving:
+      destructible: true
+      movement:
+        axis: horizontal
+        collision_behaviour: reverse_or_clamp_within_assigned_lane
+        may_overlap_other_bricks: false
+      score_weight: 1.6
+    invisible:
+      destructible: true
+      visibility:
+        shimmer_occasional: true
+        otherwise_low_visibility: true
+      score_weight: 1.7
+    regenerating:
+      destructible: true
+      modes:
+      - heal_after_delay
+      - respawn_after_destruction
+      mode_selected_by_level_or_template: true
+      default_heal_delay_seconds: 4
+      default_respawn_delay_seconds: 6
+      score_weight: 1.9
+    powerup:
+      destructible: true
+      visibly_special: true
+      guaranteed_or_high_probability_drop: true
+      score_weight: 1.2
+  property_communication:
+    visual_encoding_required: true
+    use:
+    - colour
+    - shape
+    - texture
+    - damage_marks
+    - animation
+    colour_only_not_sufficient: true
+powerups:
+  naming_style: generic_functional
+  drop_model:
+    mixture:
+    - random_on_destructible_brick
+    - visibly_special_powerup_brick
+    - hidden_predetermined_seeded_drop
+    fall_direction: straight_down
+    missed_powerup: despawn_below_playfield
+  duration_model: per_powerup
+  active_effects_removed_on_life_loss: true
+  stacking_policy: explicit_compatibility_rules
+  types:
+    wide:
+      category: paddle_size
+      positive: true
+      duration_seconds: 15
+      stacks: true
+      stack_effect: progressively_wider
+      max_width_multiplier: 2.0
+    narrow:
+      category: paddle_size
+      positive: false
+      duration_seconds: 12
+      stacks: true
+      stack_effect: progressively_narrower
+      min_width_multiplier: 0.5
+    multiball:
+      category: ball_count
+      positive: true
+      instant: true
+      behaviour: split_each_existing_ball
+      maximum_total_balls: 6
+    sticky:
+      category: paddle_ability
+      positive: true
+      duration_seconds: 15
+      behaviour: 'Balls contacting the paddle are held and can be released with Space.
+
+        '
+      maximum_hold_seconds: 3
+      release_angle_rule: use_physics_ball_bat_release_angle_from_current_held_ball_position
+    laser:
+      category: paddle_weapon
+      positive: true
+      duration_seconds: 15
+      fire_control: hold_space
+      fire_style: machine_gun
+      fire_rate_shots_per_second: 8
+      normal_brick_damage: destroy_in_one_hit
+      stronger_brick_damage: one_damage_unit_per_hit
+      indestructible_brick_damage: 0
+    slow_ball:
+      category: ball_speed
+      positive: true
+      duration_seconds: 10
+      speed_multiplier: 0.72
+      applies_to_all_active_balls: true
+      expiry_behaviour: snap_back
+    fast_ball:
+      category: ball_speed
+      positive: false
+      duration_seconds: 10
+      speed_multiplier: 1.3
+      applies_to_all_active_balls: true
+      expiry_behaviour: snap_back
+    extra_life:
+      category: life
+      positive: true
+      instant: true
+      amount: 1
+      max_lives: 9
+    penetrating_ball:
+      category: ball_ability
+      positive: true
+      duration_seconds: 12
+      behaviour: 'Active balls pass through destructible bricks while applying their normal impact damage without reflecting
+        from those bricks.
+
+        '
+      indestructible_behaviour: bounce
+      can_destroy_indestructible: false
+    imprecise_paddle:
+      category: control_penalty
+      positive: false
+      duration_seconds: 10
+      behaviour: 'Temporarily reduce paddle control precision by increasing inertia, slightly reducing acceleration response
+        and adding small deterministic steering drift derived from the campaign RNG.
+
+        '
+    space_invaders_frenzy:
+      category: mode_change
+      positive: true
+      display_name: INVADERS
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: space_invaders_frenzy
+    fps_frenzy:
+      category: mode_change
+      positive: true
+      display_name: FPS
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: fps_frenzy
+    pinball_frenzy:
+      category: mode_change
+      positive: true
+      display_name: PINBALL
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: pinball_frenzy
+    asteroids_frenzy:
+      category: mode_change
+      positive: true
+      display_name: ASTEROIDS
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: asteroids_frenzy
+    missile_command_frenzy:
+      category: mode_change
+      positive: true
+      display_name: MISSILE
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: missile_command_frenzy
+    arkanoid_revenge_frenzy:
+      category: mode_change
+      positive: true
+      display_name: REVENGE
+      rarity: rare
+      visually_distinct_pickup: true
+      activates: arkanoid_revenge_frenzy
+  compatibility:
+    explicit: true
+    rules:
+    - pair:
+      - wide
+      - sticky
+      allowed: true
+    - pair:
+      - wide
+      - laser
+      allowed: true
+    - pair:
+      - sticky
+      - laser
+      allowed: true
+    - pair:
+      - slow_ball
+      - multiball
+      allowed: true
+    - pair:
+      - fast_ball
+      - multiball
+      allowed: true
+    - pair:
+      - penetrating_ball
+      - sticky
+      allowed: true
+    - pair:
+      - wide
+      - narrow
+      allowed: false
+      resolution: new_pickup_replaces_existing_size_effect
+    - pair:
+      - slow_ball
+      - fast_ball
+      allowed: false
+      resolution: new_pickup_replaces_existing_speed_effect
+    default_for_unlisted_pairs: allowed_when_semantically_independent
+  frenzy_drop_rules:
+    do_not_spawn_any_frenzy_pickup_while_a_frenzy_is_active_or_transitioning: true
+    same_tick_multiple_frenzy_pickups: resolve_deterministically_by_pickup_id_and_activate_only_one
+    per_type_occurrence_limits_are_configurable: true
+scoring:
+  enabled: true
+  brick_score:
+    base_points: 100
+    increases_with_toughness: true
+    type_weighting_from_brick_config: true
+  no_paddle_combo:
+    enabled: true
+    shared_across_multiball: true
+    increments_on_required_brick_damage_or_destruction: true
+    resets_on_any_ball_paddle_contact: true
+    multiplier_curve:
+      start: 1
+      step: 1
+      max: 10
+  rapid_destruction_combo:
+    enabled: true
+    window_seconds: 2
+    separate_from_no_paddle_combo: true
+    multiplier_curve:
+      start: 1
+      step: 1
+      max: 8
+  explosion_scoring:
+    score_every_destroyed_brick: true
+    chain_reaction_bonus: true
+    chain_bonus_points_per_additional_explosion: 150
+  frenzy_scoring:
+    enabled: true
+    own_multiplier: true
+    multiplier_start: 2
+    multiplier_step: 0.25
+    multiplier_max: 5
+    full_clear_bonus: 10000
+  level_completion_bonus:
+    enabled: true
+    components:
+      completion_time: true
+      remaining_lives: true
+      max_combo: true
+      unused_continues: true
+    default_values:
+      life_bonus_each: 1000
+      unused_continue_bonus_each: 2500
+      max_combo_bonus_each_multiplier_step: 250
+      time_par_seconds: 120
+      time_bonus_per_second_under_par: 20
+  fps_frenzy_scoring:
+    enabled: true
+    own_multiplier: true
+    multiplier_start: 2
+    multiplier_step: 0.25
+    multiplier_max: 5
+    full_clear_bonus: 10000
+  final_assault_scoring:
+    enabled: true
+    required_brick_score_multiplier: 2.0
+    applies_to_explosive_chain_destroyed_required_bricks: true
+  pinball_frenzy_scoring:
+    enabled: true
+    uses_shared_frenzy_multiplier: true
+    full_clear_bonus: 10000
+    mode_specific_bonus_events: true
+  asteroids_frenzy_scoring:
+    enabled: true
+    uses_shared_frenzy_multiplier: true
+    full_clear_bonus: 10000
+    mode_specific_bonus_events: true
+  missile_command_frenzy_scoring:
+    enabled: true
+    uses_shared_frenzy_multiplier: true
+    full_clear_bonus: 10000
+    mode_specific_bonus_events: true
+  arkanoid_revenge_frenzy_scoring:
+    enabled: true
+    uses_shared_frenzy_multiplier: true
+    full_clear_bonus: 10000
+    mode_specific_bonus_events: true
+lives_and_death:
+  on_life_loss:
+    destroyed_bricks_remain_destroyed: true
+    damaged_bricks_retain_damage: true
+    active_powerups_removed: true
+    score_retained: true
+    combo_progress_retained: true
+    ball_count_reset_to: 1
+    next_ball_waits_on_paddle: true
+continues:
+  enabled: true
+  maximum_per_campaign: 3
+  presentation: classic_countdown
+  countdown_seconds: 10
+  on_continue:
+    restart_current_level_from_original_generated_layout: true
+    reset_score_to_zero: true
+    reset_lives_to_starting_lives: true
+    decrement_continue_count: true
+    preserve_campaign_seed: true
+    preserve_difficulty: true
+frenzy_framework:
+  enabled: true
+  state_flow:
+  - FRENZY_TRANSITION_IN
+  - FRENZY_ACTIVE
+  - FRENZY_TRANSITION_OUT
+  modal_override: true
+  activation_contract:
+    atomic: true
+    reject_activation_if_another_frenzy_is_active_or_transitioning: true
+    snapshot_before_transition:
+    - all_active_balls_and_velocities
+    - held_sticky_balls_and_hold_state
+    - paddle_position_velocity_size_and_abilities
+    - active_powerups_and_remaining_durations
+    - normal_gameplay_projectiles
+    - combo_state_and_combo_timers
+    - seeded_rng_state_relevant_to_normal_play
+    - ball_spin_state
+    - final_assault_state_and_no_hit_timers
+    suspend:
+    - normal_ball_simulation
+    - normal_paddle_ability_processing
+    - normal_gameplay_projectiles
+    - all_normal_powerup_duration_timers
+    - rapid_combo_expiry_timer
+    normal_powerups_must_not_be_reapplied_to_frenzy_entities: true
+    normal_powerup_effects_remain_logically_active_but_suspended: true
+  restoration_contract:
+    on_timeout_or_player_hit:
+      restore_snapshot: true
+      resume_powerup_timers_from_exact_remaining_duration: true
+      restore_ball_count_positions_and_velocities: true
+      restore_sticky_hold_state: true
+      restore_paddle_properties_and_abilities: true
+      restore_normal_projectiles_if_still_valid: true
+      resume_combo_timers: true
+      restore_ball_spin_state: true
+      restore_final_assault_state_and_timers: true
+    on_full_clear:
+      restore_transient_ball_and_paddle_state: false
+      transition_directly_to_level_complete: true
+      discard_suspended_normal_projectiles: true
+    must_be_idempotent: true
+  occurrence_limits:
+    configurable: true
+    defaults:
+      space_invaders_frenzy_per_level: 1
+      fps_frenzy_per_level: 1
+      pinball_frenzy_per_level: 1
+      asteroids_frenzy_per_level: 1
+      missile_command_frenzy_per_level: 1
+      arkanoid_revenge_frenzy_per_level: 1
+      total_frenzies_per_level: 2
+    rule: Each Frenzy type has an independent configurable per-level cap. A separate configurable total-per-level cap prevents
+      Frenzy from overwhelming ordinary play.
+  transition_visuals:
+    enter_seconds: 2.5
+    exit_seconds: 2.0
+    screen_shake: true
+    morph_between_source_and_frenzy_entities: true
+    input_locked_during_transition: true
+    timers_suspended_during_transition: true
+    mode_specific_morph_sequences_required: true
+  supported_modes:
+  - space_invaders_frenzy
+  - fps_frenzy
+  - pinball_frenzy
+  - asteroids_frenzy
+  - missile_command_frenzy
+  - arkanoid_revenge_frenzy
+space_invaders_frenzy:
+  enabled: true
+  trigger: rare_falling_powerup
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 8
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - screen_pulse_and_increasing_screen_shake
+    - bricks_lift_from_grid
+    - brick_geometry_distorts_and_begins_alien_morph
+    - entities_travel_toward_invader_formation_positions
+    - brick_and_alien_shapes_cross_morph_continuously
+    - paddle_morphs_into_spaceship
+    - formation_snaps_alive_and_crossfades_to_frenzy_presentation
+    - show_frenzy_announcement
+    - unlock_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_frenzy_controls
+    - screen_shake_and_energy_release
+    - surviving_aliens_begin_brick_cross_morph
+    - surviving_entities_travel_back_to_exact_original_positions
+    - spaceship_morphs_back_into_paddle
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+    remember_original_brick_positions: true
+    remember_original_brick_damage_and_state: true
+    participating_bricks:
+      destructible: true
+      indestructible: true
+  spaceship:
+    movement: horizontal_only
+    fire_key: Space
+    weapon:
+      fire_style: individual_shots
+      hold_to_repeat: false
+    vulnerable_to_invader_fire: true
+  formation:
+    style: classic_space_invaders
+    moves_side_to_side: true
+    descends_on_edge: true
+    firing_rate_increases_as_population_falls: true
+  transformed_brick_behaviour:
+    normal:
+      health_maps_from_brick_state: true
+    multi_hit:
+      strength_maps_from_remaining_hits: true
+    indestructible:
+      destructible_during_frenzy: true
+      high_strength: true
+    explosive:
+      retains_explosion: true
+      retains_chain_reactions: true
+    moving:
+      movement_replaced_by_formation_movement: true
+    invisible:
+      retains_visual_identity: true
+    regenerating:
+      retains_regeneration: true
+    powerup:
+      retains_visual_identity: true
+  duration:
+    maximum_seconds: 20
+    ends_on:
+    - timer_expiry
+    - player_hit
+    - all_invaders_destroyed
+  on_player_hit:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+  on_timeout:
+    restore_surviving_bricks: true
+  restoration:
+    surviving_invaders_return_to_exact_original_positions: true
+    surviving_invaders_restore_prior_damage_state_plus_frenzy_damage: true
+    invaders_destroyed_during_frenzy_remain_destroyed: true
+  full_clear:
+    completes_level_immediately: true
+    awards_frenzy_clear_bonus: true
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+fps_frenzy:
+  enabled: true
+  trigger: distinct_rare_falling_powerup
+  display_name: FPS FRENZY
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 8
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    retain_original_brick_arrangement: true
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - hide_and_suspend_normal_paddle
+    - screen_shake_and_camera_push_forward_into_first_person_view
+    - flat_bricks_extrude_into_solid_3d_cuboids
+    - bricks_separate_along_the_depth_axis_while_preserving_their_recognisable_2d_arrangement
+    - perspective_occlusion_depth_shadows_and_parallax_build_progressively
+    - first_person_rifle_rises_into_lower_centre_down_the_barrel_view
+    - crosshair_materialises
+    - hud_crossfades_to_fps_frenzy_hud
+    - unlock_fps_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_fps_controls
+    - screen_shake_and_camera_pull_back
+    - rifle_drops_out_of_first_person_view
+    - surviving_blocks_converge_along_depth_axis
+    - surviving_blocks_compress_from_solid_3d_cuboids_to_2d_bricks
+    - crosshair_fades_out
+    - restore_normal_paddle_from_suspended_snapshot
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+  view:
+    perspective: first_person_down_the_barrel
+    camera_movement: horizontal_strafe_only
+    normal_paddle_visible: false
+    normal_paddle_gameplay_relevance: none_while_fps_frenzy_is_active
+    weapon: first_person_rifle_independent_of_paddle
+    brick_layout: preserve_recognisable_normal_xy_arrangement_but_assign_varied_z_depth
+    depth_model:
+      type: deterministic_per_brick_depth
+      minimum_depth: 0.55
+      maximum_depth: 1.45
+      derived_from:
+      - campaign_seed
+      - level
+      - brick_id
+      must_avoid_unfair_complete_occlusion_of_required_targets: true
+      closer_bricks_render_larger: true
+      farther_bricks_render_smaller: true
+      depth_sorting: far_to_near
+      camera_strafe_changes_parallax: true
+    renderer: canvas_2d_perspective_projection
+    solid_geometry: extruded_cuboids_with_visible_front_side_and_top_faces
+    falling_attack_readability:
+      falling_bricks_descend_from_top_of_first_person_view: true
+      perspective_scaling_allowed: true
+      world_trajectory_must_remain_vertical: true
+      no_homing_or_curved_attack_paths: true
+  aiming:
+    mouse_crosshair: true
+    keyboard_crosshair: true
+    keyboard_aim_keys:
+      left: KeyA
+      right: KeyD
+      up: KeyW
+      down: KeyS
+    crosshair_visible: true
+    crosshair_clamped_to_playfield: true
+    aiming_is_independent_of_camera_strafe: true
+  movement:
+    strafe_left_key: ArrowLeft
+    strafe_right_key: ArrowRight
+    vertical_movement: false
+    forward_backward_movement: false
+    strafe_changes_camera_parallax_and_target_projection: true
+    normal_paddle_does_not_move_or_render: true
+    falling_brick_world_trajectory_remains_straight_during_strafe: true
+  rifle:
+    weapon_model: hitscan
+    ammo: unlimited
+    fire_rate_limited: true
+    fire_rate_shots_per_second: 6
+    fire_controls:
+    - Space
+    - MousePrimary
+    visual_feedback:
+    - muzzle_flash
+    - brief_tracer
+    - target_hit_flash
+    can_destroy_indestructible_bricks: true
+    presentation: first_person_down_the_barrel
+    independent_of_paddle: true
+    normal_paddle_hidden: true
+  enemy_blocks:
+    fight_back: true
+    attack_model: visible_hostile_projectiles_toward_player_viewpoint
+    firing_frequency_increases_as_population_falls: true
+    brick_properties_map_to_combat_behaviour: true
+    normal:
+      health_maps_from_brick_state: true
+    multi_hit:
+      strength_maps_from_remaining_hits: true
+    indestructible:
+      destructible_during_fps_frenzy: true
+      high_strength: true
+    explosive:
+      retains_explosion: true
+      retains_chain_reactions: true
+    moving:
+      retains_horizontal_motion_within_3d_plane: true
+    invisible:
+      shimmers_in_3d: true
+    regenerating:
+      retains_regeneration: true
+    powerup:
+      retains_visual_identity: true
+  duration:
+    maximum_seconds: 20
+    ends_on:
+    - timer_expiry
+    - player_hit
+    - all_blocks_destroyed
+  on_player_hit:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+  on_timeout:
+    restore_surviving_bricks: true
+  restoration:
+    surviving_blocks_return_to_exact_original_2d_positions: true
+    surviving_blocks_restore_prior_damage_state_plus_frenzy_damage: true
+    blocks_destroyed_during_frenzy_remain_destroyed: true
+  full_clear:
+    completes_level_immediately: true
+    awards_fps_frenzy_clear_bonus: true
+    bonus_points: 10000
+  enemy_fire:
+    enabled: false
+    rule: FPS Frenzy must not fire perspective projectiles toward the player.
+    reason: Perspective projectiles become confusing while strafing. Hostile attacks use vertically falling bricks instead.
+  falling_brick_attacks:
+    enabled: true
+    principle: Selected surviving bricks detach from the 3D formation and fall vertically from above toward the player's horizontal
+      world lane. Their horizontal world position locks at detachment, so strafing changes the viewpoint but never makes an
+      attack home or curve.
+    attack_source: surviving_bricks
+    selection:
+      deterministic_seeded: true
+      do_not_select_same_brick_while_already_falling: true
+      prefer_front_and_mid_depth_bricks: true
+      allow_all_brick_types: true
+    telegraph:
+      enabled: true
+      warning_seconds: 0.65
+      brick_rises_or_pulses_before_detaching: true
+      fall_lane_indicator: true
+      indicator_tracks_world_lane_not_screen_curve: true
+      reduced_flashing_safe: true
+    motion:
+      type: vertical_world_drop
+      horizontal_world_position_locked_after_detach: true
+      must_not_curve_toward_player_after_detach: true
+      camera_strafe_changes_only_viewpoint_and_relative_screen_position: true
+      fall_speed_pixels_per_second: 360
+      gravity_acceleration_pixels_per_second_squared: 260
+    player_collision:
+      model: horizontal_lane_overlap_at_player_impact_plane
+      player_hit_terminates_frenzy: true
+      lose_normal_life: false
+      clear_hitbox_visualisation_in_debug_mode: true
+    player_counterplay:
+      falling_bricks_can_be_shot: true
+      hitscan_uses_normal_fps_damage_rules: true
+      destroying_falling_brick_counts_as_destroying_that_original_brick: true
+      damaging_but_not_destroying_brick_preserves_damage: true
+    missed_attack:
+      when_brick_reaches_floor_without_hitting_player: return_to_remembered_3d_formation_position
+      recovery_seconds: 0.55
+      health_and_damage_preserved: true
+    rate:
+      base_interval_seconds: 1.45
+      minimum_interval_seconds: 0.55
+      increase_as_brick_population_falls: true
+      maximum_simultaneous_falling_bricks: 2
+      easy_maximum_simultaneous: 1
+      normal_maximum_simultaneous: 2
+      hard_maximum_simultaneous: 2
+    brick_type_behaviour:
+      normal: standard_fall
+      multi_hit: retains_remaining_hit_points
+      indestructible: destructible_under_fps_frenzy_rules_and_falls_as_heavy_block
+      explosive: can_be_detonated_while_falling_and_chain_react_with_nearby_formation_bricks
+      moving: stops_horizontal_brick_motion_while_falling
+      invisible: becomes_sufficiently_visible_during_telegraph_and_fall
+      regenerating: regeneration_pauses_while_falling_and_resumes_after_return
+      powerup: standard_fall_with_powerup_identity_visual_cue
+final_assault:
+  enabled: true
+  purpose: Create an escalating end-of-level climax with continuously increasing speed, visibly stronger magnetic steering
+    and one deployable Big Bomb.
+  activation:
+    required_bricks_remaining_fraction: 0.1
+    maximum_required_bricks_remaining: 6
+    threshold_formula: min(6, max(1, ceil(initial_required_brick_count * 0.10)))
+    not_active_during:
+    - FRENZY_TRANSITION_IN
+    - FRENZY_ACTIVE
+    - FRENZY_TRANSITION_OUT
+    - BOSS
+    activate_after_frenzy_restoration_if_threshold_is_met: true
+  presentation:
+    announcement: FINAL ASSAULT!
+    remaining_required_bricks_pulse: true
+    remaining_required_bricks_have_enhanced_non_colour_visual_cues: true
+    music_urgency_increase: true
+    sfx_urgency_increase: true
+    screen_effect_intensity: low
+  gameplay:
+    ball_speed_multiplier: 1.1
+    respect_global_ball_speed_cap: true
+    remaining_required_brick_score_multiplier: 2.0
+    explosive_chain_scores_also_receive_final_assault_multiplier: true
+    ball_spin_remains_active: true
+    ball_speed_increase: continuous_ramp_to_configured_maximum
+    magnetism: continuous_visible_ramp_throughout_final_assault
+    big_bomb: single_use_after_power_bar_full
+  hunter_assist:
+    enabled: true
+    principle: Bias paddle reflection toward a reachable remaining required brick without creating a homing ball.
+    stage_1:
+      seconds_without_required_brick_hit: 4
+      next_paddle_bounce_angle_bias_strength: 0.18
+    stage_2:
+      seconds_without_required_brick_hit: 7
+      next_paddle_bounce_angle_bias_strength: 0.32
+    maximum_angle_adjustment_degrees: 25
+    target_selection: seeded_nearest_reachable_required_brick_with_clear_reasonable_trajectory
+    applies_only_on_paddle_bounce: true
+    never_changes_ball_position_directly: true
+    never_guarantees_a_hit: true
+    disabled_during_multimode_transitions: true
+    stage_3:
+      seconds_without_required_brick_hit: 10
+      enables_magnetic_assist: true
+    timer_reset_rule: use_final_assault_helper_progress_reset_policy
+  completion:
+    ends_immediately_when_level_completion_condition_is_met: true
+    no_separate_life_or_continue_cost: true
+  magnetic_assist:
+    enabled: true
+    activation: progressive_throughout_final_assault
+    principle: Remaining required bricks visibly attract the ball strongly enough to create unmistakable arcade-style curved
+      trajectories while retaining player influence.
+    force_model:
+      sum_attraction_from_all_remaining_required_bricks: true
+      distance_weighted: true
+      maximum_effect_distance_pixels: 380
+      minimum_effect_distance_pixels: 35
+      preserve_ball_speed: true
+      must_not_reverse_vertical_direction: true
+      must_not_teleport_or_snap_ball: true
+      disabled_within_pixels_of_paddle: 45
+    interaction_with_spin:
+      both_can_apply: true
+      spin_applied_first: true
+      magnetic_steering_applied_second: true
+      combined_heading_change_capped_degrees_per_second: 36
+    multiball:
+      applies_to_each_ball_independently: true
+      balls_do_not_attract_each_other: true
+    visual_cue:
+      strong_curved_ball_trail: true
+      trail_curvature_should_make_magnetic_effect_obvious: true
+      subtle_energy_filaments_between_ball_and_nearby_required_bricks: true
+      remaining_bricks_pulse_more_strongly_as_magnetic_strength_increases: true
+      reduced_flashing_setting_reduces_effect: true
+    ends_when_final_assault_ends: true
+    timer_reset_rule: use_final_assault_helper_progress_reset_policy
+    strength_progression:
+      start_heading_change_degrees_per_second: 6
+      maximum_heading_change_degrees_per_second: 30
+      ramp_seconds: 15.0
+      ramp: continuous_linear
+      after_ramp: hold_at_maximum_strength
+  helper_progress:
+    shared_timer: true
+    description: Hunter Assist stages and magnetic assist are driven by one shared elapsed-time-since-reset value. Ordinary
+      damage to a surviving required brick does not reset helper progress by default.
+    reset_policy:
+      config_key: finalAssault.helperResetPolicy
+      default: destroyed_only
+      allowed_values:
+      - destroyed_only
+      - any_hit
+      - never
+      behaviour:
+        destroyed_only: Reset helper elapsed time and return to helper stage 0 only when a required brick is destroyed.
+        any_hit: Reset helper elapsed time and return to helper stage 0 whenever a required brick is successfully damaged.
+          This preserves the earlier v1.2.2 behaviour and is available for tuning.
+        never: Do not reset helper elapsed time during Final Assault. Once helper stages activate they remain active until
+          Final Assault ends.
+    non_required_brick_events:
+      never_reset_helper_timer: true
+    indestructible_normal_play_contact:
+      never_reset_helper_timer: true
+    explosive_chain:
+      reset_evaluation: Evaluate the configured reset policy from actual required-brick outcomes. Under destroyed_only, any
+        required brick destroyed by the chain resets helper progress once for the chain event.
+    multiball:
+      simultaneous_events_are_coalesced_per_simulation_step: true
+      maximum_resets_per_simulation_step: 1
+  speed_escalation:
+    enabled: true
+    starts_immediately_when_final_assault_activates: true
+    start_multiplier: 1.0
+    maximum_multiplier: 1.35
+    ramp_seconds: 15.0
+    ramp: continuous_linear
+    after_ramp: hold_at_maximum_multiplier
+    applies_to: all_normal_play_balls
+    multiball: each_ball_receives_same_final_assault_speed_multiplier
+    preserve_existing_ball_spin: true
+  big_bomb:
+    ownership: level_gameplay_big_bomb
+    available_during_final_assault_if_ready_and_not_used: true
+    final_assault_does_not_charge_reset_or_modify_pickup_progress: true
+bosses:
+  supported: true
+  architecture: data_driven
+  milestone_support:
+    future_levels:
+    - 5
+    - 10
+    - 15
+    - 20
+  v1_0:
+    boss_level: 20
+    conventional_brick_level_replaced: true
+    presentation:
+      unique_encounter: true
+      health_bar: true
+      attack_phases: true
+      unique_movement: true
+      boss_taunts: true
+    default_design:
+      id: boss_20
+      display_name: THE LAST BRICK
+      health: 100
+      phases:
+      - threshold_percent: 100
+        movement: horizontal_sweep
+        attack: single_projectiles
+      - threshold_percent: 66
+        movement: faster_horizontal_sweep
+        attack: paired_projectiles
+      - threshold_percent: 33
+        movement: erratic_horizontal_sweep
+        attack: spread_projectiles
+      contact_with_ball_causes_damage: true
+      paddle_hit_by_boss_projectile_loses_life: true
+level_transitions:
+  intermission_screen: true
+  show:
+  - level_complete
+  - score
+  - completion_time
+  - combo_bonus
+  - remaining_lives
+  - next_level
+  require_player_confirmation_or_short_delay: true
+  default_auto_advance_seconds: 4
+  level_complete_pacing:
+    complete_hold_seconds: 3.0
+    next_prompt_seconds: 2.0
+    advance_input_during_hold: false
+    next_level_prompt_visible_during_hold: false
+    final_level_next_prompt: false
+menu:
+  main:
+    items:
+    - New Game
+    - Continue
+    - High Scores
+    - How to Play
+    - Settings
+  new_game:
+    choose_difficulty: true
+    choose_seed:
+      random: true
+      manual_entry: true
+  pause:
+    items:
+    - Resume
+    - Restart Level
+    - Settings
+    - Quit to Menu
+hud:
+  show:
+  - score
+  - level
+  - lives
+  - current_combo
+  - current_multiplier
+  - active_powerups
+  - powerup_time_remaining
+  - campaign_seed
+high_scores:
+  storage: localStorage
+  table_size: 10
+  combined_across_difficulties: true
+  initials:
+    length: 3
+    entry_method: text_input
+    uppercase: true
+  fields:
+  - initials
+  - score
+  - campaign_seed
+  - difficulty
+  - level_reached
+  - date
+  - campaign_completed
+  - max_combo
+persistence:
+  storage: localStorage
+  autosave: true
+  autosave_on_all_significant_state_changes: true
+  significant_events_include:
+  - level_start
+  - level_completion
+  - life_loss
+  - pause
+  - continue_used
+  - score_checkpoint
+  - powerup_state_change
+  - frenzy_start
+  - frenzy_end
+  - boss_phase_change
+  - frenzy_transition_in_start
+  - frenzy_transition_out_complete
+  - final_assault_start
+  save_fields:
+  - campaign_seed
+  - difficulty
+  - current_level
+  - score
+  - lives
+  - continues_remaining
+  - generated_level_state
+  - settings
+  - high_score_eligible_state
+  transient_state_policy:
+    mid_level_ball_positions_saved: false
+    mid_level_paddle_position_saved: false
+    on_reload_mid_level: restart_current_level_from_level_start_state
+  frenzy_save_policy:
+    do_not_persist_half_completed_transition_animation: true
+    save_canonical_pre_frenzy_snapshot_and_frenzy_outcome_state: true
+    on_reload_during_frenzy_or_transition: restart_current_level_from_level_start_state
+audio:
+  sound_effects:
+    enabled: true
+    events:
+    - paddle_hit
+    - brick_hit
+    - brick_break
+    - powerup_collect
+    - laser
+    - explosion
+    - life_lost
+    - level_complete
+    - frenzy_transform
+    - invader_fire
+    - boss_event
+    - frenzy_transition_in
+    - frenzy_transition_out
+    - fps_rifle_fire
+    - fps_block_fire
+    - final_assault_start
+  music:
+    enabled: true
+    loop: true
+    user_toggle: true
+    normal_gameplay_track: true
+    separate_frenzy_music: false
+    separate_boss_music: false
+    final_assault_urgency_variant: true
+  controls:
+    music_volume: true
+    sfx_volume: true
+    music_mute: true
+    sfx_mute: true
+    global_mute: true
+  asset_policy:
+    generated_web_audio_preferred_for_sfx: true
+    locally_bundled_audio_allowed: true
+    external_runtime_audio_dependency: false
+accessibility:
+  reduced_screen_shake: true
+  reduced_flashing: true
+  colour_blind_friendly_cues: true
+  remappable_keys: true
+  readable_text_contrast: true
+  pause_on_window_blur: true
+attract_mode:
+  enabled: true
+  location: title_screen_background
+  AI:
+    style: simple_competent
+    human_like_error_model_required: false
+  seeded_demo: true
+  demo_has_no_high_score_eligibility: true
+debug:
+  enabled: true
+  query_string:
+    master_switch: debug=true
+    options:
+      level: level
+      seed: seed
+      difficulty: difficulty
+      lives: lives
+      frenzy: frenzy
+      config_override: cfg.<BattyJoe.Config dot path>=<value>
+      final_assault_helper_reset:
+        preferred_generic_form: cfg.finalAssault.helperResetPolicy
+        allowed_values:
+        - destroyed_only
+        - any_hit
+        - never
+      frenzy_type_values:
+      - invaders
+      - fps
+      - pinball
+      - asteroids
+      - missile
+      - revenge
+      - gridrunner
+    config_overrides:
+      enabled: true
+      requires_debug_true: true
+      syntax: cfg.<dot.separated.config.path>=<value>
+      examples:
+      - debug=true&cfg.finalAssault.helperResetPolicy=never
+      - debug=true&cfg.finalAssault.hunterAssistDelay1=3
+      - debug=true&cfg.finalAssault.magneticAssist.maxHeadingDegreesPerSecond=12
+      - debug=true&cfg.frenzy.totalMaxPerLevel=6
+      - debug=true&cfg.frenzy.fps.fallingBrick.warningSeconds=1
+      - debug=true&cfg.finalAssault.speedMaxMultiplier=1.5
+      - debug=true&cfg.finalAssault.magnetismMaxDegreesPerSecond=40
+      - debug=true&cfg.finalAssault.bigBomb.passiveFullChargeSeconds=10
+      - debug=true&cfg.finalAssault.bigBomb.damage=3
+      - debug=true&cfg.frenzy.pinball.duration=120
+      - debug=true&cfg.physics.ball.spin.paddleVelocityContribution=1.0
+      - debug=true&cfg.physics.collision.brickImperfectionDegrees=5
+      - debug=true&cfg.frenzy.pinball.outlaneWidth=24
+      - debug=true&cfg.frenzy.pinball.ballRestitution=0.75
+      - debug=true&cfg.bigBomb.passiveFullChargeSeconds=60
+      - debug=true&cfg.bigBomb.destroyChargePercent=3
+      - debug=true&cfg.frenzy.pinball.flipperPower=1.5
+      - debug=true&cfg.frenzy.pinball.flipperTipBonus=1.3
+      - debug=true&cfg.bigBomb.pickupsRequired=2
+      - debug=true&cfg.bigBomb.spawnMinSeconds=10&cfg.bigBomb.spawnMaxSeconds=15
+      scope:
+        primitive_leaf_values_only: true
+        numbers: true
+        booleans: true
+        strings: true
+        arrays: false
+        objects: false
+        functions: false
+      validation:
+        path_must_exist_in_BattyJoe_Config: true
+        type_must_match_default_config_value: true
+        numeric_value_must_be_finite: true
+        enum_string_must_match_declared_allowed_values_when_configured_as_enum: true
+        unknown_or_invalid_override: ignore_and_report_in_debug_overlay_and_console
+        duplicate_parameter_rule: last_value_wins
+      application_order:
+      - load_static_BattyJoe_Config_defaults
+      - parse_debug_query_string
+      - apply_valid_cfg_overrides_to_runtime_config_clone
+      - create_game_systems_from_runtime_config
+      - start_or_resume_campaign
+      persistence:
+        query_overrides_are_session_only: true
+        must_not_write_overridden_values_to_saved_settings: true
+        continue_uses_current_url_overrides_for_current_session: true
+      competitive_integrity:
+        any_valid_config_override_makes_high_score_ineligible: true
+        debug_mode_already_makes_high_score_ineligible: true
+      visibility:
+        debug_overlay_lists_active_overrides: true
+        console_logs_applied_overrides: true
+  overlay:
+    show_when_debug_enabled:
+    - fps
+    - collision_boxes
+    - game_state
+    - campaign_seed
+    - entity_counts
+    - ball_velocity
+    - active_rng_state
+  cheat_keys:
+    debug_only: true
+    actions_required:
+    - spawn_each_powerup
+    - advance_level
+    - destroy_all_required_bricks
+    - add_life
+    - toggle_invulnerability
+    - jump_to_boss
+    - trigger_space_invaders_frenzy
+    - trigger_fps_frenzy
+    - cycle_frenzy_type
+    - trigger_final_assault
+configuration:
+  data_driven:
+    bosses: true
+    level_templates: true
+    procedural_generation_parameters: true
+    powerup_duration: true
+    powerup_probability: true
+    powerup_stacking: true
+    powerup_compatibility: true
+    brick_strength: true
+    scoring_values: true
+    difficulty_curves: true
+    frenzy_occurrence_limits: true
+    frenzy_transition_timing: true
+    fps_frenzy_weapon_and_enemy_parameters: true
+    final_assault_thresholds_and_assist: true
+    final_assault_helper_reset_policy: true
+    developer_query_config_overrides: true
+  central_config_file: batty-joe-config.js
+  query_string_overrides:
+    supported: true
+    debug_only: true
+    runtime_config_is_clone_of_static_config: true
+    static_BattyJoe_Config_must_not_be_mutated: true
+    override_prefix: cfg.
+    primitive_leaf_values_only: true
+    invalid_values_are_ignored: true
+  runtime_config_aliases:
+    finalAssault.speedRampSeconds: final_assault.speed_escalation.ramp_seconds
+    finalAssault.speedMaxMultiplier: final_assault.speed_escalation.maximum_multiplier
+    finalAssault.magnetismMaxDegreesPerSecond: final_assault.magnetic_assist.strength_progression.maximum_heading_change_degrees_per_second
+    finalAssault.bigBomb.passiveFullChargeSeconds: gameplay.big_bomb.power_bar.passive_full_charge_seconds
+    finalAssault.bigBomb.hitChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.required_brick_hit.bonus_percent
+    finalAssault.bigBomb.destroyChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.required_brick_destroyed.bonus_percent
+    finalAssault.bigBomb.paddleChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.high_speed_paddle_contact.bonus_percent
+    finalAssault.bigBomb.damage: gameplay.big_bomb.deployment.damage_per_brick
+    frenzy.pinball.duration: pinball_frenzy.duration.maximum_seconds
+    physics.ball.spin.paddleVelocityContribution: physics.ball.spin_and_swerve.imparted_on_paddle_contact.paddle_velocity_contribution
+    physics.ball.spin.maxFlightHeadingDegreesPerSecond: physics.ball.spin_and_swerve.flight_effect.maximum_heading_change_degrees_per_second
+    physics.ball.spin.maxBrickBounceDeflectionDegrees: physics.ball.spin_and_swerve.collision_angle_effect.maximum_spin_deflection_degrees.brick
+    physics.ball.spin.maxEdgeBounceDeflectionDegrees: physics.ball.spin_and_swerve.collision_angle_effect.maximum_spin_deflection_degrees.screen_edge
+    physics.collision.brickImperfectionDegrees: physics.collision.imperfect_rebound.brick.maximum_variation_degrees
+    physics.collision.edgeImperfectionDegrees: physics.collision.imperfect_rebound.screen_edge.maximum_variation_degrees
+    frenzy.pinball.outlaneWidth: pinball_frenzy.table.lower_playfield.outlanes.width_pixels
+    frenzy.pinball.ballRestitution: pinball_frenzy.ball.restitution.default
+    frenzy.pinball.funnelRestitution: pinball_frenzy.ball.restitution.funnel_rail
+    bigBomb.passiveFullChargeSeconds: gameplay.big_bomb.power_bar.passive_full_charge_seconds
+    bigBomb.hitChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.required_brick_hit.bonus_percent
+    bigBomb.destroyChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.required_brick_destroyed.bonus_percent
+    bigBomb.paddleChargePercent: gameplay.big_bomb.power_bar.active_charge_sources.high_speed_paddle_contact.bonus_percent
+    bigBomb.damage: gameplay.big_bomb.deployment.damage_per_brick
+    frenzy.pinball.flipperPower: pinball_frenzy.table.flipper_geometry.power.base_impulse_multiplier
+    frenzy.pinball.flipperTipBonus: pinball_frenzy.table.flipper_geometry.power.tip_velocity_bonus_multiplier
+    physics.ball.releaseMaxAngleDegrees: physics.ball.bat_release_angle.mapping.output_range_degrees
+    bigBomb.pickupsRequired: gameplay.big_bomb.power_bar.pickups_required_default
+    bigBomb.spawnMinSeconds: gameplay.big_bomb.big_bomb_power_up.spawn_system.minimum_interval_seconds
+    bigBomb.spawnMaxSeconds: gameplay.big_bomb.big_bomb_power_up.spawn_system.maximum_interval_seconds
+    bigBomb.pickupFallSpeed: gameplay.big_bomb.big_bomb_power_up.movement.fall_speed_pixels_per_second
+testing:
+  required: true
+  runner: browser
+  files:
+    html: batty-joe-tests.html
+    javascript: batty-joe-tests.js
+  no_node_required: true
+  automated_coverage_required_for:
+  - seeded_random_generation
+  - cross_run_determinism
+  - scoring
+  - combo_reset_and_increment_rules
+  - powerup_compatibility
+  - powerup_stacking
+  - collision_calculations
+  - level_completion
+  - life_loss
+  - continues
+  - save_load
+  - frenzy_state_transformation
+  - frenzy_state_restoration
+  - explosive_chain_reactions
+  - regeneration
+  - boss_state_transitions
+  - frenzy_modal_snapshot_and_restore
+  - frenzy_powerup_timer_suspension
+  - frenzy_activation_with_each_individual_powerup
+  - frenzy_activation_with_supported_powerup_combinations
+  - frenzy_activation_with_six_active_balls
+  - frenzy_activation_while_sticky_holds_a_ball
+  - frenzy_same_tick_powerup_activation_race_conditions
+  - frenzy_reentrant_activation_rejection
+  - space_invaders_transition_morph_sequence
+  - fps_frenzy_hitscan_targeting
+  - fps_frenzy_strafe_and_crosshair_controls
+  - fps_frenzy_indestructible_brick_destruction
+  - fps_frenzy_state_restoration
+  - final_assault_activation_threshold
+  - final_assault_score_multiplier
+  - final_assault_hunter_assist_bounds
+  - fps_frenzy_first_person_paddle_hidden
+  - fps_frenzy_deterministic_depth_assignment
+  - fps_frenzy_depth_sort_and_occlusion
+  - fps_frenzy_arrow_key_strafe
+  - fps_frenzy_wasd_crosshair_control
+  - fps_frenzy_mouse_crosshair_control
+  - fps_frenzy_strafe_parallax_preserves_aim_independence
+  - ball_spin_sign_from_paddle_velocity
+  - ball_spin_decay
+  - ball_spin_swerve_preserves_speed
+  - ball_spin_independent_per_multiball
+  - ball_spin_and_final_assault_magnetism_combined_cap
+  - pinball_frenzy_full_lifecycle
+  - pinball_flipper_collision_and_drain_exit
+  - asteroids_frenzy_full_lifecycle
+  - asteroids_seeded_drift_and_ship_collision_exit
+  - missile_command_frenzy_full_lifecycle
+  - missile_command_interception_blast_collision
+  - arkanoid_revenge_frenzy_full_lifecycle
+  - arkanoid_revenge_enemy_segment_damage_and_shrink
+  - all_six_frenzy_types_obey_independent_and_total_occurrence_caps
+  - all_six_frenzy_types_suspend_and_restore_every_normal_powerup
+  - final_assault_magnetic_stage_activation
+  - final_assault_magnetism_speed_preservation
+  - final_assault_magnetism_never_reverses_vertical_direction
+  - pinball_lower_funnel_rails_redirect_ball_toward_flipper_zone
+  - pinball_outlanes_are_valid_unreachable_drain_routes
+  - pinball_bottom_boundary_is_not_open_outside_defined_drains
+  - pinball_funnel_has_no_static_ball_traps
+  - pinball_flippers_cannot_reach_outlane_committed_ball
+  - fps_frenzy_has_no_hostile_perspective_projectiles
+  - fps_falling_brick_world_x_remains_fixed_after_detach
+  - fps_falling_brick_screen_motion_changes_with_strafe_but_world_trajectory_does_not_curve
+  - fps_falling_brick_telegraph_precedes_drop
+  - fps_falling_brick_player_lane_collision_terminates_frenzy_without_life_loss
+  - fps_falling_brick_can_be_destroyed_by_hitscan
+  - fps_falling_brick_miss_returns_to_formation_with_damage_preserved
+  - fps_falling_brick_simultaneous_attack_cap
+  - final_assault_helper_default_reset_policy_is_destroyed_only
+  - final_assault_non_destroying_required_brick_hit_does_not_reset_helpers_under_destroyed_only
+  - final_assault_required_brick_destruction_resets_helpers_under_destroyed_only
+  - final_assault_helper_never_policy_does_not_reset_on_hit_or_destruction
+  - final_assault_helper_any_hit_policy_preserves_legacy_hit_reset_behaviour
+  - final_assault_explosion_chain_reset_is_coalesced_to_one_reset_per_simulation_step
+  - query_config_override_requires_debug_true
+  - query_config_override_number_boolean_and_string_type_coercion
+  - query_config_override_rejects_unknown_path
+  - query_config_override_rejects_object_or_array_replacement
+  - query_config_override_rejects_invalid_enum
+  - query_config_override_last_duplicate_value_wins
+  - query_config_override_does_not_mutate_static_config
+  - query_config_override_makes_high_score_ineligible
+  - query_config_override_is_not_persisted_to_saved_settings
+  - final_assault_speed_ramps_continuously_from_1_to_1_35_over_15_seconds
+  - final_assault_speed_cap_is_enforced
+  - final_assault_magnetism_ramps_to_30_degrees_per_second
+  - final_assault_magnetism_visibly_changes_heading_without_reversing_vertical_direction
+  - final_assault_big_bomb_power_bar_passively_reaches_full_in_20_seconds
+  - final_assault_big_bomb_required_brick_hit_adds_charge
+  - final_assault_big_bomb_required_brick_destruction_adds_larger_charge
+  - final_assault_big_bomb_high_speed_paddle_contact_adds_charge_with_cooldown
+  - final_assault_big_bomb_magnetism_does_not_add_charge
+  - final_assault_big_bomb_can_be_used_only_once
+  - final_assault_big_bomb_arrow_down_activation
+  - final_assault_big_bomb_damages_every_remaining_required_destructible_brick_by_two
+  - final_assault_big_bomb_does_not_damage_indestructible_bricks
+  - final_assault_big_bomb_triggers_explosive_brick_chain_reactions
+  - final_assault_big_bomb_state_is_suspended_and_restored_across_frenzy
+  - pinball_frenzy_default_duration_is_90_seconds
+  - pinball_frenzy_duration_can_be_overridden_by_query_config
+  - brick_collision_rebound_has_small_deterministic_nonzero_imperfection
+  - screen_edge_rebound_has_small_deterministic_nonzero_imperfection
+  - collision_imperfection_does_not_violate_minimum_vertical_component
+  - spin_changes_brick_collision_reflection_angle
+  - spin_changes_screen_edge_collision_reflection_angle
+  - moving_paddle_imparts_more_spin_than_v1_3_0_model
+  - fast_opposite_paddle_motion_can_reverse_ball_spin
+  - pinball_outlane_width_default_is_30_pixels
+  - pinball_narrower_outlanes_increase_contestable_lower_playfield
+  - pinball_restitution_reduces_post_collision_energy
+  - pinball_funnel_rail_restitution_is_lower_than_general_target_restitution
+  - big_bomb_charge_starts_at_level_start
+  - big_bomb_passive_full_charge_default_is_90_seconds
+  - big_bomb_can_be_deployed_before_final_assault_when_ready
+  - big_bomb_charge_and_used_state_survive_life_loss
+  - big_bomb_state_is_suspended_and_restored_across_frenzy
+  - big_bomb_is_limited_to_one_use_per_level
+  - big_bomb_active_charge_sources_apply_during_normal_level_gameplay
+  - big_bomb_frenzy_actions_do_not_charge_power_bar
+  - big_bomb_final_assault_activation_does_not_reset_charge
+  - pinball_lower_apron_is_continuously_solid_outside_three_valid_drain_routes
+  - pinball_ball_cannot_exit_below_funnel_or_between_geometry_gaps
+  - pinball_outlane_can_only_be_entered_through_visible_upper_entrance
+  - pinball_ball_loss_only_occurs_in_left_outlane_right_outlane_or_central_flipper_gap
+  - pinball_flipper_impulse_is_stronger_than_v1_4_0
+  - pinball_flipper_tip_contact_imparts_more_energy_than_near_pivot_contact
+  - pinball_held_flipper_does_not_repeatedly_add_energy
+  - starting_ball_release_angle_depends_on_ball_position_on_bat
+  - sticky_ball_release_angle_depends_on_ball_position_on_bat
+  - bat_release_centre_position_launches_nearly_vertical
+  - bat_release_left_and_right_offsets_launch_toward_corresponding_side
+  - big_bomb_no_longer_charges_from_time_hits_destruction_or_paddle_contacts
+  - big_bomb_power_up_spawner_is_independent_of_brick_destruction
+  - big_bomb_power_up_spawn_is_seeded_and_repeatable
+  - big_bomb_power_up_does_not_use_normal_powerup_drop_table
+  - big_bomb_power_up_collection_increments_segmented_bomb_progress
+  - big_bomb_becomes_ready_after_configured_pickup_count
+  - big_bomb_power_up_does_not_spawn_when_bomb_ready_or_used
+  - big_bomb_power_up_spawn_pauses_during_modal_frenzy
+  - all_eight_frenzy_types_obey_shared_snapshot_restore_contract
+  manual_test_scenarios_required:
+  - six_ball_multiball_with_particles
+  - frenzy_with_explosive_and_regenerating_invaders
+  - fullscreen_toggle
+  - keyboard_remapping
+  - continue_countdown
+  - high_score_initial_entry
+  - attract_mode
+  - browser_reload_mid_level
+  - space_invaders_frenzy_transition_with_long_morph_and_screen_shake
+  - fps_frenzy_mouse_aim_keyboard_aim_and_strafing
+  - fps_frenzy_with_every_brick_type_present
+  - final_assault_with_single_difficult_corner_brick
+  - reduced_motion_frenzy_transitions
+  - fps_frenzy_down_the_barrel_view
+  - fps_frenzy_arrow_strafe_with_wasd_aiming
+  - fps_frenzy_near_and_far_brick_depth_readability
+  - pinball_frenzy_visual_transformation_and_flipper_feel
+  - asteroids_frenzy_ship_control_and_screen_wrap
+  - missile_command_frenzy_crosshair_and_interception_feedback
+  - arkanoid_revenge_frenzy_inverted_duel_readability
+  - moving_paddle_spin_is_noticeable_but_controllable
+  - final_assault_magnetism_feels_helpful_without_becoming_homing
+  - pinball_funnel_makes_most_descending_balls_contestable
+  - pinball_outlane_drains_feel_dangerous_but_fair
+  - pinball_central_drain_gap_remains_skill_based
+  - fps_frenzy_falling_bricks_are_easy_to_read_while_strafing
+  - fps_frenzy_strafe_feels_like_dodging_vertical_hazards_not_curved_projectiles
+  - fps_frenzy_telegraph_provides_fair_reaction_time
+  - compare_final_assault_helper_reset_destroyed_only_vs_never
+  - developer_can_tune_final_assault_config_from_query_string_without_editing_code
+  - active_query_config_overrides_are_visible_in_debug_overlay
+  - final_assault_speed_ramp_creates_increasing_urgency
+  - final_assault_magnetism_produces_obviously_curved_arcade_ball_paths
+  - final_assault_big_bomb_power_bar_is_clear_and_satisfying
+  - final_assault_big_bomb_feels_powerful_without_becoming_an_automatic_level_clear
+  - pinball_frenzy_90_second_duration_feels_appropriate
+  - normal_brick_and_wall_rebounds_feel_slightly_organic_not_mathematically_perfect
+  - visible_spin_changes_the_character_of_subsequent_bounces
+  - moving_paddle_produces_obvious_controllable_english
+  - pinball_narrower_outlanes_feel_dangerous_without_being_dominant
+  - pinball_lower_restitution_makes_ball_feel_heavier_and_less_pingy
+  - big_bomb_charge_from_level_start_usually_becomes_relevant_late_in_level
+  - pinball_bottom_visually_and_physically_feels_sealed_except_outlanes_and_central_drain
+  - pinball_flippers_can_drive_ball_back_to_upper_table_despite_gravity
+  - starting_ball_can_be_aimed_by_positioning_it_across_the_bat
+  - sticky_release_position_gives_intuitive_control_over_launch_direction
+  - big_bomb_power_pickups_feel_special_and_are_not_confused_with_normal_brick_drops
+  frenzy_regression_matrix:
+    must_run_for_each_frenzy_type:
+    - space_invaders_frenzy
+    - fps_frenzy
+    individual_active_effect_cases:
+    - wide
+    - narrow
+    - multiball
+    - sticky
+    - laser
+    - slow_ball
+    - fast_ball
+    - penetrating_ball
+    - imprecise_paddle
+    combination_cases:
+    - - multiball
+      - laser
+      - wide
+    - - sticky
+      - wide
+      - laser
+    - - penetrating_ball
+      - slow_ball
+    - - penetrating_ball
+      - fast_ball
+    - - multiball
+      - slow_ball
+      - wide
+    - - multiball
+      - imprecise_paddle
+      - laser
+    special_cases:
+    - six_active_balls
+    - sticky_holding_one_or_more_balls
+    - multiple_simultaneous_timed_effects
+    - frenzy_activation_same_simulation_tick_as_another_pickup
+    - frenzy_end_by_timeout
+    - frenzy_end_by_player_hit
+    - frenzy_end_by_full_clear
+    assertions:
+    - no_hang_or_deadlock
+    - no_duplicate_animation_loop
+    - no_duplicate_input_handler
+    - powerup_timers_do_not_decrement_while_suspended
+    - ball_count_positions_and_velocities_restore_exactly_when_restoration_is_required
+    - sticky_hold_state_restores_exactly
+    - paddle_size_and_abilities_restore_exactly
+    - combo_and_rng_state_resume_correctly
+    - full_clear_transitions_to_level_complete_without_restoring_transient_play_state
+performance:
+  target: Sustain smooth interactive gameplay on a normal modern desktop browser with six balls, particles, moving bricks,
+    either Frenzy mode including pseudo-3D FPS rendering, and Final Assault presentation active where applicable.
+  target_fps: 60
+  graceful_degradation:
+    reduce_particle_density_first: true
+    reduce_screen_shake_processing_second: true
+    gameplay_simulation_must_not_slow_down: true
+    reduce_pseudo_3d_cosmetic_detail_third: true
+security_and_storage:
+  network_calls_required: false
+  personal_data_required: false
+  local_storage_only: true
+  user_generated_content: false
+future_architecture:
+  multiplayer:
+    planned_possible: true
+    current_version: single_player_only
+    architecture_requirement: 'Keep input, game-state update and rendering concerns sufficiently separated that future local
+      co-op, versus or network synchronization can be added without replacing the core game model.
+
+      '
+  handcrafted_levels:
+    planned_possible: true
+  additional_bosses:
+    planned_possible: true
+  new_powerups:
+    planned_possible: true
+  new_brick_types:
+    planned_possible: true
+implementation_defaults:
+  note: Values in this section are initial tuning defaults established or amended by v1.1.0. They are part of the source of
+    truth and may be adjusted only through a specification change.
+  powerup_random_drop_chance:
+    easy: 0.14
+    normal: 0.11
+    hard: 0.09
+  negative_powerup_share_of_random_drops:
+    easy: 0.08
+    normal: 0.14
+    hard: 0.2
+  starting_ball_speed_pixels_per_second:
+    easy: 330
+    normal: 370
+    hard: 415
+  max_ball_speed_pixels_per_second:
+    easy: 620
+    normal: 700
+    hard: 780
+  paddle:
+    base_width_pixels: 130
+    height_pixels: 18
+    max_speed_pixels_per_second: 760
+    acceleration_pixels_per_second_squared: 5200
+    deceleration_pixels_per_second_squared: 4400
+  ball:
+    radius_pixels: 8
+  lives:
+    starting: 3
+    maximum: 9
+  continues:
+    maximum: 3
+  frenzy:
+    duration_seconds: 20
+    minimum_bricks: 8
+    enter_transition_seconds: 2.5
+    exit_transition_seconds: 2.0
+    space_invaders_max_per_level: 1
+    fps_max_per_level: 1
+    total_max_per_level: 2
+  frenzy_drop_weight:
+    space_invaders_frenzy:
+      easy: 0.004
+      normal: 0.0035
+      hard: 0.003
+    fps_frenzy:
+      easy: 0.004
+      normal: 0.0035
+      hard: 0.003
+  fps_frenzy:
+    fire_rate_shots_per_second: 6
+    duration_seconds: 20
+    minimum_bricks: 8
+  final_assault:
+    remaining_fraction_threshold: 0.1
+    maximum_remaining_bricks_threshold: 6
+    ball_speed_multiplier: 1.1
+    score_multiplier: 2.0
+    hunter_assist_stage_1_seconds: 4
+    hunter_assist_stage_1_strength: 0.18
+    hunter_assist_stage_2_seconds: 7
+    hunter_assist_stage_2_strength: 0.32
+    hunter_assist_max_angle_degrees: 25
+acceptance_criteria:
+- 'A player can start a new seeded campaign on Easy, Normal or Hard and play through procedurally generated levels using keyboard
+  controls.
+
+  '
+- 'The same seed and difficulty reproduce the same campaign layouts and seeded gameplay randomness on supported browsers.
+
+  '
+- 'Paddle/ball gameplay, lives, scoring, combos, power-ups, brick behaviours, level completion, continues, saving, high scores
+  and pause/settings operate according to this specification.
+
+  '
+- 'Space Invaders Frenzy transforms the remaining brick set into a temporary invader formation, preserves/restores state correctly,
+  permits destruction of indestructible bricks, and obeys all specified termination conditions.
+
+  '
+- 'Level 20 presents a distinct configurable boss encounter and completing the campaign presents a victory sequence with the
+  option of a harder loop.
+
+  '
+- 'The game runs without npm, Node, a build process or runtime internet access.
+
+  '
+- 'Automated browser tests pass for all required deterministic and rules-based systems.
+
+  '
+- 'Generated source files identify Development Specification v1.1.0 in their headers.
+
+  '
+- Either Frenzy mode can be activated while any supported normal power-up or supported power-up combination is active without
+  hanging, deadlocking, duplicating loops or corrupting restored state.
+- Normal power-up timers and suspended normal gameplay timers do not advance during Frenzy transitions or active Frenzy gameplay
+  and resume from the correct remaining duration when normal play is restored.
+- Space Invaders Frenzy uses extended visual brick-to-alien and alien-to-brick morph transitions with bounded screen shake
+  and reduced-motion fallbacks.
+- FPS Frenzy provides a pseudo-3D first-person brick field, mouse and keyboard aiming, horizontal strafing, crosshairs, unlimited
+  rate-limited hitscan rifle fire, hostile blocks, destruction of indestructible bricks and correct restoration/full-clear
+  behaviour.
+- Final Assault activates for the configured final fraction/count of required bricks, increases pace and scoring, and applies
+  bounded paddle-bounce Hunter Assist after prolonged periods without a required-brick hit.
+changelog:
+- version: 1.1.0
+  date: '2026-08-18'
+  changes:
+  - Introduces a shared modal Frenzy lifecycle that atomically snapshots, suspends and restores normal gameplay and active
+    power-ups.
+  - Adds regression requirements covering Frenzy activation with every individual power-up, supported combinations, six-ball
+    play, sticky-held balls and same-tick activation races.
+  - Extends Frenzy transitions with longer visual morph sequences, stronger bounded screen shake and reduced-motion fallbacks.
+  - Adds FPS Frenzy with pseudo-3D extruded bricks, rifle/crosshair gameplay, mouse and keyboard aiming, horizontal strafing,
+    hitscan fire and hostile blocks.
+  - Makes per-type Frenzy occurrence limits configurable, defaulting to one Space Invaders Frenzy and one FPS Frenzy per level.
+  - Adds Final Assault for the last 10 percent of required bricks, with faster play, doubled brick scoring and bounded Hunter
+    Assist on delayed paddle bounces.
+- version: 1.0.0
+  date: '2026-08-18'
+  changes:
+  - Initial Batty Joe development specification.
+  - Defines core Arkanoid-style gameplay and 20-level campaign.
+  - Defines deterministic procedural campaign generation using templates, symmetry and controlled randomness.
+  - Defines brick, power-up, scoring, combo, continue, save and high-score systems.
+  - Defines Space Invaders Frenzy mode.
+  - Defines level-20 boss architecture and future milestone boss support.
+  - Defines classic arcade presentation, audio, accessibility and attract mode.
+  - Defines modular drop-in browser architecture, debugging, testing and spec-driven change governance.
+- version: 1.1.1
+  date: '2026-08-18'
+  changes:
+  - Refined FPS Frenzy into a genuine first-person down-the-barrel presentation.
+  - Normal paddle is hidden and irrelevant during FPS Frenzy; rifle is a separate first-person weapon entity.
+  - Remaining bricks become solid 3D cuboids assigned deterministic varied depths while preserving their recognisable arrangement.
+  - Arrow Left/Right now control camera strafing during FPS Frenzy.
+  - A/D control horizontal crosshair movement and W/S control vertical crosshair movement; mouse remains full crosshair control.
+  - Added FPS depth, occlusion, controls, paddle-hidden and parallax regression tests.
+- version: 1.2.0
+  date: '2026-08-18'
+  changes:
+  - Added Pinball Frenzy with two flippers, pinball gravity, transformed targets and drain-based exit.
+  - Added Asteroids Frenzy with rotate/thrust ship controls, projectile fire and seeded drifting brick-asteroids.
+  - Added Missile Command Frenzy with crosshair-directed interception explosions, hostile missile batteries and player base
+    zones.
+  - Added Arkanoid Revenge Frenzy with an inverted paddle duel against an enemy paddle built from remaining bricks.
+  - Extended the shared Frenzy framework to six data-driven Frenzy modes with independent per-type limits and a configurable
+    total-per-level cap.
+  - Added paddle-velocity-induced ball spin with deterministic decaying swerve.
+  - Added Final Assault stage-3 magnetic assistance after prolonged failure to hit a remaining required brick.
+  - Expanded automated and manual tests for all new modes, spin physics, Frenzy restoration and magnetic Final Assault behaviour.
+- version: 1.2.1
+  date: '2026-08-19'
+  changes:
+  - Reworked Pinball Frenzy lower playfield to remove the excessively open bottom.
+  - Added sloping funnel guide rails that redirect most descending balls toward the flippers.
+  - Added two narrow left/right outlanes that intentionally bypass flipper reach and act as fair drain channels.
+  - Added inlanes feeding each flipper plus a small central drain gap between the flipper tips.
+  - Defined explicit flipper and lower-playfield geometry and added collision/balance regression tests.
+- version: 1.2.2
+  date: '2026-08-19'
+  changes:
+  - Rebalanced FPS Frenzy by removing hostile perspective projectiles.
+  - Surviving bricks now detach and fall vertically toward the player's world lane as telegraphed hazards.
+  - Falling attacks keep a fixed horizontal world trajectory, so strafing changes viewpoint but never makes attacks home or
+    curve.
+  - Falling bricks can be shot with the FPS hitscan rifle; destroyed attackers remain destroyed and damaged attackers preserve
+    damage.
+  - Missed falling bricks return to their remembered 3D formation positions after a short recovery.
+  - Added deterministic attack-rate, simultaneous-fall limits, telegraphing and regression coverage for FPS falling-brick
+    attacks.
+- version: 1.2.3
+  date: '2026-08-19'
+  changes:
+  - Changed Final Assault helper reset behaviour to be configuration-driven.
+  - 'Default Final Assault helper reset policy is now destroyed_only: ordinary hits no longer reset Hunter Assist or magnetic-assist
+    progress.'
+  - Added never and any_hit helper reset policies for tuning and backwards comparison.
+  - Added developer query-string overrides using cfg.<BattyJoe.Config path>=<value> when debug=true.
+  - Query config overrides are validated, session-only, do not mutate static config or persisted settings, and invalidate
+    high-score eligibility.
+  - Expanded regression tests for helper reset policies and query-string config parsing/validation.
+- version: 1.3.0
+  date: '2026-08-19'
+  changes:
+  - Overhauled Final Assault into a continuously escalating end-of-level climax.
+  - Final Assault ball speed now ramps continuously from normal speed to +35% over 15 seconds.
+  - Final Assault magnetism now ramps visibly up to 30 degrees of steering per second with stronger curved-trail feedback.
+  - Added a one-shot Big Bomb powered by a charge bar that fills passively and is accelerated by brick hits, brick destruction
+    and high-speed paddle contacts.
+  - Big Bomb is activated with ArrowDown when ready and deals exactly 2 damage to every remaining required destructible brick.
+  - Big Bomb does not affect indestructible bricks and triggers normal explosive-brick chain reactions.
+  - Added developer query overrides for Final Assault speed, magnetism, bomb charge/damage and Pinball Frenzy duration.
+  - Increased default Pinball Frenzy duration from 20 seconds to 90 seconds and made it independently configurable.
+- version: 1.4.0
+  date: '2026-08-19'
+  changes:
+  - Changed normal brick and screen-edge collisions from perfect mirror reflections to small deterministic imperfect rebounds.
+  - Spin now directly modifies brick, screen-edge and paddle rebound angles as well as producing in-flight swerve.
+  - Increased moving-paddle contribution to ball spin and increased visible spin curvature.
+  - Narrowed Pinball Frenzy left/right outlanes from 46px to 30px and raised the target proportion of contestable downward
+    trajectories.
+  - Reduced Pinball Frenzy restitution so the ball loses more energy on walls, rails and targets and feels heavier under gravity.
+  - Moved Big Bomb ownership from Final Assault to the full level gameplay loop.
+  - Big Bomb power now begins charging at level start, can be deployed whenever ready, and remains limited to one use per
+    level.
+  - Slowed default Big Bomb passive charging to 90 seconds and reduced active hit/destroy/paddle charge bonuses.
+  - Added query-config aliases for collision imperfection, spin strength, Pinball restitution/outlane width and level-wide
+    Big Bomb charging.
+- version: 1.4.1
+  date: '2026-08-19'
+  changes:
+  - Sealed the Pinball Frenzy lower apron so the ball can only be lost through the left outlane, right outlane, or central
+    gap between the flippers.
+  - Required rendered funnel geometry and collision geometry to match with no hidden gaps beneath or behind the apron.
+  - Increased Pinball flipper impulse to compensate for stronger gravity and lower restitution, including stronger outer-tip
+    contacts.
+  - Changed initial and Sticky Bat ball release so launch angle depends on the ball horizontal position on the bat.
+- version: 1.5.0
+  date: '2026-08-20'
+  changes:
+  - Replaced Big Bomb time/hit/destroy/paddle charging with independent Big Bomb Power Up collectibles.
+  - Big Bomb Power Ups spawn randomly from an independent seeded level spawner and are never generated by brick destruction.
+  - Default Big Bomb readiness now requires collecting 3 Big Bomb Power Ups; required count and spawn cadence are configurable.
+  - 'Added 10-Pin Frenzy: first-person 3D bowling view, bricks transform into skittles, default 2 configurable bowls, strike/spare
+    scoring and z-axis bowling-ball motion.'
+  - Expanded the shared Frenzy framework to eight Frenzy types and added lifecycle, restoration, scoring and deterministic
+    tests for both new modes.
+pinball_frenzy:
+  enabled: true
+  trigger: distinct_rare_falling_powerup
+  display_name: PINBALL FRENZY
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 6
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - playfield_tilts_and_gains_pinball_table_depth
+    - normal_paddle_splits_and_morphs_into_left_and_right_flippers
+    - remaining_bricks_raise_into_pinball_targets_bumpers_and_drop_targets
+    - existing_ball_morphs_into_single_frenzy_pinball
+    - lanes_lights_and_score_inserts_illuminate
+    - unlock_pinball_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_pinball_controls
+    - table_lights_collapse_toward_original_brick_grid
+    - surviving_targets_morph_back_to_bricks
+    - flippers_merge_back_into_suspended_paddle
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+  table:
+    flippers: 2
+    bottom_drain: true
+    side_walls: true
+    seeded_bumpers: true
+    brick_mapping:
+      normal: drop_target
+      multi_hit: multi_hit_drop_target
+      indestructible: armoured_target_destructible_in_frenzy
+      explosive: explosive_bumper
+      moving: moving_target
+      invisible: shimmer_target
+      regenerating: regenerating_drop_target
+      powerup: lit_bonus_target
+    lower_playfield:
+      purpose: Reduce unfair drains by shaping the lower playfield so most descending balls are funnelled into the flipper
+        zone while preserving narrow, clearly readable outlane drains.
+      reference_playfield:
+        width: 960
+        height: 720
+      apron_start_y: 500
+      flipper_zone:
+        top_y: 580
+        bottom_y: 675
+        centre_x: 480
+        central_drain_gap_width: 72
+        rule: The two flippers must cover the majority of the central funnel exit. A small central drain gap remains between
+          their inner tips.
+      funnel_guides:
+        enabled: true
+        left:
+          upper_anchor:
+          - 120
+          - 510
+          lower_anchor:
+          - 365
+          - 625
+        right:
+          upper_anchor:
+          - 840
+          - 510
+          lower_anchor:
+          - 595
+          - 625
+        collision: solid_pinball_rail
+        bounce: restitution_0_76
+        purpose: redirect ordinary descending trajectories toward the two flippers
+        must_not_create_ball_traps: true
+        corners_must_be_rounded: true
+        coverage:
+          must_join_outer_walls_without_gap: true
+          must_join_flipper_apron_without_gap: true
+          must_close_entire_lower_screen_except_outlane_entries_and_central_flipper_gap: true
+          must_not_allow_ball_to_pass_behind_or_below_funnel_geometry: true
+          collision_geometry_must_match_rendered_geometry: true
+      outlanes:
+        enabled: true
+        count: 2
+        left:
+          x_range:
+          - 82
+          - 112
+          entry_y: 525
+          drain_y: 700
+        right:
+          x_range:
+          - 848
+          - 878
+          entry_y: 525
+          drain_y: 700
+        width_pixels: 30
+        behaviour: Outlanes remain deliberate danger channels but are narrower than v1.3.0. Once a ball is deeply committed
+          it remains beyond normal flipper reach and drains.
+        visual_readability:
+          must_be_clearly_visible: true
+          lane_lighting: true
+          warning_colour_or_pattern: true
+          never_rely_on_colour_alone: true
+        entry_rule: A ball may enter an outlane only through its visible upper entrance. The apron and funnel walls prevent
+          entry through any hidden lower or side gap.
+      inlanes:
+        enabled: true
+        left:
+          feeds: left_flipper
+          position: inside_left_outlane
+        right:
+          feeds: right_flipper
+          position: inside_right_outlane
+        purpose: provide safe-ish return lanes that feed the outer portion of each flipper
+      bottom_boundary:
+        sealed_apron: true
+        rule: The funnel/apron forms a continuous solid collision boundary across the entire lower playfield. The ball may
+          be lost only through the left outlane, the right outlane, or the central gap between the flippers.
+        valid_loss_routes:
+        - left_outlane
+        - right_outlane
+        - central_gap_between_flippers
+        invalid_loss_routes: none
+        lower_screen_edge_is_solid_outside_valid_loss_routes: true
+        rendered_geometry_must_match_collision_geometry: true
+      difficulty_target:
+        ordinary_descent_should_reach_flipper_zone_probability: 0.84
+        note: Geometry should make roughly five out of six ordinary downward trajectories contestable by the player. Outlanes
+          remain dangerous but should no longer dominate the lower playfield.
+    flipper_geometry:
+      left:
+        pivot:
+        - 382
+        - 646
+        rest_angle_degrees: 18
+        active_angle_degrees: -24
+        length_pixels: 118
+        thickness_pixels: 18
+      right:
+        pivot:
+        - 578
+        - 646
+        rest_angle_degrees: 162
+        active_angle_degrees: 204
+        length_pixels: 118
+        thickness_pixels: 18
+      inner_tip_gap_pixels_at_rest: 72
+      must_not_overlap_funnel_guides: true
+      must_not_be_able_to_reach_outlanes: true
+      power:
+        enabled: true
+        purpose: Compensate for increased pinball gravity and reduced restitution so flippers can return the ball high into
+          the table.
+        base_impulse_multiplier: 1.35
+        tip_velocity_bonus_multiplier: 1.2
+        minimum_upward_exit_speed_multiplier: 1.05
+        maximum_upward_exit_speed_multiplier: 1.55
+        contact_position_affects_impulse: true
+        outer_tip_contacts_are_stronger: true
+        held_flipper_does_not_repeatedly_add_energy: true
+        energy_is_applied_from_flipper_angular_velocity_at_contact: true
+        configurable: true
+  ball:
+    count: 1
+    uses_pinball_gravity: true
+    flipper_impulse: true
+    retains_frenzy_specific_spin: true
+    normal_ball_state_restored_after_frenzy: true
+    restitution:
+      enabled: true
+      purpose: Reduce pinball ping-pong energy and allow gravity to create a heavier, more readable game.
+      default: 0.82
+      wall: 0.8
+      funnel_rail: 0.76
+      brick_target: 0.82
+      bumper: 0.9
+      flipper: 0.88
+      maximum_post_collision_speed_multiplier: 1.08
+      minimum_speed_multiplier: 0.58
+      gravity_restores_downward_momentum: true
+      configurable: true
+  nudge:
+    enabled: true
+    small_table_impulse: true
+    cooldown_seconds: 1.0
+    tilt_penalty: false
+  duration:
+    maximum_seconds: 90
+    ends_on:
+    - timer_expiry
+    - ball_drains_through_central_gap_or_outlane
+    - all_targets_destroyed
+    config_key: frenzy.pinball.duration
+    query_string_override_example: debug=true&cfg.frenzy.pinball.duration=120
+    reason: Pinball Frenzy uses slower gravity-driven play and requires substantially more time than the 20-second action
+      Frenzies.
+  on_ball_drain:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+    valid_drain_routes:
+    - central_gap_between_flippers
+    - left_outlane
+    - right_outlane
+    rule: Pinball Frenzy can end from ball loss only when the ball travels through the left outlane, right outlane, or central
+      gap between the flippers. Any other lower-edge loss is a collision defect.
+  full_clear:
+    completes_level_immediately: true
+    bonus_points: 10000
+asteroids_frenzy:
+  enabled: true
+  trigger: distinct_rare_falling_powerup
+  display_name: ASTEROIDS FRENZY
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 6
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - brick_grid_breaks_apart_into_floating_chunks
+    - brick_chunks_morph_into_seeded_polygonal_asteroids
+    - paddle_folds_into_a_small_vector_style_ship
+    - background_opens_into_wrapping_starfield
+    - asteroids_receive_seeded_velocities_and_rotation
+    - unlock_ship_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_ship_controls
+    - surviving_asteroids_slow_and_converge
+    - asteroids_morph_back_into_surviving_bricks
+    - ship_unfolds_back_into_suspended_paddle
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+  ship:
+    movement: rotate_and_thrust
+    screen_wrap: true
+    collision_with_asteroid_ends_frenzy: true
+    weapon:
+      type: visible_projectile
+      fire_key: Space
+      fire_rate_shots_per_second: 5
+      projectile_screen_wrap: false
+  asteroids:
+    movement: seeded_drift_and_rotation_with_screen_wrap
+    preserve_brick_identity_and_damage: true
+    strength_maps_from_remaining_hits: true
+    visual_fragmentation_on_damage: true
+    multi_hit_may_split_visually_into_smaller_chunks: true
+    split_chunks_do_not_create_additional_required_bricks: true
+    indestructible_destructible_during_frenzy: true
+    explosive_retains_chain_reaction: true
+    regenerating_retains_regeneration: true
+  duration:
+    maximum_seconds: 20
+    ends_on:
+    - timer_expiry
+    - ship_collision
+    - all_asteroids_destroyed
+  on_ship_collision:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+  full_clear:
+    completes_level_immediately: true
+    bonus_points: 10000
+missile_command_frenzy:
+  enabled: true
+  trigger: distinct_rare_falling_powerup
+  display_name: MISSILE COMMAND FRENZY
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 6
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - brick_field_recedes_into_defence_grid
+    - remaining_bricks_become_hostile_missile_batteries
+    - paddle_and_ball_fade_out
+    - three_player_base_zones_rise_at_bottom_of_screen
+    - crosshair_and_targeting_grid_materialise
+    - unlock_defence_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_defence_controls
+    - missile_trails_and_interception_blasts_dissipate
+    - surviving_batteries_morph_back_into_bricks
+    - base_zones_and_crosshair_fade
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+  player_defence:
+    base_zones: 3
+    base_hit_ends_frenzy: true
+    crosshair: mouse_or_wasd
+    weapon:
+      type: interception_explosion
+      fire_controls:
+      - Space
+      - MousePrimary
+      ammo: unlimited
+      fire_rate_shots_per_second: 4
+      detonation: at_crosshair_after_short_seeded_travel_time
+      blast:
+        expands_then_contracts: true
+        destroys_hostile_missiles: true
+        damages_bricks_within_radius: true
+        chain_reacts_with_explosive_bricks: true
+  hostile_batteries:
+    remaining_bricks_launch_missiles: true
+    missiles_target_seeded_player_base_zones: true
+    launch_rate_increases_as_population_falls: true
+    brick_strength_maps_to_battery_health: true
+    indestructible_destructible_during_frenzy: true
+    regenerating_retains_regeneration: true
+  duration:
+    maximum_seconds: 20
+    ends_on:
+    - timer_expiry
+    - player_base_hit
+    - all_batteries_destroyed
+  on_player_base_hit:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+  full_clear:
+    completes_level_immediately: true
+    bonus_points: 10000
+arkanoid_revenge_frenzy:
+  enabled: true
+  trigger: distinct_rare_falling_powerup
+  display_name: ARKANOID REVENGE
+  maximum_occurrences_per_level: from_frenzy_framework_config_default_1
+  minimum_suitable_bricks: 4
+  lifecycle:
+    uses_shared_snapshot_and_restore_contract: true
+    normal_powerup_timers_paused: true
+    safe_with_all_powerup_combinations: true
+  transformation:
+    uses_shared_frenzy_framework: true
+    enter_seconds: 2.5
+    sequence:
+    - freeze_and_snapshot_normal_play
+    - camera_rotates_180_degrees
+    - player_paddle_slides_to_top_of_playfield
+    - remaining_bricks_stream_downward_and_form_segmented_enemy_paddle
+    - enemy_paddle_wakes_and_begins_tracking_the_ball
+    - single_duel_ball_materialises_at_centre
+    - unlock_revenge_controls
+    exit_seconds: 2.0
+    exit_sequence:
+    - lock_revenge_controls
+    - duel_ball_dissolves
+    - surviving_enemy_segments_return_to_their_exact_brick_positions
+    - player_paddle_returns_to_suspended_normal_position
+    - camera_rotates_back
+    - restore_suspended_normal_gameplay_state
+    - unlock_normal_controls
+  duel:
+    player_paddle_position: top
+    enemy_paddle_position: bottom
+    enemy_paddle_built_from_remaining_bricks: true
+    enemy_ai: competent_but_imperfect_seeded_tracking
+    ball_count: 1
+    player_miss_above_top_ends_frenzy: true
+    enemy_miss_below_bottom_relaunches_ball_after_short_pause: true
+    enemy_segments:
+      ball_contact_applies_one_damage_unit_then_reflects: true
+      destroyed_segments_shrink_enemy_paddle: true
+      multi_hit_uses_remaining_hits: true
+      indestructible_destructible_during_frenzy: true
+      explosive_segment_chain_reacts_into_adjacent_segments: true
+      regenerating_segment_retains_regeneration: true
+    enemy_can_apply_english_to_ball:
+      enabled: true
+      strength: small
+      deterministic: true
+  duration:
+    maximum_seconds: 20
+    ends_on:
+    - timer_expiry
+    - player_miss
+    - all_enemy_segments_destroyed
+  on_player_miss:
+    terminate_frenzy: true
+    lose_normal_life: false
+    restore_surviving_bricks: true
+  full_clear:
+    completes_level_immediately: true
+    bonus_points: 10000
+gameplay:
+  big_bomb:
+    enabled: true
+    scope: per_level
+    availability:
+      maximum_uses_per_level: 1
+      starts_unavailable: true
+      becomes_available_when_required_big_bomb_pickups_collected: true
+      cannot_recharge_after_use: true
+      may_be_used_before_during_or_after_final_assault: true
+    activation_control:
+      key: ArrowDown
+      remappable: true
+      active_during_normal_level_gameplay: true
+      active_during_final_assault: true
+      does_nothing_until_ready: true
+    power_bar:
+      enabled: true
+      starts_at_percent: 0
+      maximum_percent: 100
+      charge_source: big_bomb_power_up_pickups_only
+      time_based_charging: false
+      brick_hit_charging: false
+      brick_destroyed_charging: false
+      paddle_contact_charging: false
+      magnetic_assist_charging: false
+      frenzy_action_charging: false
+      pickups_required_default: 3
+      pickup_charge_percent: 100 / pickups_required
+      charge_is_segmented_by_pickup_count: true
+      charge_is_clamped_to_100_percent: true
+      charge_never_decreases: true
+      continues_across_life_loss: true
+    deployment:
+      effect: damage_all_remaining_required_destructible_bricks
+      damage_per_brick: 2
+      requires_targeting: false
+      affects_every_remaining_required_destructible_brick: true
+      indestructible_bricks_affected: false
+      explosive_bricks_trigger_normal_explosion_and_chain_reaction: true
+      multi_hit_bricks_take_two_damage: true
+      regenerating_bricks_take_two_damage_and_keep_normal_regeneration_rules_if_surviving: true
+      moving_bricks_take_two_damage: true
+      invisible_bricks_take_two_damage: true
+      powerup_bricks_take_two_damage: true
+      score_each_destroyed_or_damaged_brick_using_normal_final_assault_scoring_rules: true
+    presentation:
+      hud_power_bar: true
+      hud_label: BIG BOMB
+      ready_message: BIG BOMB READY
+      ready_indicator_pulses: true
+      deployment_freeze_seconds: 0.18
+      screen_shake: large
+      full_screen_flash: brief_and_accessibility_safe
+      large_radial_explosion_visual: true
+      brick_damage_wave_visual: true
+      audio_event: big_bomb
+    state_rules:
+      life_loss: preserve_collected_pickups_and_used_state
+      frenzy_activation: suspend_and_restore_pickup_progress_and_used_state
+      final_assault_activation: no_reset
+      level_complete: discard_unused_bomb_and_pickup_progress
+      restart_level: reset_pickup_progress_and_used_state
+      continue_restart_level: reset_pickup_progress_and_used_state_with_level_restart
+    big_bomb_power_up:
+      enabled: true
+      display_name: BIG BOMB POWER
+      category: special_level_pickup
+      is_not_generated_by_brick_destruction: true
+      does_not_use_normal_powerup_drop_table: true
+      spawn_system:
+        independent_random_spawner: true
+        deterministic_seeded: true
+        starts_after_level_begins_seconds: 8.0
+        minimum_interval_seconds: 18.0
+        maximum_interval_seconds: 32.0
+        maximum_simultaneous_on_screen: 1
+        do_not_spawn_if_big_bomb_ready: true
+        do_not_spawn_if_big_bomb_already_used: true
+        do_not_spawn_during_modal_frenzy: true
+        resume_spawn_schedule_after_frenzy: true
+        spawn_position:
+          x: seeded_random_with_safe_side_margins
+          y: top_of_playfield
+      movement:
+        falls_straight_down: true
+        fall_speed_pixels_per_second: 125
+        missed_pickup_despawns_at_bottom: true
+      collection:
+        by_paddle_contact: true
+        increments_collected_count_by: 1
+        plays_distinct_sound: true
+        shows_distinct_hud_feedback: true
+        last_required_pickup_sets_big_bomb_ready: true
+      visual_identity:
+        must_be_visually_distinct_from_all_normal_powerups: true
+        suggested_icon: large_bomb_or_bomb_segment
+        larger_than_normal_powerup: true
+        pulsing_outline: true
+        never_rely_on_colour_alone: true
+  starting_ball_release:
+    held_on_bat_before_launch: true
+    horizontal_position_on_bat_controls_launch_angle: true
+    uses: physics.ball.bat_release_angle
+grid_runner_frenzy:
+  transformation:
+    uses_shared_frenzy_framework: true
+    view: top_down_neon_grid
+    destructible_bricks: deterministic collectible energy nodes
+    indestructible_bricks: solid blocker cells
+    trail: vacated cells remain collision hazards
+  controls:
+    left: turn 90 degrees anticlockwise
+    right: turn 90 degrees clockwise
+    space: temporary speed boost
+  movement:
+    continuous: true
+    deterministic: true
+    grid_cell_based: true
+    direct_reverse: false
+  termination:
+    failure:
+    - arena boundary
+    - own trail
+    - solid blocker
+    timeout: true
+    full_clear: shared frenzy full-clear contract
+  configuration:
+    duration: 20
+    cell_size: 24
+    step_seconds: 0.12
+    boost_multiplier: 1.75
+    boost_seconds: 0.9
+    boost_cooldown_seconds: 3.0
+    full_clear_bonus: 10000

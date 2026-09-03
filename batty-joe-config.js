@@ -1,10 +1,10 @@
-/* Batty Joe Development Specification v1.6.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
   const BJ = global.BattyJoe = global.BattyJoe || {};
 
-  BJ.VERSION = '1.6.0';
+  BJ.VERSION = '1.7.0';
   BJ.WIDTH = 960;
   BJ.HEIGHT = 720;
 
@@ -33,6 +33,7 @@
     bossLevel: 20,
     lives: { start: 3, max: 9 },
     continues: { max: 3, countdownSeconds: 10 },
+    levelTransitions: { completeHoldSeconds: 3.0, nextPromptSeconds: 2.0 },
     balls: { max: 6, radius: 8, releaseMaxAngleDegrees: 60 },
     physics: {
       paddleVelocityTransfer: {
@@ -81,14 +82,13 @@
         accelerationFactor: 0.85,
         positiveDropChance: 0.14,
         negativeDropShare: 0.08,
-        invadersFrenzyWeight: 0.0025,
-        fpsFrenzyWeight: 0.0025,
-        pinballFrenzyWeight: 0.0022,
-        asteroidsFrenzyWeight: 0.0022,
-        missileFrenzyWeight: 0.0022,
-        revengeFrenzyWeight: 0.0020,
-        tenPinFrenzyWeight: 0.0020,
-        bomberFrenzyWeight: 0.0020,
+        invadersFrenzyWeight: 0.0027731,
+        fpsFrenzyWeight: 0.0027731,
+        pinballFrenzyWeight: 0.0024403,
+        asteroidsFrenzyWeight: 0.0024403,
+        missileFrenzyWeight: 0.0024403,
+        revengeFrenzyWeight: 0.0022185,
+        gridRunnerFrenzyWeight: 0.0025143,
         brickToughness: 0.85,
         hazardRate: 0.72
       },
@@ -98,14 +98,13 @@
         accelerationFactor: 1.0,
         positiveDropChance: 0.11,
         negativeDropShare: 0.14,
-        invadersFrenzyWeight: 0.0022,
-        fpsFrenzyWeight: 0.0022,
-        pinballFrenzyWeight: 0.0020,
-        asteroidsFrenzyWeight: 0.0020,
-        missileFrenzyWeight: 0.0020,
-        revengeFrenzyWeight: 0.0018,
-        tenPinFrenzyWeight: 0.0018,
-        bomberFrenzyWeight: 0.0018,
+        invadersFrenzyWeight: 0.0024422,
+        fpsFrenzyWeight: 0.0024422,
+        pinballFrenzyWeight: 0.0022201,
+        asteroidsFrenzyWeight: 0.0022201,
+        missileFrenzyWeight: 0.0022201,
+        revengeFrenzyWeight: 0.0019981,
+        gridRunnerFrenzyWeight: 0.0022571,
         brickToughness: 1.0,
         hazardRate: 1.0
       },
@@ -115,14 +114,13 @@
         accelerationFactor: 1.15,
         positiveDropChance: 0.09,
         negativeDropShare: 0.20,
-        invadersFrenzyWeight: 0.0020,
-        fpsFrenzyWeight: 0.0020,
-        pinballFrenzyWeight: 0.0018,
-        asteroidsFrenzyWeight: 0.0018,
-        missileFrenzyWeight: 0.0018,
-        revengeFrenzyWeight: 0.0016,
-        tenPinFrenzyWeight: 0.0016,
-        bomberFrenzyWeight: 0.0016,
+        invadersFrenzyWeight: 0.0022130,
+        fpsFrenzyWeight: 0.0022130,
+        pinballFrenzyWeight: 0.0019917,
+        asteroidsFrenzyWeight: 0.0019917,
+        missileFrenzyWeight: 0.0019917,
+        revengeFrenzyWeight: 0.0017704,
+        gridRunnerFrenzyWeight: 0.0020286,
         brickToughness: 1.18,
         hazardRate: 1.3
       }
@@ -144,8 +142,7 @@
       asteroids_frenzy: { label: 'ASTEROIDS', positive: true, instant: true, rare: true },
       missile_command_frenzy: { label: 'MISSILE', positive: true, instant: true, rare: true },
       arkanoid_revenge_frenzy: { label: 'REVENGE', positive: true, instant: true, rare: true },
-      ten_pin_frenzy: { label: '10-PIN', positive: true, instant: true, rare: true },
-      bomber_frenzy: { label: 'BOMBER', positive: true, instant: true, rare: true }
+      grid_runner_frenzy: { label: 'GRID RUNNER', positive: true, instant: true, rare: true }
     },
     powerupCompatibility: {
       'wide|narrow': { allowed: false, resolution: 'replace-size' },
@@ -166,10 +163,7 @@
       asteroidsFrenzyClearBonus: 10000,
       missileFrenzyClearBonus: 10000,
       revengeFrenzyClearBonus: 10000,
-      tenPinStrikeBonus: 12000,
-      tenPinSpareBonus: 7000,
-      tenPinFrenzyClearBonus: 10000,
-      bomberFrenzyClearBonus: 12000,
+      gridRunnerFrenzyClearBonus: 10000,
       lifeBonus: 1000,
       continueBonus: 2500,
       comboBonusStep: 250,
@@ -183,7 +177,7 @@
       shipHeight: 24,
       transitionIn: 2.5,
       transitionOut: 2.0,
-      maxPerLevelByType: { invaders: 1, fps: 1, pinball: 1, asteroids: 1, missile: 1, revenge: 1, tenpin: 1, bomber: 1 },
+      maxPerLevelByType: { invaders: 1, fps: 1, pinball: 1, asteroids: 1, missile: 1, revenge: 1, gridrunner: 1 },
       maxTotalPerLevel: 2,
       totalMaxPerLevel: 2,
       configurableIndependentLimits: true,
@@ -282,16 +276,9 @@
         minBricks: 4, playerY: 74, enemyY: 646, playerWidth: 132, playerHeight: 18,
         ballSpeed: 390, enemyMaxSpeed: 420, enemyTracking: 0.84, relaunchDelay: 0.65
       },
-      tenpin: {
-        minBricks: 6, duration: 45, attempts: 2, laneNearY: 650, laneFarY: 142,
-        ballSpeedMin: 0.50, ballSpeedMax: 0.92, aimRate: 1.15, maxAim: 1.0,
-        collisionRadius: 0.22, powerCollisionBonus: 0.18, maxHook: 0.07,
-        pinScaleNear: 1.18, pinScaleFar: 0.72, resetDelay: 0.9
-      },
-      bomber: {
-        minBricks: 6, duration: 30, playerSpeed: 430, playerAcceleration: 2100, drag: 7.5,
-        fireRate: 7, shotSpeed: 720, enemyShotSpeed: 300, enemyFireInterval: 0.82,
-        enemyDrift: 42, enemyDiveSpeed: 34, playerWidth: 52, playerHeight: 42
+      gridrunner: {
+        minBricks: 6, duration: 20, cellSize: 24, stepSeconds: 0.12,
+        boostMultiplier: 1.75, boostSeconds: 0.9, boostCooldownSeconds: 3.0, fullClearBonus: 10000
       }
     },
     finalAssault: {
@@ -403,9 +390,6 @@
     'bigBomb.spawnMaxSeconds': 'bigBomb.spawnMaxSeconds',
     'bigBomb.pickupFallSpeed': 'bigBomb.pickupFallSpeed',
     'bigBomb.damage': 'bigBomb.damage',
-    'frenzy.tenPin.attempts': 'frenzy.tenpin.attempts',
-    'frenzy.tenPin.duration': 'frenzy.tenpin.duration',
-    'frenzy.bomber.duration': 'frenzy.bomber.duration',
     'frenzy.pinball.duration': 'frenzy.pinball.duration',
     'frenzy.totalMaxPerLevel': 'frenzy.maxTotalPerLevel',
     'frenzy.fps.fallingBrick.warningSeconds': 'frenzy.fps.falling.telegraphSeconds'

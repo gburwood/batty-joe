@@ -1,0 +1,47 @@
+id: CHG-0003
+title: Retire surplus frenzies, improve level-complete pacing, and add Grid Runner
+  Frenzy
+classification: behaviour_change
+status: validated
+priority: high
+sources:
+- type: conversation
+  reference: user-request-2026-09-03-remove-tenpin-bomber-level-complete-delay-new-frenzy
+  received_at: '2026-09-03T22:24:00+01:00'
+request:
+  summary: Remove Ten-Pin and Bomber Frenzy, delay the next-level prompt after level
+    completion, and introduce a new distinct Frenzy mode.
+  detail: Ten-Pin and Bomber are surplus to requirements. Level completion should
+    visibly settle for a few seconds before the NEXT LEVEL prompt appears. A replacement
+    Frenzy should add a genuinely different gameplay style rather than duplicate existing
+    shooter, ricochet, defence, role-reversal or FPS modes.
+clarification:
+  required: false
+  notes: The qualitative request leaves timing and replacement-Frenzy mechanics open.
+    PROP-0003-01 proposes explicit values and Grid Runner mechanics for approval.
+relationships:
+  depends_on:
+  - CHG-0002
+  conflicts_with: []
+  related_to: []
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0003-01
+proposal:
+  current: PROP-0003-01
+approvals:
+- APR-0003
+implementation:
+  attempts:
+  - IMP-0003-01
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-03T22:24:00+01:00'
+  created_by:
+    type: ai
+    id: chatgpt

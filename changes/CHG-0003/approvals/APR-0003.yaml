@@ -1,0 +1,14 @@
+id: APR-0003
+change: CHG-0003
+proposal: PROP-0003-01
+decision: approved
+actor:
+  type: human
+  id: product-owner
+timestamp: '2026-09-03T22:30:00+01:00'
+scope:
+  proposal_sha256: 302d4385e9c8795cacd3562b5696df606eacc4111f537969d1e4f432265ac89b
+  proposed_specification_version: 1.7.0
+mechanism:
+  type: conversation
+  reference: Approve PROP-0003-01

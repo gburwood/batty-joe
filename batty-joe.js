@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.5.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
@@ -154,7 +154,7 @@
     on('pauseSettingsBtn', 'click', function () { self.settingsReturn = 'pause'; self.applySettingsToUi(); self.showPanel('settingsPanel'); });
     on('quitMenuBtn', 'click', function () { self.showMainMenu(); });
     on('continueNowBtn', 'click', function () { self.game.useContinue(); self.hideOverlay(); });
-    on('intermissionNextBtn', 'click', function () { self.game.intermissionRemaining = 0; self.hideOverlay(); });
+    on('intermissionNextBtn', 'click', function () { if (self.game.intermissionPhase === 'prompt') { self.game.intermissionRemaining = 0; self.hideOverlay(); } });
 
     on('saveSettingsBtn', 'click', function () { self.saveSettings(); });
     on('musicToggleQuick', 'click', function () {
@@ -437,8 +437,7 @@
     if (code === 'KeyO') this.game.debugTriggerFrenzy('asteroids');
     if (code === 'KeyM') this.game.debugTriggerFrenzy('missile');
     if (code === 'KeyV') this.game.debugTriggerFrenzy('revenge');
-    if (code === 'KeyY') this.game.debugTriggerFrenzy('tenpin');
-    if (code === 'KeyU') this.game.debugTriggerFrenzy('bomber');
+    if (code === 'KeyY') this.game.debugTriggerFrenzy('gridrunner');
     if (code === 'KeyG') this.game.debugSpawnBigBombPower();
     if (code === 'KeyN') this.game.debugAdvanceLevel();
     if (code === 'KeyK') this.game.debugDestroyRequired();
@@ -459,7 +458,11 @@
       document.getElementById('continuesLeft').textContent = this.game.continuesRemaining;
     }
     if (this.game.state === BJ.State.LEVEL_COMPLETE && !this.game.attract) {
-      document.getElementById('intermissionNextBtn').textContent = 'NEXT  ' + Math.max(0, Math.ceil(this.game.intermissionRemaining));
+      const nextBtn = document.getElementById('intermissionNextBtn');
+      const prompt = this.game.intermissionPhase === 'prompt';
+      nextBtn.style.visibility = prompt ? 'visible' : 'hidden';
+      nextBtn.disabled = !prompt;
+      if (prompt) nextBtn.textContent = 'NEXT LEVEL  ' + Math.max(0, Math.ceil(this.game.intermissionRemaining));
     }
     if (this.game.attract && (this.game.state === BJ.State.GAME_OVER || this.game.state === BJ.State.VICTORY || this.game.state === BJ.State.CONTINUE)) {
       this.startAttractMode();

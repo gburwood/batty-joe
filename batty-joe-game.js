@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.6.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
@@ -53,7 +53,7 @@
     this.particles = [];
     this.activePowerups = Object.create(null);
     this.laserCooldown = 0;
-    this.frenzyCounts = { invaders: 0, fps: 0, pinball: 0, asteroids: 0, missile: 0, revenge: 0, tenpin: 0, bomber: 0 };
+    this.frenzyCounts = { invaders: 0, fps: 0, pinball: 0, asteroids: 0, missile: 0, revenge: 0, gridrunner: 0 };
     this.frenzyTotalThisLevel = 0;
     this.frenzyMode = null;
     this.frenzyRemaining = 0;
@@ -141,7 +141,7 @@
     this.fxRng = BJ.Levels.campaignRng(this.seed, this.difficulty, level, 'fx');
     this.bigBombRng = BJ.Levels.campaignRng(this.seed, this.difficulty, level, 'big-bomb-spawn');
     this.levelElapsed = 0;
-    this.frenzyCounts = { invaders: 0, fps: 0, pinball: 0, asteroids: 0, missile: 0, revenge: 0, tenpin: 0, bomber: 0 };
+    this.frenzyCounts = { invaders: 0, fps: 0, pinball: 0, asteroids: 0, missile: 0, revenge: 0, gridrunner: 0 };
     this.frenzyTotalThisLevel = 0;
     this.frenzyMode = null;
     this.frenzyRemaining = 0;
@@ -245,7 +245,8 @@
 
     if (this.state === BJ.State.LEVEL_COMPLETE) {
       this.intermissionRemaining -= dt;
-      if (this.actionPressed() || this.intermissionRemaining <= 0) this.advanceLevel();
+      if (this.intermissionPhase === 'hold' && this.intermissionRemaining <= 0) { this.intermissionPhase = 'prompt'; this.intermissionRemaining = C.levelTransitions.nextPromptSeconds; }
+      else if (this.intermissionPhase === 'prompt' && (this.actionPressed() || this.intermissionRemaining <= 0)) this.advanceLevel();
       return;
     }
 
@@ -277,8 +278,7 @@
         else if (this.frenzyMode === 'asteroids') this.updateAsteroidsInput(dt);
         else if (this.frenzyMode === 'missile') this.updateMissileInput(dt);
         else if (this.frenzyMode === 'revenge') this.updateRevengeInput(dt);
-        else if (this.frenzyMode === 'tenpin') this.updateTenPinInput(dt);
-        else if (this.frenzyMode === 'bomber') this.updateBomberInput(dt);
+        else if (this.frenzyMode === 'gridrunner') this.updateGridRunnerInput(dt);
       }
       this.updateFrenzyState(dt);
       this.updateEnemyShots(dt);
@@ -624,7 +624,7 @@
     const frenzyTypeToMode = {
       space_invaders_frenzy: 'invaders', fps_frenzy: 'fps', pinball_frenzy: 'pinball',
       asteroids_frenzy: 'asteroids', missile_command_frenzy: 'missile', arkanoid_revenge_frenzy: 'revenge',
-      ten_pin_frenzy: 'tenpin', bomber_frenzy: 'bomber'
+      grid_runner_frenzy: 'gridrunner'
     };
     if (frenzyTypeToMode[type]) {
       const mode = frenzyTypeToMode[type];
@@ -653,7 +653,7 @@
     const frenzyPowerups = {
       space_invaders_frenzy: 'invaders', fps_frenzy: 'fps', pinball_frenzy: 'pinball',
       asteroids_frenzy: 'asteroids', missile_command_frenzy: 'missile', arkanoid_revenge_frenzy: 'revenge',
-      ten_pin_frenzy: 'tenpin', bomber_frenzy: 'bomber'
+      grid_runner_frenzy: 'gridrunner'
     };
     if (frenzyPowerups[type]) { this.startFrenzy(frenzyPowerups[type]); return; }
 
@@ -782,6 +782,8 @@
   };
 
   Game.prototype.normalizeFrenzyMode = function (mode) {
+    const raw = String(mode || '').toLowerCase();
+    if (['tenpin','ten_pin','ten_pin_frenzy','bowling','bomber','bomber_frenzy'].indexOf(raw) >= 0) return null;
     const aliases = {
       invaders: 'invaders', space_invaders: 'invaders', space_invaders_frenzy: 'invaders',
       fps: 'fps', fps_frenzy: 'fps',
@@ -789,14 +791,14 @@
       asteroids: 'asteroids', asteroids_frenzy: 'asteroids',
       missile: 'missile', missile_command: 'missile', missile_command_frenzy: 'missile',
       revenge: 'revenge', arkanoid_revenge: 'revenge', arkanoid_revenge_frenzy: 'revenge',
-      tenpin: 'tenpin', ten_pin: 'tenpin', ten_pin_frenzy: 'tenpin', bowling: 'tenpin',
-      bomber: 'bomber', bomber_frenzy: 'bomber'
+      gridrunner: 'gridrunner', grid_runner: 'gridrunner', grid_runner_frenzy: 'gridrunner'
     };
-    return aliases[String(mode || '').toLowerCase()] || 'invaders';
+    return aliases[raw] || 'invaders';
   };
 
   Game.prototype.startFrenzy = function (requestedMode) {
     const mode = this.normalizeFrenzyMode(requestedMode);
+    if (!mode) return false;
     if (this.isFrenzyState() || !this.levelData || this.levelData.boss) return false;
     if ((this.frenzyCounts[mode] || 0) >= (C.frenzy.maxPerLevelByType[mode] || 1)) return false;
     if (this.frenzyTotalThisLevel >= C.frenzy.maxTotalPerLevel) return false;
@@ -859,7 +861,7 @@
       invaders: 'SPACE INVADERS FRENZY!', fps: 'FPS FRENZY: DOWN THE BARREL!',
       pinball: 'PINBALL FRENZY!', asteroids: 'ASTEROIDS FRENZY!',
       missile: 'MISSILE COMMAND FRENZY!', revenge: 'ARKANOID REVENGE!',
-      tenpin: '10-PIN FRENZY!', bomber: 'BOMBER FRENZY!'
+      gridrunner: 'GRID RUNNER FRENZY!'
     };
     this.showMessage(labels[mode], 2.3);
     this.autosave('frenzy_start');
@@ -974,42 +976,28 @@
       return;
     }
 
-    if (mode === 'tenpin') {
-      const cfg = C.frenzy.tenpin;
-      const required = participants.filter(function (b) { return b.type !== 'indestructible'; });
-      const indestructible = participants.filter(function (b) { return b.type === 'indestructible'; });
-      const active = required.concat(indestructible).slice(0, 10);
-      const pinLayout = [
-        [0,0.78],[-0.34,0.84],[0.34,0.84],[-0.68,0.90],[0,0.90],[0.68,0.90],
-        [-1.02,0.97],[-0.34,0.97],[0.34,0.97],[1.02,0.97]
-      ];
-      this.frenzyGame = { type: 'tenpin', activeIds: active.map(function (b) { return b.id; }), attemptsUsed: 0,
-        maxAttempts: U.clamp(Math.round(cfg.attempts), 2, 3), ball: null, aim: 0, power: 0, charging: false,
-        wasActionDown: false, resetDelay: 0, bowlStartAlive: active.length, result: '' };
-      participants.forEach((function (brick) {
-        const index = active.indexOf(brick);
-        brick.frenzyMeta.activePin = index >= 0;
-        if (index < 0) return;
-        const pos = pinLayout[index];
-        brick.frenzyMeta.pinX = pos[0]; brick.frenzyMeta.pinZ = pos[1]; brick.frenzyMeta.pinFallen = false;
-        const projected = this.projectTenPinPoint(pos[0], pos[1]);
-        brick.frenzyMeta.transitionEnd = { x: projected.x - 14, y: projected.y - 32, w: 28, h: 58 };
-      }).bind(this));
-      return;
-    }
 
-    if (mode === 'bomber') {
-      const cfg = C.frenzy.bomber;
-      this.frenzyGame = { type: 'bomber', player: { x: C.playfield.width / 2 - cfg.playerWidth / 2, y: 590,
-        w: cfg.playerWidth, h: cfg.playerHeight, vx: 0, vy: 0 }, shots: [], enemyShots: [], fireCooldown: 0, enemyFireCooldown: 0.6 };
-      participants.forEach((function (brick, index) {
-        const r = BJ.Levels.campaignRng(this.seed, this.difficulty, this.level, 'bomber|' + brick.id);
-        brick.frenzyMeta.aircraftType = (brick.type === 'moving' || brick.type === 'multi_hit' || r() > 0.58) ? 'fighter' : 'biplane';
-        brick.frenzyMeta.baseX = 70 + (index % 8) * 112;
-        brick.frenzyMeta.baseY = 100 + Math.floor(index / 8) * 58;
-        brick.frenzyMeta.phase = r() * Math.PI * 2;
-        brick.frenzyMeta.transitionEnd = { x: brick.frenzyMeta.baseX, y: brick.frenzyMeta.baseY, w: 56, h: 32 };
-      }).bind(this));
+    if (mode === 'gridrunner') {
+      const cfg = C.frenzy.gridrunner;
+      const cols = Math.floor(C.playfield.width / cfg.cellSize);
+      const rows = Math.floor((C.playfield.height - 72) / cfg.cellSize);
+      const originY = 60;
+      const occupied = Object.create(null);
+      function key(x, y) { return x + ',' + y; }
+      participants.forEach(function (brick, index) {
+        const rr = BJ.Levels.campaignRng(this.seed, this.difficulty, this.level, 'gridrunner|' + brick.id);
+        let gx, gy, tries = 0;
+        do { gx = rr.int(2, cols - 3); gy = rr.int(2, rows - 3); tries += 1; } while (occupied[key(gx, gy)] && tries < 200);
+        occupied[key(gx, gy)] = true;
+        brick.frenzyMeta.gridX = gx; brick.frenzyMeta.gridY = gy;
+        brick.frenzyMeta.gridBlocker = brick.type === 'indestructible';
+        brick.frenzyMeta.transitionEnd = { x: gx * cfg.cellSize + 3, y: originY + gy * cfg.cellSize + 3, w: cfg.cellSize - 6, h: cfg.cellSize - 6 };
+      }, this);
+      let sx = Math.floor(cols / 2), sy = rows - 2;
+      while (occupied[key(sx, sy)] && sy > 1) sy -= 1;
+      this.frenzyGame = { type: 'gridrunner', cols: cols, rows: rows, originY: originY,
+        x: sx, y: sy, dir: 0, queuedTurn: 0, accumulator: 0, trail: Object.create(null),
+        boostRemaining: 0, boostCooldown: 0 };
       return;
     }
   };
@@ -1068,8 +1056,7 @@
     else if (this.frenzyMode === 'asteroids') this.updateAsteroidsFrenzy(dt);
     else if (this.frenzyMode === 'missile') this.updateMissileFrenzy(dt);
     else if (this.frenzyMode === 'revenge') this.updateRevengeFrenzy(dt);
-    else if (this.frenzyMode === 'tenpin') this.updateTenPinFrenzy(dt);
-    else if (this.frenzyMode === 'bomber') this.updateBomberFrenzy(dt);
+    else if (this.frenzyMode === 'gridrunner') this.updateGridRunnerFrenzy(dt);
     if (this.frenzyRemaining <= 0 && this.state === BJ.State.FRENZY_ACTIVE) this.beginFrenzyExit('timeout');
   };
 
@@ -1715,138 +1702,49 @@
     if (!this.countAliveBricks()) { this.score += C.scoring.revengeFrenzyClearBonus; this.finishFrenzyClear(); this.completeLevel(true); }
   };
 
-  Game.prototype.projectTenPinPoint = function (worldX, z) {
-    const cfg = C.frenzy.tenpin;
-    const zz = U.clamp(z, 0, 1.12);
-    const perspective = U.lerp(1.18, 0.48, U.clamp(zz, 0, 1));
-    return { x: C.playfield.width / 2 + worldX * 105 * perspective, y: U.lerp(cfg.laneNearY, cfg.laneFarY, U.clamp(zz, 0, 1)) };
-  };
 
-  Game.prototype.updateTenPinInput = function (dt) {
-    const g = this.frenzyGame, cfg = C.frenzy.tenpin;
-    if (!g || g.type !== 'tenpin' || g.ball || g.resetDelay > 0) return;
-    let aimInput = 0;
-    if (this.attract) aimInput = Math.sin(this.elapsed * 1.6) > 0 ? 0.35 : -0.25;
-    else if (this.input && this.input.isCodeDown) aimInput = ((this.input.isCodeDown('ArrowRight') || this.input.isCodeDown('KeyD')) ? 1 : 0) - ((this.input.isCodeDown('ArrowLeft') || this.input.isCodeDown('KeyA')) ? 1 : 0);
-    g.aim = U.clamp(g.aim + aimInput * cfg.aimRate * dt, -cfg.maxAim, cfg.maxAim);
-    const pointer = this.input && this.input.getPointer ? this.input.getPointer() : null;
-    if (!this.attract && pointer && pointer.inside) g.aim = U.clamp((pointer.x - C.playfield.width / 2) / 330, -1, 1);
-    const down = this.attract ? (this.stateElapsed % 2.2 < 1.0) : this.actionDown();
-    if (down) { g.charging = true; g.power = U.clamp(g.power + dt * 0.85, 0.20, 1); }
-    if (!down && g.wasActionDown && g.charging) this.launchTenPinBall();
-    g.wasActionDown = down;
-  };
-
-  Game.prototype.launchTenPinBall = function () {
-    const g = this.frenzyGame, cfg = C.frenzy.tenpin;
-    if (!g || g.ball || g.attemptsUsed >= g.maxAttempts) return false;
-    g.attemptsUsed += 1; g.bowlStartAlive = this.getTenPinActiveBricks().filter(function (b) { return b.alive; }).length;
-    const power = U.clamp(g.power || 0.58, 0.20, 1);
-    g.ball = { x: 0, z: 0, vx: g.aim * (0.34 + power * 0.18), speed: U.lerp(cfg.ballSpeedMin, cfg.ballSpeedMax, power), power: power,
-      hook: -g.aim * cfg.maxHook * (0.35 + power * 0.65), hitIds: Object.create(null) };
-    g.power = 0; g.charging = false;
-    this.audio.play('bowling_roll'); return true;
-  };
-
-  Game.prototype.getTenPinActiveBricks = function () {
-    return this.levelData.bricks.filter(function (b) { return b.frenzyMeta && b.frenzyMeta.activePin; });
-  };
-
-  Game.prototype.updateTenPinFrenzy = function (dt) {
-    const g = this.frenzyGame, cfg = C.frenzy.tenpin; if (!g) return;
-    if (g.resetDelay > 0) { g.resetDelay -= dt; return; }
-    const ball = g.ball; if (!ball) return;
-    ball.z += ball.speed * dt; ball.vx += ball.hook * dt; ball.x += ball.vx * dt;
-    const pins = this.getTenPinActiveBricks();
-    for (let i = 0; i < pins.length; i += 1) {
-      const brick = pins[i]; if (!brick.alive || ball.hitIds[brick.id]) continue;
-      const m = brick.frenzyMeta; const dz = Math.abs(ball.z - m.pinZ); const reach = cfg.collisionRadius + ball.power * cfg.powerCollisionBonus;
-      if (dz < 0.055 && Math.abs(ball.x - m.pinX) < reach) {
-        ball.hitIds[brick.id] = true; this.damageBrick(brick, 1, { source: 'tenpin-ball', frenzy: true }); this.spawnParticles(brick.x + brick.w/2, brick.y + brick.h/2, 8);
-        m.pinFallen = true; ball.vx += (ball.x - m.pinX) * 0.12; ball.speed *= 0.94;
-        // Arcade pin-to-pin carry: sufficiently powerful direct contacts can topple immediate neighbours.
-        if (ball.power > 0.55) pins.forEach((function (other) {
-          if (!other.alive || other === brick || ball.hitIds[other.id]) return;
-          const om = other.frenzyMeta; const d = Math.hypot(om.pinX - m.pinX, (om.pinZ - m.pinZ) * 5.0);
-          if (d < 0.48 + ball.power * 0.22) { ball.hitIds[other.id] = true; om.pinFallen = true; this.damageBrick(other, 1, { source: 'tenpin-chain', frenzy: true }); }
-        }).bind(this));
+  Game.prototype.updateGridRunnerInput = function () {
+    const g = this.frenzyGame; if (!g || g.type !== 'gridrunner' || this.attract) return;
+    if (this.input && this.input.wasPressed) {
+      if (this.input.wasPressed('left')) g.queuedTurn = -1;
+      else if (this.input.wasPressed('right')) g.queuedTurn = 1;
+      if (this.input.wasPressed('action') && g.boostCooldown <= 0) {
+        g.boostRemaining = C.frenzy.gridrunner.boostSeconds;
+        g.boostCooldown = C.frenzy.gridrunner.boostCooldownSeconds;
       }
     }
-    if (ball.z >= 1.12 || Math.abs(ball.x) > 2.0) {
-      const alive = pins.filter(function (b) { return b.alive; }).length; g.ball = null;
-      if (alive === 0) {
-        const first = g.attemptsUsed === 1; this.score += first ? C.scoring.tenPinStrikeBonus : C.scoring.tenPinSpareBonus;
-        this.showMessage(first ? 'STRIKE!' : 'SPARE!', 1.8);
-        if (this.countRequiredAliveBricks() === 0) { this.score += C.scoring.tenPinFrenzyClearBonus; this.finishFrenzyClear(); this.completeLevel(true); return; }
-        this.beginFrenzyExit('pins_cleared'); return;
-      }
-      if (g.attemptsUsed >= g.maxAttempts) { this.beginFrenzyExit('attempts'); return; }
-      g.resetDelay = cfg.resetDelay; g.power = 0; g.charging = false; g.wasActionDown = false;
-      pins.forEach(function (b) { if (b.alive && b.frenzyMeta) b.frenzyMeta.pinFallen = false; });
+  };
+
+  Game.prototype.updateGridRunnerFrenzy = function (dt) {
+    const g = this.frenzyGame, cfg = C.frenzy.gridrunner; if (!g) return;
+    if (this.attract && !g.queuedTurn && this.rng() < 0.035) g.queuedTurn = this.rng() < 0.5 ? -1 : 1;
+    g.boostRemaining = Math.max(0, g.boostRemaining - dt); g.boostCooldown = Math.max(0, g.boostCooldown - dt);
+    g.accumulator += dt * (g.boostRemaining > 0 ? cfg.boostMultiplier : 1);
+    while (g.accumulator >= cfg.stepSeconds && this.state === BJ.State.FRENZY_ACTIVE) {
+      g.accumulator -= cfg.stepSeconds;
+      if (g.queuedTurn) { g.dir = (g.dir + g.queuedTurn + 4) % 4; g.queuedTurn = 0; }
+      g.trail[g.x + ',' + g.y] = true;
+      const dx = [0,1,0,-1][g.dir], dy = [-1,0,1,0][g.dir];
+      const nx = g.x + dx, ny = g.y + dy, k = nx + ',' + ny;
+      if (nx < 0 || nx >= g.cols || ny < 0 || ny >= g.rows || g.trail[k]) { this.onFrenzyPlayerHit(); return; }
+      const blocker = this.levelData.bricks.find(function (b) { return b.alive && b.frenzyMeta && b.frenzyMeta.gridX === nx && b.frenzyMeta.gridY === ny && b.frenzyMeta.gridBlocker; });
+      if (blocker) { this.onFrenzyPlayerHit(); return; }
+      g.x = nx; g.y = ny;
+      const hit = this.levelData.bricks.find(function (b) { return b.alive && b.frenzyMeta && !b.frenzyMeta.gridBlocker && b.frenzyMeta.gridX === nx && b.frenzyMeta.gridY === ny; });
+      if (hit) { this.damageBrick(hit, 1, { source: 'gridrunner-node', frenzy: true }); this.spawnParticles(hit.x + hit.w/2, hit.y + hit.h/2, 8); }
+      if (!BJ.Levels.countRequired(this.levelData.bricks)) { this.score += cfg.fullClearBonus; this.showMessage('GRID CLEARED!',1.8); this.finishFrenzyClear(); this.completeLevel(true); return; }
     }
   };
 
-  Game.prototype.updateBomberInput = function (dt) {
-    const g = this.frenzyGame, cfg = C.frenzy.bomber; if (!g || g.type !== 'bomber') return;
-    const p = g.player; let ix = 0, iy = 0;
-    if (this.attract) { ix = Math.sin(this.elapsed * 1.4); iy = Math.sin(this.elapsed * 0.9) * 0.35; }
-    else if (this.input && this.input.isCodeDown) {
-      ix = ((this.input.isCodeDown('ArrowRight') || this.input.isCodeDown('KeyD')) ? 1 : 0) - ((this.input.isCodeDown('ArrowLeft') || this.input.isCodeDown('KeyA')) ? 1 : 0);
-      iy = ((this.input.isCodeDown('ArrowDown') || this.input.isCodeDown('KeyS')) ? 1 : 0) - ((this.input.isCodeDown('ArrowUp') || this.input.isCodeDown('KeyW')) ? 1 : 0);
-    }
-    p.vx += ix * cfg.playerAcceleration * dt; p.vy += iy * cfg.playerAcceleration * dt;
-    if (!ix) p.vx *= Math.max(0, 1 - cfg.drag * dt); if (!iy) p.vy *= Math.max(0, 1 - cfg.drag * dt);
-    p.vx = U.clamp(p.vx, -cfg.playerSpeed, cfg.playerSpeed); p.vy = U.clamp(p.vy, -cfg.playerSpeed, cfg.playerSpeed);
-    p.x = U.clamp(p.x + p.vx * dt, 8, C.playfield.width - p.w - 8); p.y = U.clamp(p.y + p.vy * dt, C.playfield.height * 0.35, C.playfield.height - p.h - 18);
-    g.fireCooldown = Math.max(0, g.fireCooldown - dt);
-    if ((this.actionDown() || this.attract) && g.fireCooldown <= 0) { g.shots.push({ x:p.x+p.w/2, y:p.y-4, vy:-cfg.shotSpeed, r:3 }); g.fireCooldown=1/cfg.fireRate; this.audio.play('laser'); }
+  Game.prototype.drawGridRunnerEnvironment = function (ctx) {
+    const g=this.frenzyGame,cfg=C.frenzy.gridrunner;if(!g)return;ctx.save();ctx.fillStyle='rgba(2,8,20,.76)';ctx.fillRect(0,54,C.playfield.width,C.playfield.height-54);ctx.strokeStyle='rgba(77,232,255,.18)';ctx.lineWidth=1;
+    for(let x=0;x<=g.cols;x++){ctx.beginPath();ctx.moveTo(x*cfg.cellSize,g.originY);ctx.lineTo(x*cfg.cellSize,g.originY+g.rows*cfg.cellSize);ctx.stroke();}
+    for(let y=0;y<=g.rows;y++){ctx.beginPath();ctx.moveTo(0,g.originY+y*cfg.cellSize);ctx.lineTo(g.cols*cfg.cellSize,g.originY+y*cfg.cellSize);ctx.stroke();}ctx.restore();
   };
 
-  Game.prototype.updateBomberFrenzy = function (dt) {
-    const g = this.frenzyGame, cfg = C.frenzy.bomber; if (!g) return;
-    const alive = this.levelData.bricks.filter(function (b) { return b.alive; });
-    alive.forEach((function (brick) { const m=brick.frenzyMeta; if(!m)return; m.phase += dt*(m.aircraftType==='fighter'?2.2:1.35); const amp=m.aircraftType==='fighter'?cfg.enemyDrift*1.35:cfg.enemyDrift; brick.x=U.clamp(m.baseX+Math.sin(m.phase)*amp,18,C.playfield.width-brick.w-18); brick.y=m.baseY+(m.aircraftType==='fighter'?Math.sin(m.phase*0.7)*22:Math.sin(m.phase*0.45)*10); }).bind(this));
-    for (let i=g.shots.length-1;i>=0;i-=1){const sh=g.shots[i];sh.y+=sh.vy*dt;if(sh.y<45){g.shots.splice(i,1);continue;}const hit=alive.find(function(b){return b.alive && sh.x>=b.x&&sh.x<=b.x+b.w&&sh.y>=b.y&&sh.y<=b.y+b.h;});if(hit){this.damageBrick(hit,1,{source:'bomber-shot',frenzy:true});this.spawnParticles(sh.x,sh.y,6);g.shots.splice(i,1);}}
-    g.enemyFireCooldown-=dt;
-    if(g.enemyFireCooldown<=0&&alive.length){const shooter=alive[Math.floor(this.rng()*alive.length)];g.enemyShots.push({x:shooter.x+shooter.w/2,y:shooter.y+shooter.h,vx:(this.rng()-0.5)*55,vy:cfg.enemyShotSpeed,r:4});const ratio=alive.length/Math.max(1,this.frenzyInitialCount);g.enemyFireCooldown=cfg.enemyFireInterval*U.lerp(0.58,1.25,ratio);this.audio.play('invader_fire');}
-    for(let i=g.enemyShots.length-1;i>=0;i-=1){const sh=g.enemyShots[i];sh.x+=sh.vx*dt;sh.y+=sh.vy*dt;if(sh.y>C.playfield.height+10){g.enemyShots.splice(i,1);continue;}const p=g.player;if(sh.x>=p.x&&sh.x<=p.x+p.w&&sh.y>=p.y&&sh.y<=p.y+p.h){g.enemyShots.splice(i,1);if(!this.debugInvulnerable){this.beginFrenzyExit('hit');return;}}}
-    if(!this.debugInvulnerable){const p=g.player;const crash=alive.find(function(b){return P.rectRect(p,b);});if(crash){this.beginFrenzyExit('collision');return;}}
-    this.updateFrenzyRegeneration(dt);
-    if(!this.countAliveBricks()){this.score+=C.scoring.bomberFrenzyClearBonus;this.showMessage('AIR SUPERIORITY!',1.8);this.finishFrenzyClear();this.completeLevel(true);}
-  };
-
-  Game.prototype.drawTenPinEnvironment = function (ctx) {
-    const cfg=C.frenzy.tenpin; ctx.save(); ctx.fillStyle='rgba(40,22,8,.72)';ctx.fillRect(0,54,C.playfield.width,C.playfield.height-54);
-    const vx=C.playfield.width/2, hy=cfg.laneFarY; ctx.fillStyle='#c99b58';ctx.beginPath();ctx.moveTo(120,cfg.laneNearY);ctx.lineTo(vx-155,hy);ctx.lineTo(vx+155,hy);ctx.lineTo(C.playfield.width-120,cfg.laneNearY);ctx.closePath();ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;[-1,-.5,0,.5,1].forEach(function(k){ctx.beginPath();ctx.moveTo(vx+k*330,cfg.laneNearY);ctx.lineTo(vx+k*125,hy);ctx.stroke();});
-    for(let i=0;i<6;i++){const t=i/5;const y=U.lerp(cfg.laneNearY,hy,t*t);ctx.beginPath();ctx.moveTo(U.lerp(120,vx-155,t),y);ctx.lineTo(U.lerp(C.playfield.width-120,vx+155,t),y);ctx.stroke();}ctx.restore();
-  };
-
-  Game.prototype.drawTenPinBrick = function (ctx, brick) {
-    const m=brick.frenzyMeta;if(!m||!m.activePin)return; const p=this.projectTenPinPoint(m.pinX,m.pinZ); const scale=U.lerp(C.frenzy.tenpin.pinScaleNear,C.frenzy.tenpin.pinScaleFar,m.pinZ); const lean=m.pinFallen?0.75:0;
-    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(lean);ctx.scale(scale,scale);ctx.fillStyle=brick.type==='indestructible'?'#c6d6e6':'#f7f1dd';ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.shadowBlur=10;ctx.shadowColor='#ffffff';
-    ctx.beginPath();ctx.moveTo(-6,-31);ctx.bezierCurveTo(-15,-21,-14,-7,-20,12);ctx.bezierCurveTo(-22,28,-10,34,0,34);ctx.bezierCurveTo(10,34,22,28,20,12);ctx.bezierCurveTo(14,-7,15,-21,6,-31);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#d94b4b';ctx.fillRect(-11,-15,22,5);ctx.fillRect(-10,-8,20,4);ctx.restore();
-  };
-
-  Game.prototype.drawTenPinEntities = function (ctx) {
-    const g=this.frenzyGame;if(!g)return;ctx.save();ctx.textAlign='center';ctx.font='bold 15px monospace';ctx.fillStyle='#ffe85f';ctx.fillText('BOWL '+Math.min(g.attemptsUsed+1,g.maxAttempts)+' / '+g.maxAttempts,480,92);
-    if(!g.ball){const x=480+g.aim*250;ctx.fillStyle='rgba(255,232,95,.28)';ctx.fillRect(x-2,120,4,500);ctx.fillStyle='#d8d8df';ctx.beginPath();ctx.arc(480,622,24,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(472,612,3,0,Math.PI*2);ctx.arc(481,608,3,0,Math.PI*2);ctx.arc(487,616,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7dff8a';ctx.fillRect(330,665,300*U.clamp(g.power,0,1),10);}
-    else{const p=this.projectTenPinPoint(g.ball.x,g.ball.z);const sc=U.lerp(1.25,.45,U.clamp(g.ball.z,0,1));ctx.fillStyle='#d8d8df';ctx.shadowBlur=15;ctx.shadowColor='#fff';ctx.beginPath();ctx.arc(p.x,p.y,22*sc,0,Math.PI*2);ctx.fill();}
-    ctx.restore();
-  };
-
-  Game.prototype.drawBomberEnvironment = function (ctx) {
-    ctx.save();ctx.fillStyle='rgba(8,40,45,.52)';ctx.fillRect(0,54,C.playfield.width,C.playfield.height-54);ctx.strokeStyle='rgba(190,240,255,.13)';ctx.lineWidth=22;for(let i=0;i<7;i++){const y=((i*137+this.elapsed*80)%760)-20;ctx.beginPath();ctx.moveTo((i*181)%900,y);ctx.lineTo(((i*181)%900)+90,y+18);ctx.stroke();}ctx.restore();
-  };
-
-  Game.prototype.drawBomberBrick = function (ctx, brick) {
-    const m=brick.frenzyMeta;if(!m)return;const fighter=m.aircraftType==='fighter';ctx.save();ctx.translate(brick.x+brick.w/2,brick.y+brick.h/2);ctx.fillStyle=BJ.Colour[brick.type]||'#ffcf72';ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.shadowBlur=9;ctx.shadowColor=ctx.fillStyle;
-    ctx.beginPath();ctx.moveTo(0,-brick.h*.58);ctx.lineTo(fighter?9:6,-3);ctx.lineTo(brick.w*.48,6);ctx.lineTo(brick.w*.46,13);ctx.lineTo(8,9);ctx.lineTo(5,brick.h*.52);ctx.lineTo(-5,brick.h*.52);ctx.lineTo(-8,9);ctx.lineTo(-brick.w*.46,13);ctx.lineTo(-brick.w*.48,6);ctx.lineTo(fighter?-9:-6,-3);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-  };
-
-  Game.prototype.drawBomberEntities = function (ctx) {
-    const g=this.frenzyGame;if(!g)return;const p=g.player;ctx.save();ctx.translate(p.x+p.w/2,p.y+p.h/2);ctx.fillStyle='#7dff8a';ctx.strokeStyle='#fff';ctx.shadowBlur=12;ctx.shadowColor='#7dff8a';ctx.beginPath();ctx.moveTo(0,-24);ctx.lineTo(9,-5);ctx.lineTo(25,6);ctx.lineTo(24,13);ctx.lineTo(7,9);ctx.lineTo(5,21);ctx.lineTo(-5,21);ctx.lineTo(-7,9);ctx.lineTo(-24,13);ctx.lineTo(-25,6);ctx.lineTo(-9,-5);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-    ctx.save();ctx.fillStyle='#ffe85f';g.shots.forEach(function(sh){ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#ff6573';g.enemyShots.forEach(function(sh){ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.fill();});ctx.restore();
+  Game.prototype.drawGridRunnerEntities = function (ctx) {
+    const g=this.frenzyGame,cfg=C.frenzy.gridrunner;if(!g)return;ctx.save();ctx.fillStyle='rgba(255,92,168,.55)';Object.keys(g.trail).forEach(function(k){const a=k.split(',');ctx.fillRect(+a[0]*cfg.cellSize+7,g.originY+(+a[1])*cfg.cellSize+7,cfg.cellSize-14,cfg.cellSize-14);});
+    const cx=g.x*cfg.cellSize+cfg.cellSize/2,cy=g.originY+g.y*cfg.cellSize+cfg.cellSize/2;ctx.translate(cx,cy);ctx.rotate(g.dir*Math.PI/2);ctx.fillStyle='#ffe85f';ctx.shadowBlur=14;ctx.shadowColor='#ffe85f';ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(8,8);ctx.lineTo(0,5);ctx.lineTo(-8,8);ctx.closePath();ctx.fill();ctx.restore();
   };
 
   Game.prototype.updateFrenzyRegeneration = function () {
@@ -1904,7 +1802,7 @@
     this.audio.play('frenzy_transform');
     this.addShake(8);
     if (reason === 'hit' || reason === 'drain' || reason === 'collision' || reason === 'base_hit' || reason === 'miss') {
-      const messages = { fps: 'FPS FRENZY: TAKE COVER!', invaders: 'FRENZY CANCELLED. ALIENS: 1, YOU: 0.', pinball: 'PINBALL DRAINED.', asteroids: 'SHIP HIT. ASTEROIDS WIN THIS ROUND.', missile: 'BASE HIT. DEFENCE COLLAPSED.', revenge: 'REVENGE SERVED COLD.', tenpin: 'GUTTER BALL. PINS UNIMPRESSED.', bomber: 'BOMBER DOWN. BRICKS CLAIM AIRSPACE.' };
+      const messages = { fps: 'FPS FRENZY: TAKE COVER!', invaders: 'FRENZY CANCELLED. ALIENS: 1, YOU: 0.', pinball: 'PINBALL DRAINED.', asteroids: 'SHIP HIT. ASTEROIDS WIN THIS ROUND.', missile: 'BASE HIT. DEFENCE COLLAPSED.', revenge: 'REVENGE SERVED COLD.', gridrunner: 'GRID COLLISION. ROUTE TERMINATED.' };
       this.showMessage(messages[this.frenzyMode] || 'FRENZY INTERRUPTED.', 1.8);
     } else if (reason === 'timeout') this.showMessage('FRENZY OVER. THE BRICKS HAVE LAWYERED UP.', 1.8);
   };
@@ -2262,7 +2160,8 @@
     const bonus = this.calculateLevelBonus();
     this.score += bonus.total;
     this.audio.play('level_complete');
-    this.intermissionRemaining = 4;
+    this.intermissionPhase = 'hold';
+    this.intermissionRemaining = C.levelTransitions.completeHoldSeconds;
     this.finalAssault.active = false;
     this.setState(BJ.State.LEVEL_COMPLETE, { bonus });
     this.autosave('level_completion');
@@ -2429,8 +2328,7 @@
     const h = C.playfield.height;
     const fpsView = this.isFrenzyState() && this.frenzyMode === 'fps';
     const missileView = this.isFrenzyState() && this.frenzyMode === 'missile';
-    const tenPinView = this.isFrenzyState() && this.frenzyMode === 'tenpin';
-    this.canvas.style.cursor = (fpsView || missileView || tenPinView) ? 'none' : '';
+    this.canvas.style.cursor = (fpsView || missileView) ? 'none' : '';
 
     ctx.save();
     ctx.clearRect(0, 0, w, h);
@@ -2533,10 +2431,8 @@
       ctx.strokeStyle = 'rgba(114,255,159,0.14)'; ctx.lineWidth = 1;
       for (let x = 0; x < C.playfield.width; x += 64) { ctx.beginPath(); ctx.moveTo(x, 54); ctx.lineTo(x, C.playfield.height); ctx.stroke(); }
       for (let y = 86; y < C.playfield.height; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(C.playfield.width, y); ctx.stroke(); }
-    } else if (this.frenzyMode === 'tenpin') {
-      this.drawTenPinEnvironment(ctx);
-    } else if (this.frenzyMode === 'bomber') {
-      this.drawBomberEnvironment(ctx);
+    } else if (this.frenzyMode === 'gridrunner') {
+      this.drawGridRunnerEnvironment(ctx);
     } else if (this.frenzyMode === 'revenge') {
       ctx.fillStyle = 'rgba(75,18,35,0.13)'; ctx.fillRect(0, 54, C.playfield.width, C.playfield.height - 54);
       ctx.setLineDash([9, 10]); ctx.strokeStyle = 'rgba(255,92,168,0.22)';
@@ -2551,8 +2447,7 @@
     else if (this.frenzyMode === 'asteroids') this.drawAsteroidsEntities(ctx);
     else if (this.frenzyMode === 'missile') this.drawMissileEntities(ctx);
     else if (this.frenzyMode === 'revenge') this.drawRevengeEntities(ctx);
-    else if (this.frenzyMode === 'tenpin') this.drawTenPinEntities(ctx);
-    else if (this.frenzyMode === 'bomber') this.drawBomberEntities(ctx);
+    else if (this.frenzyMode === 'gridrunner') this.drawGridRunnerEntities(ctx);
   };
 
   Game.prototype.drawPinballEntities = function (ctx) {
@@ -2684,8 +2579,6 @@
   Game.prototype.drawBrick = function (ctx, brick, invader) {
     if (this.isFrenzyState() && this.frenzyMode === 'fps' && brick.frenzyMeta) { this.drawFpsBrick(ctx, brick); return; }
     if (this.isFrenzyState() && this.frenzyMode === 'asteroids' && brick.frenzyMeta && this.state === BJ.State.FRENZY_ACTIVE) { this.drawAsteroidBrick(ctx, brick); return; }
-    if (this.isFrenzyState() && this.frenzyMode === 'tenpin' && brick.frenzyMeta) { if (brick.frenzyMeta.activePin) this.drawTenPinBrick(ctx, brick); return; }
-    if (this.isFrenzyState() && this.frenzyMode === 'bomber' && brick.frenzyMeta) { this.drawBomberBrick(ctx, brick); return; }
 
     let alpha = 1;
     if (brick.type === 'invisible') alpha = 0.17 + (Math.sin(this.elapsed * 2.4 + brick.shimmerPhase) + 1) * 0.16;
@@ -3020,7 +2913,7 @@
     ctx.textBaseline = 'middle';
     ctx.font = 'bold 18px monospace';
     ctx.fillStyle = this.frenzyMode === 'fps' || this.frenzyMode === 'missile' ? '#ffe85f' : '#7dff8a';
-    const labels = { invaders: 'INVADERS', fps: 'FPS', pinball: 'PINBALL', asteroids: 'ASTEROIDS', missile: 'MISSILE COMMAND', revenge: 'ARKANOID REVENGE', tenpin: '10-PIN', bomber: 'BOMBER' };
+    const labels = { invaders: 'INVADERS', fps: 'FPS', pinball: 'PINBALL', asteroids: 'ASTEROIDS', missile: 'MISSILE COMMAND', revenge: 'ARKANOID REVENGE', gridrunner: 'GRID RUNNER' };
     ctx.fillText((labels[this.frenzyMode] || 'FRENZY') + '  ' + Math.max(0, this.frenzyRemaining).toFixed(1), C.playfield.width / 2, 58);
     if (this.state === BJ.State.FRENZY_ACTIVE) {
       const help = {
@@ -3029,8 +2922,7 @@
         asteroids: '←/A →/D ROTATE    ↑/W THRUST    SPACE FIRE',
         missile: 'WASD / MOUSE AIM    SPACE / CLICK INTERCEPT',
         revenge: '←/A →/D MOVE TOP PADDLE    RETURN FIRE',
-        tenpin: '←/A →/D OR MOUSE AIM    HOLD SPACE FOR POWER    RELEASE TO BOWL',
-        bomber: 'ARROWS / WASD FLY    SPACE FIRE'
+        gridrunner: 'LEFT / RIGHT TURN 90°    SPACE BOOST'
       };
       if (help[this.frenzyMode]) { ctx.font = 'bold 11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.fillText(help[this.frenzyMode], C.playfield.width / 2, C.playfield.height - 20); }
     }

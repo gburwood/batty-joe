@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.6.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
@@ -557,7 +557,7 @@
   });
 
   test('all six frenzy modes complete transition lifecycle safely', function () {
-    ['invaders', 'fps', 'pinball', 'asteroids', 'missile', 'revenge', 'tenpin', 'bomber'].forEach(function (mode) {
+    ['invaders', 'fps', 'pinball', 'asteroids', 'missile', 'revenge', 'gridrunner'].forEach(function (mode) {
       const game = makeGame({ level: 8, seed: 'MODE-' + mode });
       game.collectPowerup('wide');
       const timer = game.activePowerups.wide.remaining;
@@ -1060,29 +1060,18 @@
     if (error) { const pre = document.createElement('pre'); pre.textContent = error.stack || String(error); div.appendChild(pre); }
     results.appendChild(div);
   }
-  test('v1.5 ten-pin frenzy enters first-person bowling mode with two attempts', function () {
-    const game=makeGame({level:9});enterFrenzy(game,'tenpin');equal(game.frenzyGame.type,'tenpin');equal(game.frenzyGame.maxAttempts,BJ.Config.frenzy.tenpin.attempts);assert(game.paddle.hidden);assert(game.getTenPinActiveBricks().length<=10);exitFrenzy(game,'timeout');
-  });
+  
 
-  test('v1.5 ten-pin bowling ball advances into z axis and can use third attempt config override', function () {
-    const r=BJ.ConfigTools.buildRuntimeConfig(BJ.StaticConfig,'?debug=true&cfg.frenzy.tenPin.attempts=3');equal(r.config.frenzy.tenpin.attempts,3);
-    const game=makeGame({level:9});enterFrenzy(game,'tenpin');game.frenzyGame.power=1;game.frenzyGame.aim=0;assert(game.launchTenPinBall());const z=game.frenzyGame.ball.z;game.updateTenPinFrenzy(.2);assert(game.frenzyGame.ball.z>z,'Bowling ball must travel into depth');
-  });
+  
 
-  test('v1.5 ten-pin strike is detected when first bowl clears active skittles', function () {
-    const game=makeGame({level:9});enterFrenzy(game,'tenpin');const g=game.frenzyGame;g.attemptsUsed=1;game.getTenPinActiveBricks().forEach(function(b){b.alive=false;});g.ball={x:0,z:1.2,vx:0,speed:.8,power:1,hook:0,hitIds:{}};const score=game.score;game.updateTenPinFrenzy(.01);assert(game.score>=score+BJ.Config.scoring.tenPinStrikeBonus,'Strike bonus should apply');
-  });
+  
 
-  test('v1.5 bomber frenzy supports four-direction movement and firing', function () {
-    const game=makeGame({level:9,input:makeInput({codes:{ArrowRight:true,ArrowUp:true},actions:{action:true}})});enterFrenzy(game,'bomber');const p=game.frenzyGame.player;const x=p.x,y=p.y;game.updateBomberInput(.15);assert(p.x>x&&p.y<y,'Bomber should move in both axes');assert(game.frenzyGame.shots.length>0,'Bomber should fire');exitFrenzy(game,'timeout');
-  });
+  
 
-  test('v1.5 bomber player hit terminates frenzy without consuming normal life', function () {
-    const game=makeGame({level:9});enterFrenzy(game,'bomber');const lives=game.lives,p=game.frenzyGame.player;game.frenzyGame.enemyShots.push({x:p.x+p.w/2,y:p.y+p.h/2,vx:0,vy:0,r:4});game.updateBomberFrenzy(.01);equal(game.state,BJ.State.FRENZY_TRANSITION_OUT);equal(game.lives,lives);
-  });
+  
 
   test('v1.5 all eight frenzy aliases normalise correctly', function () {
-    const game=makeGame();['invaders','fps','pinball','asteroids','missile','revenge','tenpin','bomber'].forEach(function(mode){equal(game.normalizeFrenzyMode(mode),mode);});equal(game.normalizeFrenzyMode('ten_pin_frenzy'),'tenpin');equal(game.normalizeFrenzyMode('bomber_frenzy'),'bomber');
+    const game=makeGame();['invaders','fps','pinball','asteroids','missile','revenge','gridrunner'].forEach(function(mode){equal(game.normalizeFrenzyMode(mode),mode);});equal(game.normalizeFrenzyMode('grid_runner_frenzy'),'gridrunner');
   });
 
   function run() {
@@ -1092,3 +1081,22 @@
   }
   global.addEventListener('load', run);
 }(window));
+  test('v1.7 retired frenzy identifiers are unavailable', function () {
+    const game = makeGame({ level: 8 });
+    equal(game.normalizeFrenzyMode('tenpin'), null); equal(game.normalizeFrenzyMode('bomber'), null); assert(!game.startFrenzy('tenpin')); assert(!game.startFrenzy('bomber'));
+    assert(!BJ.Config.powerups.ten_pin_frenzy); assert(!BJ.Config.powerups.bomber_frenzy);
+  });
+
+  test('v1.7 level complete protects celebration hold before next prompt', function () {
+    const game = makeGame({ level: 8 }); game.completeLevel(false);
+    equal(game.intermissionPhase, 'hold'); game.intermissionRemaining = 1; game.input = { wasPressed: function(){ return true; } }; game.update(0.1);
+    equal(game.state, BJ.State.LEVEL_COMPLETE); equal(game.intermissionPhase, 'hold');
+    game.intermissionRemaining = 0.01; game.update(0.02); equal(game.intermissionPhase, 'prompt');
+  });
+
+  test('v1.7 grid runner can start and maps deterministic nodes', function () {
+    const a=makeGame({level:8}), b=makeGame({level:8}); a.startFrenzy('gridrunner'); b.startFrenzy('gridrunner');
+    equal(a.frenzyMode,'gridrunner'); equal(b.frenzyMode,'gridrunner');
+    equal(a.levelData.bricks.map(function(x){return x.frenzyMeta&&[x.frenzyMeta.gridX,x.frenzyMeta.gridY];}).join('|'), b.levelData.bricks.map(function(x){return x.frenzyMeta&&[x.frenzyMeta.gridX,x.frenzyMeta.gridY];}).join('|'));
+  });
+

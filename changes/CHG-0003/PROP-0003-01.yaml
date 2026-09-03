@@ -1,0 +1,126 @@
+id: PROP-0003-01
+change: CHG-0003
+revision: 1
+status: approved
+created_at: '2026-09-03T22:24:00+01:00'
+based_on_impact_analysis:
+- IA-0003-01
+proposed_specification_version: 1.7.0
+behaviour_summary: 'Retire Ten-Pin and Bomber Frenzy completely, split level completion into a protected celebration phase
+  followed by the NEXT LEVEL prompt, and add Grid Runner Frenzy: a deterministic top-down neon grid challenge based on continuous
+  movement, 90-degree steering, trail avoidance and collecting transformed brick-nodes.'
+retired_frenzies:
+  remove:
+  - ten_pin_frenzy / tenpin
+  - bomber_frenzy / bomber
+  remove_from:
+  - powerup types and drops
+  - difficulty-specific frenzy weights
+  - occurrence limits
+  - debug selectors and aliases
+  - controls
+  - scoring
+  - render/update branches
+  - runtime configuration
+  - tests and specification
+  legacy_state_policy: If persistence/debug input contains retired tenpin or bomber mode identifiers, do not instantiate them.
+    Recover to the canonical non-frenzy state/pre-frenzy snapshot where possible and continue safely.
+  drop_probability_policy: Preserve each difficulty's existing aggregate probability of receiving any Frenzy by proportionally
+    redistributing the retired Ten-Pin/Bomber weights across the retained Frenzy roster after Grid Runner is added.
+level_complete_pacing:
+  configuration_path: BattyJoe.Config.levelTransitions
+  completeHoldSeconds: 3.0
+  nextPromptSeconds: 2.0
+  phase_1:
+    name: celebration_hold
+    duration_seconds: 3.0
+    display: LEVEL N COMPLETE and existing completion/bonus information
+    next_level_prompt_visible: false
+    advance_input_enabled: false
+    reason: Let the level ending land visually and audibly before navigation UI appears.
+  phase_2:
+    name: next_level_prompt
+    duration_seconds: 2.0
+    display: Show NEXT LEVEL / countdown control after the protected hold
+    advance_input_enabled: true
+    auto_advance_on_expiry: true
+  final_level_exception: If campaign completion leads to VICTORY, no NEXT LEVEL prompt is shown.
+new_frenzy:
+  id: grid_runner_frenzy
+  runtime_mode: gridrunner
+  label: GRID RUNNER
+  creative_direction: Top-down neon grid, late-1970s/early-1980s vector-arcade energy without copying a named external game.
+  distinct_gameplay_verb: route planning and survival through continuous movement; no shooting
+  transformation:
+    uses_shared_frenzy_framework: true
+    arena: The playfield morphs into a fixed orthogonal neon grid.
+    player: The paddle morphs into a small continuously moving grid-runner/light-bike style craft.
+    destructible_bricks: Each surviving destructible brick maps deterministically to a collectible energy node on the grid.
+      Entering its cell damages/destroys the corresponding canonical brick according to its remaining frenzy damage requirement.
+    indestructible_bricks: Map to solid blocker cells. They are hazards and are not destroyed by Grid Runner contact.
+    trail: Every vacated player cell becomes a persistent trail hazard for the remainder of the Frenzy.
+  controls:
+    left: Turn 90 degrees anticlockwise relative to current direction at the next grid movement step.
+    right: Turn 90 degrees clockwise relative to current direction at the next grid movement step.
+    space: Short speed boost, subject to a cooldown; speed boost does not permit skipping collision checks.
+    no_up_down_required: true
+  movement:
+    continuous: true
+    grid_cell_based: true
+    deterministic: true
+    turning: At most one queued 90-degree turn is consumed per movement step.
+    reverse_turn: Direct 180-degree reversal is impossible because steering is relative left/right.
+    collision_checks: Every traversed cell is checked even during boost.
+  termination:
+    timeout: Normal Frenzy duration expiry
+    failure:
+    - arena boundary
+    - own trail
+    - solid blocker
+    full_clear: Destroying/collecting all required transformed destructible brick-nodes uses the shared full-clear contract.
+  scoring:
+    uses_shared_frenzy_multiplier: true
+    node_collection: Uses canonical brick destruction score through Frenzy multiplier.
+    full_clear_bonus: '10000'
+  configuration:
+    path: BattyJoe.Config.frenzy.gridrunner
+    duration: 20
+    cellSize: 24
+    stepSeconds: 0.12
+    boostMultiplier: 1.75
+    boostSeconds: 0.9
+    boostCooldownSeconds: 3.0
+    fullClearBonus: 10000
+  restoration: Destroyed canonical bricks remain destroyed; surviving bricks restore their pre-frenzy damage state plus valid
+    Grid Runner damage under the shared restoration contract.
+specification_changes:
+- Bump Batty Joe product specification from 1.6.0 to 1.7.0.
+- Remove Ten-Pin Frenzy and Bomber Frenzy definitions, controls, powerups, scoring, config, debug aliases and runtime behaviour.
+- Add retired-Frenzy persistence/debug compatibility behaviour.
+- Split level-complete intermission into a 3-second protected celebration hold and a 2-second NEXT LEVEL prompt phase.
+- Add Grid Runner Frenzy and its controls, deterministic transformation, scoring, termination, restoration and configuration
+  semantics.
+- Preserve aggregate Frenzy drop probability per difficulty while rebalancing the roster.
+artifacts_expected:
+  modify:
+  - batty-joe-dev-spec-v1.7.0.yaml
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe.js
+  - batty-joe-storage.js
+  - batty-joe-audio.js
+  - batty-joe-tests.js
+  - batty-joe-tests.html
+  add: []
+implementation_constraints:
+- Do not leave Ten-Pin or Bomber callable through hidden/debug/runtime paths.
+- Do not silently reinterpret old tenpin/bomber saved state as Grid Runner.
+- Level-complete advance input must be ignored during the protected celebration hold.
+- Grid Runner must use the existing Frenzy transition/restoration framework rather than creating a parallel lifecycle.
+- Grid Runner movement/collision must remain deterministic for the same state and input sequence.
+- No unseeded randomness is permitted in Grid Runner transformation or node placement.
+- Grid Runner is not a shooter; no projectile mechanic is to be introduced.
+- Retain existing total-per-level and per-type Frenzy occurrence caps, adding Grid Runner as a normal member of that framework.
+- Implement the approved specification first; code must not silently become the source of product intent.
+approvals:
+- APR-0003

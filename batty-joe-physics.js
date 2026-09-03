@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.6.0 */
+/* Batty Joe Development Specification v1.7.0 */
 (function (global) {
   'use strict';
 
