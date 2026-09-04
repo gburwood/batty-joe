@@ -1,0 +1,15 @@
+id: APR-0005
+change: CHG-0005
+proposal: PROP-0005-01
+decision: approved
+actor:
+  type: human
+  id: product-owner
+timestamp: '2026-09-04T01:37:47+01:00'
+scope:
+  proposal_blob_sha: e00e67421551645e59c2cfb7dbbc56deb42b5da4
+  proposal_sha256: 57c5cf0531c0dc6f074326a68606ff0705a7e67afa4ef8360adfd84243bca3d5
+  proposed_specification_version: 1.8.0
+mechanism:
+  type: conversation
+  reference: Approve PROP-0005-01
