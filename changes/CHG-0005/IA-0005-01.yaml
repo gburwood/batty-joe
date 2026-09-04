@@ -1,0 +1,43 @@
+id: IA-0005-01
+change: CHG-0005
+revision: 1
+created_at: '2026-09-04T01:35:00+01:00'
+affected:
+  requirements: []
+  components:
+  - grid_runner_frenzy
+  - frenzy_collision_exit
+  - game_loop_stability
+  artifacts:
+  - batty-joe-game.js
+  - tests/run-chg0005-tests.js
+  tests:
+    existing:
+    - shared Frenzy timeout exits active mode
+    required:
+    - Grid Runner boundary collision does not throw
+    - Grid Runner trail collision does not throw
+    - Grid Runner blocker collision does not throw
+    - Grid Runner collision begins the shared Frenzy exit with reason collision
+    - Grid Runner still exits by its configured 20-second timeout
+    - debug invulnerability does not crash Grid Runner
+compatibility:
+  breaking: false
+  notes: Restores behaviour already required by the authoritative v1.8.0 specification.
+migration:
+  required: false
+risks:
+- id: RISK-0005-01
+  description: Repairing only one collision branch could leave the other two failure paths broken.
+  severity: high
+  mitigation: Route all three branches through one defined collision handler and test them independently.
+- id: RISK-0005-02
+  description: A new collision handler could bypass debug invulnerability semantics used by other Frenzy modes.
+  severity: medium
+  mitigation: Preserve debug invulnerability and verify that the timer remains able to end the mode.
+diagnosis:
+  status: root_cause_identified
+  evidence: updateGridRunnerFrenzy() calls this.onFrenzyPlayerHit() for boundary, trail and blocker collisions, but no such method exists in batty-joe-game.js.
+  observed_effect: The first collision throws TypeError and terminates the animation loop, making Grid Runner appear not to end.
+  timeout_assessment: The shared frenzyRemaining countdown and 20-second timeout are present; they cannot execute after the animation loop has crashed.
+summary: This is an implementation defect, not a product-specification ambiguity. The authoritative specification already requires collision and timeout termination.
