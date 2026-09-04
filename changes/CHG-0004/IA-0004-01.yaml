@@ -1,0 +1,59 @@
+id: IA-0004-01
+change: CHG-0004
+revision: 1
+created_at: '2026-09-04T00:00:00+01:00'
+affected:
+  requirements: []
+  components:
+  - powerup_collection
+  - frenzy_activation
+  - runtime_collection_mutation
+  - level_transitions
+  - intermission_ui
+  - ball_rendering
+  - gameplay_tests
+  artifacts:
+  - batty-joe-dev-spec-v1.7.0.yaml
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe-tests.js
+  tests:
+    existing:
+    - normal power-up collection and expiry
+    - Frenzy pickup starts Frenzy transition
+    - level-complete protected hold and NEXT LEVEL prompt
+    required:
+    - bat-affecting power-up then Frenzy in same/adjacent collection frame does not throw or freeze
+    - Frenzy pickup with remaining drops does not dereference stale/undefined drops
+    - all Frenzy pickup types pass adjacent-power-up regression
+    - NEXT LEVEL prompt remains for five configured seconds
+    - 3-second LEVEL COMPLETE hold remains unchanged
+    - ball visual changes do not alter collision geometry or physics
+compatibility:
+  breaking: false
+  notes: Freeze fix is loop safety; timing affects UI pacing; ball changes are visual-only.
+migration:
+  required: false
+risks:
+- id: RISK-0004-01
+  description: Collection mutation during Frenzy activation can leave stale loop indexes.
+  severity: high
+  mitigation: Successful Frenzy activation becomes terminal for that frame's power-drop update.
+- id: RISK-0004-02
+  description: Observed bat-power-up correlation may hide a broader mutation bug.
+  severity: high
+  mitigation: Test arbitrary remaining drops plus wide/narrow/sticky/laser sequences.
+- id: RISK-0004-03
+  description: Harder ball rendering could reduce readability.
+  severity: medium
+  mitigation: Use a crisp dark rim, metallic gradient and compact highlight with restrained halo.
+diagnosis:
+  status: probable_root_cause_identified
+  evidence: updatePowerDrops() iterates this.powerDrops by index. collectPowerup() can call startFrenzy(), and startFrenzy()
+    assigns this.powerDrops = []. If Frenzy activation occurs before the loop exhausts its indexes, the next iteration can
+    read undefined then access drop.y, terminating the animation loop.
+  why_sequence_matters: Multiple pickups overlapping the paddle in the same or adjacent frame make the stale-index path reproducible;
+    the underlying defect is broader than bat power-ups.
+  implementation_direction: After a successful Frenzy start, terminate the current power-drop update safely rather than continuing
+    stale iteration.
+summary: Legacy freeze defect plus a level-transition timing adjustment and ball visual refinement.

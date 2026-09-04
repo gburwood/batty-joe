@@ -1,0 +1,45 @@
+id: CHG-0004
+title: Fix Frenzy pickup freeze, extend next-level pacing, and harden ball visuals
+classification: defect
+status: validated
+priority: high
+sources:
+- type: conversation
+  reference: user-request-2026-09-04-frenzy-pickup-freeze-next-level-5s-harder-balls
+  received_at: '2026-09-04T00:00:00+01:00'
+request:
+  summary: Fix a pre-existing freeze when a Frenzy pickup is collected immediately after a bat power-up, extend NEXT LEVEL
+    to five seconds, and make the normal ball visuals look harder.
+  detail: The freeze predates SpecForge adoption but has now been reproduced. The NEXT LEVEL phase introduced by CHG-0003
+    should last five seconds instead of two. Ball rendering should communicate a harder, heavier physical object rather than
+    a soft glowing orb.
+clarification:
+  required: false
+  notes: The freeze has a concrete implementation-level hypothesis suitable for regression testing. 'Harder' is subjective,
+    so PROP-0004-01 defines a metallic/chrome treatment for explicit approval.
+relationships:
+  depends_on:
+  - CHG-0003
+  conflicts_with: []
+  related_to: []
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0004-01
+proposal:
+  current: PROP-0004-01
+approvals:
+- APR-0004
+implementation:
+  attempts:
+  - IMP-0004-01
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-04T00:00:00+01:00'
+  created_by:
+    type: ai
+    id: chatgpt

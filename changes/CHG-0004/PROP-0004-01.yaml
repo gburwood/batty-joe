@@ -1,0 +1,60 @@
+id: PROP-0004-01
+change: CHG-0004
+revision: 1
+status: approved
+created_at: '2026-09-04T00:00:00+01:00'
+based_on_impact_analysis:
+- IA-0004-01
+proposed_specification_version: 1.8.0
+behaviour_summary: Make power-drop collection safe when a Frenzy pickup starts a modal transition, extend NEXT LEVEL from
+  two to five seconds, and render normal balls as compact metallic/chrome objects rather than soft glowing spheres.
+freeze_fix:
+  scope: all Frenzy pickups
+  root_cause_to_verify: Frenzy activation clears/replaces powerDrops while updatePowerDrops is still iterating the old collection.
+  required_semantics:
+  - A collected Frenzy pickup is removed exactly once.
+  - If startFrenzy succeeds, the current power-drop update terminates immediately and does not access stale indexes.
+  - No cleared drop is applied after Frenzy transition begins.
+  - If startFrenzy rejects activation, normal collection processing may continue safely.
+  preferred_implementation_shape: Have collection know whether Frenzy actually started, then break/return immediately on success.
+level_complete_pacing:
+  configuration_path: BattyJoe.Config.levelTransitions.nextPromptSeconds
+  current_seconds: 2.0
+  proposed_seconds: 5.0
+  completeHoldSeconds: unchanged at 3.0
+ball_visuals:
+  scope: normal balls including multiball
+  intent: harder, heavier, more solid and mechanical
+  approved_direction_name: hardened chrome
+  geometry: unchanged
+  treatment:
+  - tighter restrained halo
+  - dark steel outer rim
+  - radial metallic gradient from bright silver through mid-grey to gunmetal
+  - small sharp upper-left specular highlight
+  - subtle lower-right reflected edge/shadow
+  - retain high contrast across backgrounds
+  motion: No new permanent trail.
+  physics: No change to radius, collision, velocity, spin or paddle interaction.
+specification_changes:
+- Bump product spec 1.7.0 to 1.8.0.
+- Define successful Frenzy activation as terminal for current power-drop iteration.
+- Add adjacent-pickup regression coverage.
+- Change nextPromptSeconds from 2.0 to 5.0.
+- Replace soft-orb ball rendering with hardened-chrome treatment.
+artifacts_expected:
+  modify:
+  - batty-joe-dev-spec-v1.8.0.yaml
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe-tests.js
+  add: []
+implementation_constraints:
+- Verify probable root cause with focused regression.
+- Do not globally suppress normal power-ups near Frenzy pickups.
+- Do not alter 3-second protected LEVEL COMPLETE hold.
+- Ball visual changes are rendering-only.
+- Canvas primitives only; no external assets.
+- Implement approved specification first.
+approvals:
+- APR-0004

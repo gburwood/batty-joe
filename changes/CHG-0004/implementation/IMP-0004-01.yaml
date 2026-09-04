@@ -1,0 +1,28 @@
+id: IMP-0004-01
+change: CHG-0004
+proposal: PROP-0004-01
+started_at: '2026-09-04T00:12:00+01:00'
+completed_at: '2026-09-04T00:12:00+01:00'
+outcome: passed
+source_revision:
+  before: 3e28090df00e27f9c10bea919a1720bb868163c9
+  after: null
+artifacts_modified:
+- batty-joe-dev-spec-v1.8.0.yaml
+- batty-joe-config.js
+- batty-joe-game.js
+- specforge.yaml
+- tests/run-chg0004-tests.js
+notes: Implemented approved collection-loop safety fix, five-second NEXT LEVEL prompt, and hardened-chrome ball rendering.
+attempt: 1
+actor:
+  type: ai
+  id: chatgpt
+approach: Terminate power-drop iteration after successful Frenzy activation; update configured prompt timing; refine Canvas
+  ball rendering only.
+tests:
+  passed:
+  - JavaScript syntax checks
+  - SpecForge validator
+  - focused CHG-0004 regression harness
+  failed: []

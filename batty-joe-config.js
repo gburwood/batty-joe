@@ -33,7 +33,7 @@
     bossLevel: 20,
     lives: { start: 3, max: 9 },
     continues: { max: 3, countdownSeconds: 10 },
-    levelTransitions: { completeHoldSeconds: 3.0, nextPromptSeconds: 2.0 },
+    levelTransitions: { completeHoldSeconds: 3.0, nextPromptSeconds: 5.0 },
     balls: { max: 6, radius: 8, releaseMaxAngleDegrees: 60 },
     physics: {
       paddleVelocityTransfer: {

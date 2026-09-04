@@ -640,7 +640,7 @@
       if (P.rectRect(drop, this.paddle)) {
         this.powerDrops.splice(i, 1);
         if (drop.special === 'big_bomb_power') this.collectBigBombPowerUp();
-        else this.collectPowerup(drop.type);
+        else if (this.collectPowerup(drop.type) === 'frenzy_started') return;
       } else if (drop.y > C.playfield.height + 30) this.powerDrops.splice(i, 1);
     }
   };
@@ -655,7 +655,9 @@
       asteroids_frenzy: 'asteroids', missile_command_frenzy: 'missile', arkanoid_revenge_frenzy: 'revenge',
       grid_runner_frenzy: 'gridrunner'
     };
-    if (frenzyPowerups[type]) { this.startFrenzy(frenzyPowerups[type]); return; }
+    if (frenzyPowerups[type]) {
+      return this.startFrenzy(frenzyPowerups[type]) ? 'frenzy_started' : 'frenzy_rejected';
+    }
 
     if (type === 'multiball') { this.applyMultiball(); this.autosave('powerup_state_change'); return; }
     if (type === 'extra_life') { this.lives = Math.min(C.lives.max, this.lives + 1); this.showMessage('EXTRA LIFE. TRY NOT TO WASTE IT.', 1.8); this.autosave('powerup_state_change'); return; }
@@ -2814,17 +2816,38 @@
         ctx.stroke();
         ctx.restore();
       }
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = '#ffffff';
-      ctx.fillStyle = '#ffffff';
+      // Hardened chrome ball: crisp rim, compact halo and metallic body.
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = '#d8e4ea';
+      ctx.fillStyle = '#28323a';
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = '#9bdcff';
+      const chrome = ctx.createRadialGradient(ball.x - ball.r * 0.38, ball.y - ball.r * 0.42, ball.r * 0.10, ball.x, ball.y, ball.r * 0.92);
+      chrome.addColorStop(0, '#ffffff');
+      chrome.addColorStop(0.24, '#dfe7eb');
+      chrome.addColorStop(0.58, '#8d9aa2');
+      chrome.addColorStop(0.82, '#56636b');
+      chrome.addColorStop(1, '#222b31');
+      ctx.fillStyle = chrome;
       ctx.beginPath();
-      ctx.arc(ball.x - 2.5, ball.y - 2.5, 2.2, 0, Math.PI * 2);
+      ctx.arc(ball.x, ball.y, Math.max(1, ball.r - 1.25), 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#151c21';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r - 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.beginPath();
+      ctx.arc(ball.x - ball.r * 0.34, ball.y - ball.r * 0.38, Math.max(1.1, ball.r * 0.17), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(205,225,234,0.42)';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.arc(ball.x + ball.r * 0.10, ball.y + ball.r * 0.10, ball.r * 0.62, 0.12 * Math.PI, 0.58 * Math.PI);
+      ctx.stroke();
     }).bind(this));
     ctx.restore();
   };
