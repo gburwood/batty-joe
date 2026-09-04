@@ -1,0 +1,38 @@
+id: CHG-0005
+title: Fix Grid Runner collision exit
+classification: defect
+status: awaiting_approval
+priority: high
+sources:
+- type: conversation
+  reference: user-report-2026-09-04-grid-runner-does-not-end
+  received_at: '2026-09-04T01:35:00+01:00'
+request:
+  summary: Grid Runner mode does not appear to end.
+  detail: Diagnose and correct Grid Runner so its documented collision and timeout termination paths complete without stopping the game loop.
+clarification:
+  required: false
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to:
+  - CHG-0003
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0005-01
+proposal:
+  current: PROP-0005-01
+approvals: []
+implementation:
+  attempts: []
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-04T01:35:00+01:00'
+  created_by:
+    type: ai
+    id: chatgpt
