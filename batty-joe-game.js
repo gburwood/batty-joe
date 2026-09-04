@@ -1705,6 +1705,12 @@
   };
 
 
+  Game.prototype.onFrenzyPlayerHit = function () {
+    if (this.debugInvulnerable) return false;
+    this.beginFrenzyExit('collision');
+    return true;
+  };
+
   Game.prototype.updateGridRunnerInput = function () {
     const g = this.frenzyGame; if (!g || g.type !== 'gridrunner' || this.attract) return;
     if (this.input && this.input.wasPressed) {
