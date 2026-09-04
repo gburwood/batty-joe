@@ -1,0 +1,41 @@
+id: PROP-0005-01
+change: CHG-0005
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-04T01:35:00+01:00'
+based_on_impact_analysis:
+- IA-0005-01
+proposed_specification_version: 1.8.0
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+behaviour_summary: Restore the Grid Runner termination behaviour already defined by Batty Joe v1.8.0 by implementing the missing collision handler and protecting the animation loop from the current TypeError.
+implementation:
+  collision_handler:
+    name: onFrenzyPlayerHit
+    semantics:
+    - If debug invulnerability is active, do not begin the collision exit.
+    - Otherwise begin the shared Frenzy exit with reason collision.
+    - Return whether an exit was initiated so callers have explicit outcome information.
+  grid_runner:
+    boundary_collision: invoke the defined collision handler and terminate the current Grid Runner update
+    trail_collision: invoke the defined collision handler and terminate the current Grid Runner update
+    blocker_collision: invoke the defined collision handler and terminate the current Grid Runner update
+  timeout:
+    configured_seconds: 20
+    behaviour: unchanged
+specification_changes: []
+artifacts_expected:
+  modify:
+  - batty-joe-game.js
+  add:
+  - tests/run-chg0005-tests.js
+implementation_constraints:
+- Do not change Grid Runner controls, speed, layout, scoring, duration or collision rules.
+- Do not change the authoritative v1.8.0 specification because it already defines the intended termination behaviour.
+- Preserve shared Frenzy transition-out and restoration behaviour.
+- Preserve debug invulnerability semantics.
+- Add focused regression tests for all Grid Runner termination paths.
+approvals: []
