@@ -1,0 +1,20 @@
+id: IMP-0005-01
+change: CHG-0005
+proposal: PROP-0005-01
+attempt: 1
+started_at: '2026-09-04T01:39:19+01:00'
+completed_at: null
+actor:
+  type: ai
+  id: chatgpt
+approach: Add the missing shared collision handler, retain debug invulnerability, and add focused Grid Runner exit regressions.
+source_revision:
+  before: dc655817bcd8f37dfbcabfae405f30c267458bac
+  after: null
+outcome: in_progress
+artifacts_modified:
+- batty-joe-game.js
+- tests/run-chg0005-tests.js
+tests:
+  passed: []
+  failed: []
