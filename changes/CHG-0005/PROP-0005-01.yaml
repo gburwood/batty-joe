@@ -1,7 +1,7 @@
 id: PROP-0005-01
 change: CHG-0005
 revision: 1
-status: awaiting_approval
+status: approved
 created_at: '2026-09-04T01:35:00+01:00'
 based_on_impact_analysis:
 - IA-0005-01
@@ -38,4 +38,5 @@ implementation_constraints:
 - Preserve shared Frenzy transition-out and restoration behaviour.
 - Preserve debug invulnerability semantics.
 - Add focused regression tests for all Grid Runner termination paths.
-approvals: []
+approvals:
+- APR-0005
