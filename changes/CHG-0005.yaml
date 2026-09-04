@@ -1,7 +1,7 @@
 id: CHG-0005
 title: Fix Grid Runner collision exit
 classification: defect
-status: awaiting_approval
+status: approved
 priority: high
 sources:
 - type: conversation
@@ -24,7 +24,8 @@ impact_analysis:
   current: IA-0005-01
 proposal:
   current: PROP-0005-01
-approvals: []
+approvals:
+- APR-0005
 implementation:
   attempts: []
 requirements:
