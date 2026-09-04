@@ -1,7 +1,7 @@
 id: CHG-0005
 title: Fix Grid Runner collision exit
 classification: defect
-status: implementing
+status: validated
 priority: high
 sources:
 - type: conversation
