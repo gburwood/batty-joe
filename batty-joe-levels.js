@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.7.0 */
+/* Batty Joe Development Specification v1.9.0 */
 (function (global) {
   'use strict';
 
@@ -97,7 +97,7 @@
   }
 
   function generateLevel(seed, difficulty, level) {
-    if (level === C.bossLevel) return generateBossLevel(seed, difficulty, level);
+    if (C.bossLevels.indexOf(level) !== -1) return generateBossLevel(seed, difficulty, level);
     const rng = campaignRng(seed, difficulty, level, 'layout');
     const cfg = C.level;
     const rows = U.clamp(cfg.rowsMin + Math.floor((level - 1) / 4), cfg.rowsMin, cfg.rowsMax);
@@ -142,8 +142,9 @@
 
   function generateBossLevel(seed, difficulty, level) {
     const rng = campaignRng(seed, difficulty, level, 'boss');
-    const boss = { id: C.boss.id, name: C.boss.name, x: (C.playfield.width - C.boss.width) / 2, y: C.boss.y, w: C.boss.width, h: C.boss.height, vx: C.boss.baseSpeed[difficulty] || C.boss.baseSpeed.normal, health: C.boss.maxHealth, maxHealth: C.boss.maxHealth, phase: 1, shotTimer: 1.3, bobPhase: rng() * Math.PI * 2, alive: true };
-    return { seed, difficulty, level, template: 'boss', title: 'THE LAST BRICK', boss, bricks: [], initialBricks: [], rngStateAtGeneration: rng.state() };
+    const bossCfg = C.bosses[level];
+    const boss = { id: bossCfg.id, name: bossCfg.name, x: (C.playfield.width - bossCfg.width) / 2, y: bossCfg.y, w: bossCfg.width, h: bossCfg.height, vx: bossCfg.baseSpeed[difficulty] || bossCfg.baseSpeed.normal, health: bossCfg.maxHealth, maxHealth: bossCfg.maxHealth, phase: 1, shotTimer: 1.3, bobPhase: rng() * Math.PI * 2, alive: true };
+    return { seed, difficulty, level, template: 'boss', title: bossCfg.name, boss, bricks: [], initialBricks: [], rngStateAtGeneration: rng.state() };
   }
 
   function levelTitle(level, template) {

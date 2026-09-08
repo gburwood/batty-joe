@@ -1,0 +1,17 @@
+id: EVT-000040
+timestamp: '2026-09-08T14:01:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+event_type: implementation_started
+entity:
+  type: implementation_attempt
+  id: IMP-0006-01
+related:
+  change: CHG-0006
+  proposal: PROP-0006-01
+  approval: APR-0006
+resulting_state:
+  change_status: implementing
+  implementation_status: in_progress

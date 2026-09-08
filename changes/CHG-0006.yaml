@@ -1,0 +1,54 @@
+id: CHG-0006
+title: Add mid-campaign boss milestones at levels 5, 10 and 15
+classification: feature
+status: completed
+priority: normal
+sources:
+- type: conversation
+  reference: user-request-2026-09-08-designer-and-coder-suggestion
+  received_at: '2026-09-08T12:45:00+01:00'
+request:
+  summary: Add campaign boss encounters at levels 5, 10 and 15, escalating toward the existing level 20 finale.
+  detail: The user asked the AI to take on the combined role of game designer and coder, review the game as it stands, and
+    propose either an improvement or a new feature. The AI reviewed the authoritative v1.8.0 specification and the current
+    implementation, and found that the specification already declares this exact intent without it being built
+    (bosses.milestone_support.future_levels lists [5, 10, 15, 20], and future_architecture.additional_bosses is marked
+    planned_possible, but only the level 20 boss exists in code). The AI proposed closing that gap with three new,
+    progressively tougher boss encounters that build toward the existing finale rather than matching it. The user asked
+    for this to be formalised as a Change.
+clarification:
+  required: false
+  notes: The three new bosses' exact health, speed, fire-interval and phase values are the AI's design proposal rather than
+    values dictated by an existing unambiguous requirement. PROP-0006-01 states them explicitly for approval.
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to: []
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0006-01
+proposal:
+  current: PROP-0006-01
+approvals:
+- APR-0006
+implementation:
+  attempts:
+  - IMP-0006-01
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-08T13:50:38+01:00'
+  created_by:
+    type: ai
+    id: claude
+    display_name: Claude (Cowork)
+    ai:
+      provider: anthropic
+      tool: Claude (Cowork, Claude Agent SDK)
+      model: claude-sonnet-5
+      session_id: session_01J4kUPrqkyse8BddvMENtDA
+  completed_at: '2026-09-08T14:16:00+01:00'

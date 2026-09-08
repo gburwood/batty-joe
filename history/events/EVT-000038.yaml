@@ -1,0 +1,15 @@
+id: EVT-000038
+timestamp: '2026-09-08T13:50:38+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0006-01
+related:
+  change: CHG-0006
+  impact_analysis: IA-0006-01
+resulting_state:
+  proposal_status: awaiting_approval

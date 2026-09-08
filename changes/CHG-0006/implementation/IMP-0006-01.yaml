@@ -1,0 +1,55 @@
+id: IMP-0006-01
+change: CHG-0006
+proposal: PROP-0006-01
+attempt: 1
+started_at: '2026-09-08T14:01:00+01:00'
+completed_at: '2026-09-08T14:16:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+  ai:
+    provider: anthropic
+    tool: 'Claude (Cowork, Claude Agent SDK)'
+    model: claude-sonnet-5
+    session_id: session_01J4kUPrqkyse8BddvMENtDA
+approach: Replaced the single hardcoded level-20 boss config with a per-level boss config map (C.bosses, keyed by
+  campaign level) and a C.bossLevels array; rewrote boss generation, state transitions, phase/attack logic, rendering
+  and the debug boss-jump cheat to look up the active level's boss config instead of a single fixed config; added the
+  three new milestone bosses (level 5 THE WARM-UP, level 10 THE ENFORCER, level 15 THE LAST WARNING) with the stats
+  approved in PROP-0006-01; left the level 20 boss's stats, phases and taunts unchanged; added regression coverage for
+  the new bosses and for the constraint that only the level 20 boss defeat triggers VICTORY; produced
+  batty-joe-dev-spec-v1.9.0.yaml documenting the change.
+source_revision:
+  before: not_available
+  after: not_available
+  note: This implementation was carried out in a cloud sandbox against a local mirror of the repository, staged from
+    the user's machine via the Claude desktop device bridge. No device shell was available on that link to run git
+    directly against the user's working copy, so no commit hashes were captured for this attempt. The edited files
+    were transferred back to the user's repository at C:\Users\Gary Burwood\repos\batty-joe via the same bridge; the
+    user is expected to review and commit them there, at which point the resulting commit hash should be recorded
+    (e.g. via a follow-up event or by updating this record).
+outcome: passed
+artifacts_modified:
+- batty-joe-config.js
+- batty-joe-game.js
+- batty-joe-levels.js
+- batty-joe-tests.js
+- specforge.yaml
+artifacts_added:
+- batty-joe-dev-spec-v1.9.0.yaml
+tests:
+  passed:
+  - JavaScript syntax checks (node -e "new Function(...)") on all four modified .js files
+  - Full browser regression suite (batty-joe-tests.html via headless Chromium) - 108/108 tests passed, 0 failures
+  - New tests added for this change - level 5/10/15 boss stat and phase-transition checks, a boss-level-membership
+    check across the full campaign, a milestone-boss-defeat-does-not-end-campaign regression, and a
+    level-20-boss-defeat-triggers-VICTORY regression
+  - python3 tools/validate-specforge.py . against the updated repository state
+  failed: []
+notes: While converting boss references, two pre-existing tests were adjusted because they used levels that are now
+  boss levels and depended on the level having conventional bricks (level 5 and level 15). They were moved to level 6
+  and level 16 respectively; their assertions and intent are unchanged. Also fixed a self-caught inconsistency during
+  implementation - batty-joe-config.js defines the per-level boss map as a top-level C.bosses key rather than nested
+  under C.level, so batty-joe-game.js and batty-joe-levels.js were corrected to reference C.bosses[level] rather than
+  the originally-drafted C.level.bosses[level].

@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.7.0 */
+/* Batty Joe Development Specification v1.9.0 */
 (function (global) {
   'use strict';
 
@@ -112,7 +112,7 @@
     this.attract = !!options.attract;
     this.highScoreEligible = !this.attract && !options.debugModified;
     this.loadLevel(this.level, true);
-    this.setState(this.attract ? BJ.State.ATTRACT : (this.level === C.bossLevel ? BJ.State.BOSS : BJ.State.PLAYING));
+    this.setState(this.attract ? BJ.State.ATTRACT : (this.isBossLevel(this.level) ? BJ.State.BOSS : BJ.State.PLAYING));
     if (!this.attract) this.autosave('level_start');
   };
 
@@ -129,7 +129,7 @@
     this.highScoreEligible = save.highScoreEligibleState !== false;
     this.attract = false;
     this.loadLevel(this.level, true);
-    this.setState(this.level === C.bossLevel ? BJ.State.BOSS : BJ.State.PLAYING);
+    this.setState(this.isBossLevel(this.level) ? BJ.State.BOSS : BJ.State.PLAYING);
     return true;
   };
 
@@ -203,8 +203,12 @@
     return this.state === BJ.State.FRENZY_TRANSITION_IN || this.state === BJ.State.FRENZY_ACTIVE || this.state === BJ.State.FRENZY_TRANSITION_OUT;
   };
 
+  Game.prototype.isBossLevel = function (level) {
+    return C.bossLevels.indexOf(level) !== -1;
+  };
+
   Game.prototype.getBasePlayState = function () {
-    return this.level === C.bossLevel ? BJ.State.BOSS : (this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING);
+    return this.isBossLevel(this.level) ? BJ.State.BOSS : (this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING);
   };
 
   Game.prototype.getActiveFrenzyConfig = function () {
@@ -1880,6 +1884,7 @@
   Game.prototype.updateBoss = function (dt) {
     const boss = this.levelData.boss;
     if (!boss || !boss.alive) return;
+    const bossCfg = C.bosses[this.level];
     boss.bobPhase += dt * 2.2;
     boss.x += boss.vx * dt;
     const margin = 36;
@@ -1889,23 +1894,28 @@
     }
 
     const hp = boss.health / boss.maxHealth;
-    const phases = C.boss.phases;
+    const phases = bossCfg.phases;
     let phaseCfg = phases[0];
     for (let pi = 0; pi < phases.length; pi += 1) {
       if (hp <= phases[pi].minHealthRatio || pi === 0) phaseCfg = phases[pi];
     }
     // Explicit thresholds avoid ambiguity at exact boundaries.
-    if (hp <= 0.33) phaseCfg = phases[2];
-    else if (hp <= 0.66) phaseCfg = phases[1];
-    else phaseCfg = phases[0];
+    if (phases.length >= 3) {
+      if (hp <= 0.33) phaseCfg = phases[2];
+      else if (hp <= 0.66) phaseCfg = phases[1];
+      else phaseCfg = phases[0];
+    } else {
+      if (hp <= 0.5) phaseCfg = phases[1] || phases[0];
+      else phaseCfg = phases[0];
+    }
 
     if (phaseCfg.phase !== boss.phase) {
       boss.phase = phaseCfg.phase;
       const direction = boss.vx < 0 ? -1 : 1;
-      boss.vx = direction * (C.boss.baseSpeed[this.difficulty] || C.boss.baseSpeed.normal) * phaseCfg.speedMultiplier;
+      boss.vx = direction * (bossCfg.baseSpeed[this.difficulty] || bossCfg.baseSpeed.normal) * phaseCfg.speedMultiplier;
       this.audio.play('boss_event');
       this.addShake(6);
-      this.showMessage(boss.phase === 2 ? 'BOSS: THAT TICKLED.' : 'BOSS: NOW YOU HAVE MY ATTENTION.', 1.8);
+      this.showMessage((bossCfg.taunts && bossCfg.taunts[boss.phase]) || 'BOSS: GRRR.', 1.8);
       this.autosave('boss_phase_change');
     }
 
@@ -1922,7 +1932,7 @@
           this.enemyShots.push({ x: boss.x + boss.w / 2 + offset, y: boss.y + boss.h, w: 8, h: 16, vy: speed + Math.abs(offset) * 0.25 });
         }).bind(this));
       }
-      boss.shotTimer = phaseCfg.fireInterval * (C.boss.difficultyFireFactor[this.difficulty] || 1);
+      boss.shotTimer = phaseCfg.fireInterval * (bossCfg.difficultyFireFactor[this.difficulty] || 1);
       this.audio.play('invader_fire');
     }
   };
@@ -2138,7 +2148,7 @@
     this.setState(BJ.State.LIFE_LOST);
     const self = this;
     global.setTimeout(function () {
-      if (self.state === BJ.State.LIFE_LOST) self.setState(self.level === C.bossLevel ? BJ.State.BOSS : (self.attract ? BJ.State.ATTRACT : BJ.State.PLAYING));
+      if (self.state === BJ.State.LIFE_LOST) self.setState(self.isBossLevel(self.level) ? BJ.State.BOSS : (self.attract ? BJ.State.ATTRACT : BJ.State.PLAYING));
     }, 700);
   };
 
@@ -2152,7 +2162,7 @@
     this.combo = 1;
     this.rapidCombo = 1;
     this.loadLevel(this.level, true);
-    this.setState(this.level === C.bossLevel ? BJ.State.BOSS : BJ.State.PLAYING);
+    this.setState(this.isBossLevel(this.level) ? BJ.State.BOSS : BJ.State.PLAYING);
     this.autosave('continue_used');
   };
 
@@ -2194,7 +2204,7 @@
     }
     this.level += 1;
     this.loadLevel(this.level, true);
-    this.setState(this.level === C.bossLevel ? BJ.State.BOSS : (this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING));
+    this.setState(this.isBossLevel(this.level) ? BJ.State.BOSS : (this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING));
     if (!this.attract) this.autosave('level_start');
   };
 
@@ -2229,7 +2239,7 @@
 
   Game.prototype.resume = function () {
     if (this.state !== BJ.State.PAUSED) return false;
-    const next = this.previousState && this.previousState !== BJ.State.PAUSED ? this.previousState : (this.level === C.bossLevel ? BJ.State.BOSS : BJ.State.PLAYING);
+    const next = this.previousState && this.previousState !== BJ.State.PAUSED ? this.previousState : (this.isBossLevel(this.level) ? BJ.State.BOSS : BJ.State.PLAYING);
     this.state = next;
     this.stateElapsed = 0;
     if (this.callbacks.onStateChange) this.callbacks.onStateChange(next, BJ.State.PAUSED, null, this);
@@ -2251,7 +2261,7 @@
     this.finalAssault = { active: false, threshold: Math.max(1, Math.min(C.finalAssault.thresholdMaxBricks, Math.ceil(BJ.Levels.countRequired(this.levelData.bricks) * C.finalAssault.thresholdPercent))), noHitTime: 0, stage: 0, startingRequired: BJ.Levels.countRequired(this.levelData.bricks), lastResetStep: -1, elapsed: 0 };
     this.bigBomb = { charge: 0, collected: 0, used: false, readyAnnounced: false, spawnTimer: C.bigBomb.startDelaySeconds, freezeRemaining: 0, flashRemaining: 0, waveRemaining: 0 };
     this.bigBombRng = BJ.Levels.campaignRng(this.seed, this.difficulty, this.level, 'big-bomb-spawn');
-    this.setState(this.level === C.bossLevel ? BJ.State.BOSS : BJ.State.PLAYING);
+    this.setState(this.isBossLevel(this.level) ? BJ.State.BOSS : BJ.State.PLAYING);
     this.autosave('level_start');
   };
 
@@ -2933,7 +2943,7 @@
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(C.boss.name + '  PHASE ' + b.phase, C.playfield.width / 2, 24);
+    ctx.fillText(b.name + '  PHASE ' + b.phase, C.playfield.width / 2, 24);
   };
 
   Game.prototype.drawFrenzyTimer = function (ctx) {
@@ -3098,7 +3108,7 @@
 
   Game.prototype.debugJumpToBoss = function () {
     this.highScoreEligible = false;
-    this.level = C.bossLevel;
+    this.level = C.bossLevels[C.bossLevels.length - 1];
     this.loadLevel(this.level, true);
     this.setState(BJ.State.BOSS);
   };

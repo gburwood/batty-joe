@@ -1,0 +1,77 @@
+id: IA-0006-01
+change: CHG-0006
+revision: 1
+created_at: '2026-09-08T13:50:38+01:00'
+affected:
+  requirements: []
+  components:
+  - boss_framework
+  - boss_state_machine
+  - boss_rendering
+  - campaign_level_generation
+  - level_progression
+  - difficulty_scaling
+  - gameplay_tests
+  artifacts:
+  - batty-joe-dev-spec-v1.9.0.yaml
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe-levels.js
+  - batty-joe-tests.js
+  tests:
+    existing:
+    - boss transitions phases by health threshold
+    required:
+    - level 5, 10 and 15 generate their respective boss encounters instead of a procedural brick layout
+    - level 20 continues to generate THE LAST BRICK unchanged
+    - each boss's phase transitions occur at its own configured health-ratio thresholds
+    - each boss's speed, fire interval and attack pattern match its own configuration per phase
+    - defeating the level 5, 10 or 15 boss advances the campaign to the next level through the normal level-complete flow
+    - defeating the level 20 boss still triggers the existing victory sequence and does not regress
+    - boss encounters at every milestone level remain deterministic for the same seed and difficulty
+    - a saved game whose current level is 5, 10 or 15 regenerates as a boss level on reload without crashing
+    - boss taunts are specific to the encountered boss rather than always showing the level 20 boss's lines
+    - non-milestone levels are unaffected and continue to generate procedurally
+compatibility:
+  breaking: false
+  notes: Adds three new boss encounters at levels that previously generated procedural brick layouts. No existing Frenzy,
+    physics, scoring or power-up behaviour changes. The level 20 finale is unchanged.
+migration:
+  required: false
+  notes: No persisted data format changes. A campaign save currently on level 5, 10 or 15 will regenerate that level as a
+    boss encounter on next reload rather than the procedural layout it would previously have produced, consistent with
+    the existing reload contract of regenerating the current level deterministically from level-start state. No brick or
+    score data is lost.
+risks:
+- id: RISK-0006-01
+  description: Boss triggering and boss configuration are currently a single scalar (BattyJoe.Config.bossLevel) and a single
+    object (BattyJoe.Config.level.boss), referenced by equality checks in roughly nine locations in batty-joe-game.js plus
+    one in batty-joe-levels.js. Generalising this to multiple levels could miss a call site and leave an inconsistent state
+    (for example, the campaign-victory trigger, which must remain specific to level 20 only).
+  severity: high
+  mitigation: Replace the scalar with a level-keyed lookup used everywhere boss state is checked, and add an explicit
+    regression test that only the level 20 boss defeat triggers VICTORY while level 5/10/15 boss defeat advances to the
+    normal next-level flow.
+- id: RISK-0006-02
+  description: Converting three additional levels to boss-only could feel repetitive if the encounters are visually or
+    mechanically too similar to each other and to the level 20 finale.
+  severity: medium
+  mitigation: Give each boss a distinct name, distinct taunt lines, and a distinct stat/phase curve that escalates toward
+    but does not reach the level 20 boss's numbers.
+- id: RISK-0006-03
+  description: Turning 4 of the 20 campaign levels into boss-only levels (previously only level 20) is a meaningful pacing
+    change to the campaign shape, not just an additive feature.
+  severity: medium
+  mitigation: Present the exact levels and design rationale for explicit approval before implementation rather than treating
+    this as a purely additive, low-visibility change.
+- id: RISK-0006-04
+  description: Boss encounters must remain seed-deterministic per the campaign generation rules; a new per-level lookup
+    could accidentally introduce unseeded randomness or diverge from the existing deterministic RNG call pattern.
+  severity: medium
+  mitigation: Reuse the existing campaignRng(seed, difficulty, level, 'boss') call pattern for every boss level rather than
+    introducing a new randomness source.
+summary: This is an additive gameplay feature that generalises the existing single-boss architecture to a small, fixed
+  set of campaign milestone levels. The change is structurally contained to boss configuration, boss triggering and level
+  generation; it does not touch physics, Frenzy, scoring or power-up systems. The main risk is completeness of the
+  generalisation across every existing level-20-specific call site, and preserving the level 20 finale's exact current
+  behaviour including its unique victory trigger.

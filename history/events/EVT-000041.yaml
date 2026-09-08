@@ -1,0 +1,20 @@
+id: EVT-000041
+timestamp: '2026-09-08T14:16:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0006
+related:
+  change: CHG-0006
+  implementation_attempt: IMP-0006-01
+  source_revision: not_available
+resulting_state:
+  change_status: validated
+  implementation_outcome: passed
+notes: source_revision is not_available for this attempt - see IMP-0006-01.yaml for why (implementation was performed
+  in a cloud sandbox against a staged mirror of the repository; no device shell was available to run git against the
+  user's actual working copy).

@@ -1,0 +1,19 @@
+id: APR-0006
+change: CHG-0006
+proposal: PROP-0006-01
+decision: approved
+actor:
+  type: human
+  id: product-owner
+  display_name: Gary Burwood
+timestamp: '2026-09-08T14:00:45+01:00'
+scope:
+  proposal_blob_sha: f37f9b57ea177c449dc6bfd12c6c337850f5cd38
+  proposal_sha256: f8504b759726a90e6179d819c362f7c1bef778dff33eb16abf61ccca5a9b6982
+  proposed_specification_version: 1.9.0
+  hash_covers: The proposal file's substantive content (behaviour_summary, boss_milestones, specification_changes,
+    artifacts_expected, implementation_constraints) as approved; the proposal's own status and approvals bookkeeping
+    fields were updated after this approval to record it, per the same pattern as prior approvals in this repository.
+mechanism:
+  type: conversation
+  reference: Approve PROP-0006-01

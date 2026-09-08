@@ -1,0 +1,14 @@
+id: EVT-000037
+timestamp: '2026-09-08T13:50:38+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0006
+related:
+  change: CHG-0006
+resulting_state:
+  change_status: awaiting_approval

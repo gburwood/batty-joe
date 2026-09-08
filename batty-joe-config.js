@@ -1,10 +1,10 @@
-/* Batty Joe Development Specification v1.7.0 */
+/* Batty Joe Development Specification v1.9.0 */
 (function (global) {
   'use strict';
 
   const BJ = global.BattyJoe = global.BattyJoe || {};
 
-  BJ.VERSION = '1.7.0';
+  BJ.VERSION = '1.9.0';
   BJ.WIDTH = 960;
   BJ.HEIGHT = 720;
 
@@ -30,7 +30,7 @@
     version: BJ.VERSION,
     playfield: { width: BJ.WIDTH, height: BJ.HEIGHT },
     campaignLevels: 20,
-    bossLevel: 20,
+    bossLevels: [5, 10, 15, 20],
     lives: { start: 3, max: 9 },
     continues: { max: 3, countdownSeconds: 10 },
     levelTransitions: { completeHoldSeconds: 3.0, nextPromptSeconds: 5.0 },
@@ -326,20 +326,69 @@
       gap: 6,
       brickHeight: 28
     },
-    boss: {
-      id: 'boss_20',
-      name: 'THE LAST BRICK',
-      maxHealth: 100,
-      width: 260,
-      height: 72,
-      y: 110,
-      baseSpeed: { easy: 130, normal: 155, hard: 185 },
-      difficultyFireFactor: { easy: 1.22, normal: 1.0, hard: 0.82 },
-      phases: [
-        { phase: 1, minHealthRatio: 0.66, speedMultiplier: 1.0, fireInterval: 1.12, attack: 'single' },
-        { phase: 2, minHealthRatio: 0.33, speedMultiplier: 1.18, fireInterval: 0.84, attack: 'paired' },
-        { phase: 3, minHealthRatio: 0.0, speedMultiplier: 1.38, fireInterval: 0.58, attack: 'spread' }
-      ]
+    bosses: {
+      5: {
+        id: 'boss_05',
+        name: 'THE WARM-UP',
+        maxHealth: 40,
+        width: 200,
+        height: 60,
+        y: 100,
+        baseSpeed: { easy: 100, normal: 120, hard: 145 },
+        difficultyFireFactor: { easy: 1.30, normal: 1.0, hard: 0.75 },
+        phases: [
+          { phase: 1, minHealthRatio: 0.5, speedMultiplier: 1.0, fireInterval: 1.35, attack: 'single' },
+          { phase: 2, minHealthRatio: 0.0, speedMultiplier: 1.12, fireInterval: 1.05, attack: 'single' }
+        ],
+        taunts: { 2: 'BOSS: OKAY, WARM-UP OVER.' }
+      },
+      10: {
+        id: 'boss_10',
+        name: 'THE ENFORCER',
+        maxHealth: 65,
+        width: 230,
+        height: 66,
+        y: 105,
+        baseSpeed: { easy: 115, normal: 138, hard: 165 },
+        difficultyFireFactor: { easy: 1.26, normal: 1.0, hard: 0.79 },
+        phases: [
+          { phase: 1, minHealthRatio: 0.6, speedMultiplier: 1.0, fireInterval: 1.0, attack: 'single' },
+          { phase: 2, minHealthRatio: 0.0, speedMultiplier: 1.24, fireInterval: 0.72, attack: 'paired' }
+        ],
+        taunts: { 2: "BOSS: NOW I'M ENFORCING." }
+      },
+      15: {
+        id: 'boss_15',
+        name: 'THE LAST WARNING',
+        maxHealth: 85,
+        width: 245,
+        height: 70,
+        y: 108,
+        baseSpeed: { easy: 124, normal: 148, hard: 177 },
+        difficultyFireFactor: { easy: 1.24, normal: 1.0, hard: 0.80 },
+        phases: [
+          { phase: 1, minHealthRatio: 0.66, speedMultiplier: 1.0, fireInterval: 1.2, attack: 'single' },
+          { phase: 2, minHealthRatio: 0.33, speedMultiplier: 1.16, fireInterval: 0.92, attack: 'paired' },
+          { phase: 3, minHealthRatio: 0.0, speedMultiplier: 1.30, fireInterval: 0.68, attack: 'spread' }
+        ],
+        taunts: { 2: 'BOSS: THAT WAS THE WARNING.', 3: 'BOSS: LAST CHANCE.' }
+      },
+      20: {
+        id: 'boss_20',
+        name: 'THE LAST BRICK',
+        maxHealth: 100,
+        width: 260,
+        height: 72,
+        y: 110,
+        baseSpeed: { easy: 130, normal: 155, hard: 185 },
+        difficultyFireFactor: { easy: 1.22, normal: 1.0, hard: 0.82 },
+        phases: [
+          { phase: 1, minHealthRatio: 0.66, speedMultiplier: 1.0, fireInterval: 1.12, attack: 'single' },
+          { phase: 2, minHealthRatio: 0.33, speedMultiplier: 1.18, fireInterval: 0.84, attack: 'paired' },
+          { phase: 3, minHealthRatio: 0.0, speedMultiplier: 1.38, fireInterval: 0.58, attack: 'spread' }
+        ],
+        taunts: { 2: 'BOSS: THAT TICKLED.', 3: 'BOSS: NOW YOU HAVE MY ATTENTION.' }
+      }
     }
   };
 

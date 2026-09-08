@@ -1,0 +1,16 @@
+id: EVT-000039
+timestamp: '2026-09-08T14:00:45+01:00'
+actor:
+  type: human
+  id: product-owner
+  display_name: Gary Burwood
+event_type: proposal_approved
+entity:
+  type: proposal
+  id: PROP-0006-01
+related:
+  change: CHG-0006
+  approval: APR-0006
+resulting_state:
+  proposal_status: approved
+  change_status: approved

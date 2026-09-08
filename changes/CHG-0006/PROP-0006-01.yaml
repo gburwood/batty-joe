@@ -1,0 +1,125 @@
+id: PROP-0006-01
+change: CHG-0006
+revision: 1
+status: approved
+created_at: '2026-09-08T13:50:38+01:00'
+based_on_impact_analysis:
+- IA-0006-01
+proposed_specification_version: 1.9.0
+behaviour_summary: Generalise the existing single-boss architecture (currently level 20 only) to four campaign milestone
+  levels (5, 10, 15, 20), each with its own name, stats, phase curve and taunts, escalating toward the unchanged level 20
+  finale. Levels 5, 10 and 15 generate their boss encounter instead of a procedural brick layout, exactly as level 20
+  already does. No physics, Frenzy, scoring or power-up behaviour changes.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+boss_milestones:
+  architecture_change:
+    config_before: 'BattyJoe.Config.bossLevel (single number) and BattyJoe.Config.level.boss (single boss definition object).'
+    config_after: 'BattyJoe.Config.bossLevels (array [5, 10, 15, 20]) and BattyJoe.Config.level.bosses (an object keyed by
+      level number, one boss definition per milestone level, same shape as the existing single boss definition plus a new
+      per-phase taunts map).'
+    call_sites: Every existing equality check against BattyJoe.Config.bossLevel in batty-joe-game.js (state resolution on
+      start/resume/pause/life-loss/frenzy-restore, the boss-branch render/update guards, and the debug jump-to-boss cheat)
+      and the level-generation branch in batty-joe-levels.js must be changed from an equality check to a membership check
+      against bossLevels, and every place that currently reads BattyJoe.Config.level.boss must instead look up
+      BattyJoe.Config.level.bosses[currentLevel].
+    victory_trigger: The transition to the VICTORY state on boss defeat must remain conditioned specifically on
+      currentLevel equal to 20 (the final campaign level), not on any boss being defeated. Defeating the level 5, 10 or 15
+      boss must transition to the normal LEVEL_COMPLETE flow and advance the campaign, exactly like clearing a procedural
+      level.
+    taunts: Boss phase-change taunts move from the two hardcoded strings in updateBoss to a taunts map on each boss
+      definition, keyed by the phase number being entered. The existing level 20 taunts (shown on entering phase 2 and
+      phase 3) are preserved unchanged as boss_20's taunts so this is not a behaviour change for the existing finale.
+  new_bosses:
+    level_5:
+      id: boss_05
+      name: THE WARM-UP
+      design_intent: A low-threat introduction to the boss mechanic. Slower, single-shot only across both phases, so a
+        player meets a health bar and phase change without real danger.
+      maxHealth: 40
+      width: 200
+      height: 60
+      y: 100
+      baseSpeed: { easy: 100, normal: 120, hard: 145 }
+      difficultyFireFactor: { easy: 1.30, normal: 1.0, hard: 0.75 }
+      phases:
+      - { phase: 1, minHealthRatio: 0.5, speedMultiplier: 1.0, fireInterval: 1.35, attack: single }
+      - { phase: 2, minHealthRatio: 0.0, speedMultiplier: 1.12, fireInterval: 1.05, attack: single }
+      taunts:
+        '2': 'BOSS: OKAY, WARM-UP OVER.'
+    level_10:
+      id: boss_10
+      name: THE ENFORCER
+      design_intent: A genuine mid-campaign step up. Introduces the paired-shot attack for the first time outside the
+        finale.
+      maxHealth: 65
+      width: 230
+      height: 66
+      y: 105
+      baseSpeed: { easy: 115, normal: 138, hard: 165 }
+      difficultyFireFactor: { easy: 1.26, normal: 1.0, hard: 0.79 }
+      phases:
+      - { phase: 1, minHealthRatio: 0.6, speedMultiplier: 1.0, fireInterval: 1.0, attack: single }
+      - { phase: 2, minHealthRatio: 0.0, speedMultiplier: 1.24, fireInterval: 0.72, attack: paired }
+      taunts:
+        '2': "BOSS: NOW I'M ENFORCING."
+    level_15:
+      id: boss_15
+      name: THE LAST WARNING
+      design_intent: A three-phase encounter that mirrors the level 20 finale's shape (single, paired, spread) but is
+        consistently a notch slower and less aggressive at every phase, so level 20 still reads as the hardest fight in
+        the campaign.
+      maxHealth: 85
+      width: 245
+      height: 70
+      y: 108
+      baseSpeed: { easy: 124, normal: 148, hard: 177 }
+      difficultyFireFactor: { easy: 1.24, normal: 1.0, hard: 0.80 }
+      phases:
+      - { phase: 1, minHealthRatio: 0.66, speedMultiplier: 1.0, fireInterval: 1.2, attack: single }
+      - { phase: 2, minHealthRatio: 0.33, speedMultiplier: 1.16, fireInterval: 0.92, attack: paired }
+      - { phase: 3, minHealthRatio: 0.0, speedMultiplier: 1.30, fireInterval: 0.68, attack: spread }
+      taunts:
+        '2': 'BOSS: THAT WAS THE WARNING.'
+        '3': 'BOSS: LAST CHANCE.'
+    level_20:
+      id: boss_20
+      name: THE LAST BRICK
+      design_intent: Unchanged. Remains the hardest encounter in the campaign; only its config location moves from
+        level.boss to level.bosses['20'].
+      change: none — existing maxHealth (100), width (260), height (72), y (110), baseSpeed, difficultyFireFactor and
+        phases are carried over exactly as they are today, with its two existing taunts moved into its new taunts map.
+  campaign_shape_tradeoff: This changes 4 of the 20 campaign levels from procedural brick layouts to boss-only encounters,
+    up from 1 of 20 today. That is a deliberate pacing change, not an incidental side effect, and is called out here for
+    explicit approval rather than folded silently into an "additive" framing.
+specification_changes:
+- Bump product specification from 1.8.0 to 1.9.0.
+- Replace the single v1_0 boss default design under bosses with a milestone_designs list covering levels 5, 10, 15 and 20,
+  each with its own id, name, stats, phases and taunts.
+- Mark bosses.milestone_support.future_levels [5, 10, 15] as implemented; level 20 remains implemented and unchanged.
+- Document that boss defeat only triggers the campaign victory sequence at level 20; boss defeat at levels 5, 10 and 15
+  advances the campaign through the normal level-complete flow.
+artifacts_expected:
+  modify:
+  - batty-joe-config.js
+  - batty-joe-game.js
+  - batty-joe-levels.js
+  - batty-joe-tests.js
+  add:
+  - batty-joe-dev-spec-v1.9.0.yaml
+implementation_constraints:
+- Do not change the level 20 boss's stats, phases, or victory-triggering behaviour.
+- Do not change any Frenzy, physics, scoring, power-up or non-boss level-generation behaviour.
+- Every existing equality check against the old single bossLevel value must be found and converted; none may be missed,
+  including the debug jump-to-boss cheat key.
+- Boss encounters must remain deterministic for the same campaign seed and difficulty, using the existing
+  campaignRng(seed, difficulty, level, 'boss') pattern for every milestone level.
+- Add a regression test asserting that only level 20 boss defeat transitions to VICTORY, and that level 5/10/15 boss
+  defeat transitions to the normal LEVEL_COMPLETE flow and advances current_level.
+- Add phase-threshold and stat regression tests for each new boss, independent of the existing level-20-specific test.
+- Implement the approved specification first; code must not silently become the source of product intent.
+approvals:
+- APR-0006

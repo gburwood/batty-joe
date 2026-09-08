@@ -1,4 +1,4 @@
-/* Batty Joe Development Specification v1.7.0 */
+/* Batty Joe Development Specification v1.9.0 */
 (function (global) {
   'use strict';
 
@@ -333,7 +333,7 @@
   });
 
   test('indestructible bricks can be damaged in fps frenzy', function () {
-    const game = makeGame({ level: 15 });
+    const game = makeGame({ level: 16 });
     let brick = game.levelData.bricks.find(function (b) { return b.type === 'indestructible'; });
     if (!brick) { brick = game.levelData.bricks[0]; brick.type = 'indestructible'; brick.hits = brick.maxHits = 999; }
     assert(!game.damageBrick(brick, 1, { source: 'test', frenzy: false }));
@@ -385,7 +385,7 @@
   });
 
   test('continue restarts current level and resets score', function () {
-    const game = makeGame({ level: 5 });
+    const game = makeGame({ level: 6 });
     const original = layoutSignature(game.levelInitial);
     game.score = 99999; game.lives = 0; game.continuesRemaining = 3; game.setState(BJ.State.CONTINUE); game.useContinue();
     equal(game.score, 0); equal(game.lives, BJ.Config.lives.start); equal(game.continuesRemaining, 2); equal(layoutSignature(game.levelData), original);
@@ -393,6 +393,67 @@
 
   test('boss transitions phases by health threshold', function () {
     const game = makeGame({ level: 20 }); equal(game.levelData.boss.phase, 1); game.levelData.boss.health = 60; game.updateBoss(0.016); equal(game.levelData.boss.phase, 2); game.levelData.boss.health = 30; game.updateBoss(0.016); equal(game.levelData.boss.phase, 3);
+  });
+
+  test('level 5 milestone boss (THE WARM-UP) has the specified stats and two phases', function () {
+    const game = makeGame({ level: 5 });
+    const cfg = BJ.Config.bosses[5];
+    equal(game.levelData.boss.name, 'THE WARM-UP');
+    equal(game.levelData.boss.maxHealth, 40); equal(cfg.maxHealth, 40);
+    equal(cfg.phases.length, 2);
+    equal(game.levelData.boss.phase, 1);
+    game.levelData.boss.health = 15; game.updateBoss(0.016);
+    equal(game.levelData.boss.phase, 2);
+  });
+
+  test('level 10 milestone boss (THE ENFORCER) has the specified stats and switches to paired fire in phase 2', function () {
+    const game = makeGame({ level: 10 });
+    const cfg = BJ.Config.bosses[10];
+    equal(game.levelData.boss.name, 'THE ENFORCER');
+    equal(game.levelData.boss.maxHealth, 65); equal(cfg.maxHealth, 65);
+    equal(cfg.phases.length, 2);
+    equal(cfg.phases[1].attack, 'paired');
+    equal(game.levelData.boss.phase, 1);
+    game.levelData.boss.health = 20; game.updateBoss(0.016);
+    equal(game.levelData.boss.phase, 2);
+  });
+
+  test('level 15 milestone boss (THE LAST WARNING) has three escalating phases', function () {
+    const game = makeGame({ level: 15 });
+    const cfg = BJ.Config.bosses[15];
+    equal(game.levelData.boss.name, 'THE LAST WARNING');
+    equal(game.levelData.boss.maxHealth, 85); equal(cfg.maxHealth, 85);
+    equal(cfg.phases.length, 3);
+    equal(game.levelData.boss.phase, 1);
+    game.levelData.boss.health = 50; game.updateBoss(0.016); equal(game.levelData.boss.phase, 2);
+    game.levelData.boss.health = 20; game.updateBoss(0.016); equal(game.levelData.boss.phase, 3);
+  });
+
+  test('milestone boss levels are generated only at 5, 10, 15 and 20', function () {
+    equal(BJ.Config.bossLevels.join(','), '5,10,15,20');
+    [5, 10, 15, 20].forEach(function (lvl) { assert(!!makeGame({ level: lvl }).levelData.boss, 'level ' + lvl + ' should generate a boss'); });
+    [1, 6, 9, 11, 16, 19].forEach(function (lvl) { assert(!makeGame({ level: lvl }).levelData.boss, 'level ' + lvl + ' should not generate a boss'); });
+  });
+
+  test('defeating a milestone boss (level 5) completes the level without ending the campaign', function () {
+    const game = makeGame({ level: 5 });
+    game.damageBoss(game.levelData.boss.health);
+    equal(game.levelData.boss.alive, false);
+    equal(game.state, BJ.State.LEVEL_COMPLETE, 'defeating a milestone boss should complete the level, not skip it');
+    game.advanceLevel();
+    equal(game.campaignCompleted, false, 'the campaign must not be marked complete after a milestone boss');
+    assert(game.state !== BJ.State.VICTORY, 'defeating the level 5 boss must never trigger VICTORY');
+    equal(game.level, 6);
+  });
+
+  test('defeating the level 20 boss is the only way to trigger VICTORY', function () {
+    const game = makeGame({ level: 20 });
+    game.damageBoss(game.levelData.boss.health);
+    equal(game.levelData.boss.alive, false);
+    equal(game.state, BJ.State.LEVEL_COMPLETE);
+    game.advanceLevel();
+    equal(game.campaignCompleted, true);
+    equal(game.state, BJ.State.VICTORY);
   });
 
   test('moving paddle imparts signed ball spin', function () {
