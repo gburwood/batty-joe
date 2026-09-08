@@ -21,14 +21,14 @@ approach: Replaced the single hardcoded level-20 boss config with a per-level bo
   the new bosses and for the constraint that only the level 20 boss defeat triggers VICTORY; produced
   batty-joe-dev-spec-v1.9.0.yaml documenting the change.
 source_revision:
-  before: not_available
-  after: not_available
-  note: This implementation was carried out in a cloud sandbox against a local mirror of the repository, staged from
-    the user's machine via the Claude desktop device bridge. No device shell was available on that link to run git
-    directly against the user's working copy, so no commit hashes were captured for this attempt. The edited files
-    were transferred back to the user's repository at C:\Users\Gary Burwood\repos\batty-joe via the same bridge; the
-    user is expected to review and commit them there, at which point the resulting commit hash should be recorded
-    (e.g. via a follow-up event or by updating this record).
+  before: ce5555d5a9f76d5ff2222c493433d64b01748b37
+  after: 2302c2dc1a44b5f58dc7a7b9cfc7e14e449ae65a
+  note: Recorded retroactively - see EVT-000042. Not available at implementation time because this attempt was
+    carried out in a cloud sandbox against a local mirror of the repository, staged from the user's machine via the
+    Claude desktop device bridge; no device shell was available on that link to run git directly against the user's
+    working copy. The edited files were transferred back to the user's repository at
+    C:\Users\Gary Burwood\repos\batty-joe via the same bridge, and the user committed them there as
+    2302c2dc1a44b5f58dc7a7b9cfc7e14e449ae65a, on top of ce5555d5a9f76d5ff2222c493433d64b01748b37.
 outcome: passed
 artifacts_modified:
 - batty-joe-config.js

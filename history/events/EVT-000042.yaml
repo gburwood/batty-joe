@@ -1,0 +1,20 @@
+id: EVT-000042
+timestamp: '2026-09-08T15:00:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude (Cowork)
+event_type: source_revision_recorded
+entity:
+  type: implementation_attempt
+  id: IMP-0006-01
+related:
+  change: CHG-0006
+  implementation_attempt: IMP-0006-01
+  source_revision: 2302c2dc1a44b5f58dc7a7b9cfc7e14e449ae65a
+resulting_state:
+  source_revision_after: 2302c2dc1a44b5f58dc7a7b9cfc7e14e449ae65a
+notes: Recorded after the fact. IMP-0006-01 was performed in a cloud sandbox with no git access to the user's working
+  copy (see IMP-0006-01.yaml); the user committed the transferred files locally as 2302c2dc1a44b5f58dc7a7b9cfc7e14e449ae65a
+  on top of ce5555d5a9f76d5ff2222c493433d64b01748b37, and this event records that commit against the implementation
+  attempt.
