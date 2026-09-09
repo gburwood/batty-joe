@@ -1,0 +1,15 @@
+id: APR-0007
+change: CHG-0007
+proposal: PROP-0007-02
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-09T14:51:39+01:00'
+scope:
+  proposed_specification_version: 1.10.0
+  approved_behaviour: Handcrafted level authoring, ordered custom campaigns, two-frenzy-level limit, and return to normal campaign at level n plus one.
+mechanism:
+  type: conversation
+  reference: User instruction to complete this change according to the SpecForge bootstrap.

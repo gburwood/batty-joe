@@ -1,0 +1,19 @@
+id: EVT-000043
+timestamp: '2026-09-09T14:51:39+01:00'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: proposal_approved
+entity:
+  type: approval
+  id: APR-0007
+related:
+  change: CHG-0007
+  proposal: PROP-0007-02
+resulting_state:
+  proposal_status: approved
+  change_status: approved
+evidence:
+  mechanism: conversation
+  reference: User instruction to complete this change according to the SpecForge bootstrap.

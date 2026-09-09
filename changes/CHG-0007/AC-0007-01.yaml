@@ -1,0 +1,7 @@
+id: AC-0007-01
+requirement: REQ-0007
+given: A player creates or imports a handcrafted level.
+when: The level is saved or started.
+then: The game validates its grid bounds, 16-96 brick count, durability range, supported power-ups, and maximum of two frenzy power-ups; valid frenzy selections survive serialization and invoke the matching game power-up.
+verification:
+  type: automated

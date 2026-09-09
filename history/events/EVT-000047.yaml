@@ -1,0 +1,21 @@
+id: EVT-000047
+timestamp: '2026-09-09T14:53:45+01:00'
+actor:
+  type: ai
+  id: github-copilot
+  display_name: GitHub Copilot
+event_type: correction
+entity:
+  type: change
+  id: CHG-0007
+related:
+  change: CHG-0007
+  implementation_attempt: IMP-0007-01
+  specification: batty-joe-dev-spec-v1.10.0.yaml
+corrects: EVT-000046
+resulting_state:
+  change_status: completed
+  correction: Committed designer tutorial is assigned to campaign level 1 and resolves through the prebuilt-level loader.
+evidence:
+  browser_loader_check: passed
+  browser_suite: 113_of_113_passed

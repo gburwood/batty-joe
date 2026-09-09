@@ -1,0 +1,9 @@
+id: REQ-0008
+title: Ordered custom campaigns
+status: active
+requirement: The game shall allow a player to select and order up to 20 saved custom levels, play them in that order, and then resume the normal campaign at level n plus one.
+introduced:
+  by_change: CHG-0007
+  in_specification: 1.10.0
+acceptance_criteria:
+- AC-0008-01

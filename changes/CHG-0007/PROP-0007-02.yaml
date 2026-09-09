@@ -1,0 +1,26 @@
+id: PROP-0007-02
+change: CHG-0007
+revision: 2
+status: approved
+created_at: '2026-09-09T14:51:39+01:00'
+based_on_impact_analysis:
+- IA-0007-01
+supersedes: PROP-0007-01
+proposed_specification_version: 1.10.0
+behaviour_summary: Add a 12 by 10 level editor for player-authored levels and optional designer-authored campaign levels. Player levels persist in localStorage, may be imported/exported, and can be selected and drag-and-drop ordered into a Custom Campaign of up to 20 levels. Custom levels play in the selected order, then normal campaign play resumes at level n plus one. New Game runs the normal campaign using designer levels where available, with procedural generation as fallback. Each handcrafted level contains 16-96 bricks, durability 1-5, and at most two frenzy power-ups.
+implementation_constraints:
+- Preserve procedural generation as the fallback for unavailable designer levels.
+- Do not modify physics, scoring, boss, or normal Frenzy game behavior.
+- Validate player-authored data before persistence, import, or play.
+- Keep custom campaigns separate from normal campaign progress until their selected levels are complete.
+artifacts_expected:
+  specification: batty-joe-dev-spec-v1.10.0.yaml
+  implementation:
+  - batty-joe-level-editor.js
+  - batty-joe-level-editor-ui.js
+  - batty-joe-handcrafted-levels-loader.js
+  - batty-joe-levels-handcrafted.yaml
+  - schemas/handcrafted-level.schema.json
+  tests: batty-joe-tests.html and batty-joe-tests.js
+approvals:
+- APR-0007

@@ -1,0 +1,7 @@
+id: AC-0008-01
+requirement: REQ-0008
+given: A player selects multiple saved custom levels.
+when: The player drag-and-drop orders the selected cards and starts a Custom Campaign.
+then: The selected levels are played in that order, up to 20 entries, and after the final selected level normal campaign play begins at level n plus one.
+verification:
+  type: automated

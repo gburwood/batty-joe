@@ -1,0 +1,9 @@
+id: REQ-0007
+title: Handcrafted level authoring
+status: active
+requirement: The game shall provide validated 12 by 10 handcrafted levels for both player authoring and optional designer-authored campaign slots, with procedural fallback for unavailable designer slots.
+introduced:
+  by_change: CHG-0007
+  in_specification: 1.10.0
+acceptance_criteria:
+- AC-0007-01

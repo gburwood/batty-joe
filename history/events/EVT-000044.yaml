@@ -1,0 +1,17 @@
+id: EVT-000044
+timestamp: '2026-09-09T14:51:39+01:00'
+actor:
+  type: ai
+  id: github-copilot
+  display_name: GitHub Copilot
+event_type: implementation_completed
+entity:
+  type: implementation_attempt
+  id: IMP-0007-01
+related:
+  change: CHG-0007
+  proposal: PROP-0007-02
+  approval: APR-0007
+resulting_state:
+  implementation_outcome: passed
+  source_revision: uncommitted_worktree

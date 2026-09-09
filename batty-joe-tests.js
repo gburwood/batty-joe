@@ -1140,8 +1140,7 @@
     tests.forEach(function (t) { try { t.fn(); passed += 1; renderResult(t.name, true); } catch (error) { renderResult(t.name, false, error); } });
     const summary = document.getElementById('summary'); summary.className = passed === tests.length ? 'pass' : 'fail'; summary.textContent = passed + ' / ' + tests.length + ' tests passed.'; BJ.Storage.clearAllForTests();
   }
-  global.addEventListener('load', run);
-}(window));
+
   test('v1.7 retired frenzy identifiers are unavailable', function () {
     const game = makeGame({ level: 8 });
     equal(game.normalizeFrenzyMode('tenpin'), null); equal(game.normalizeFrenzyMode('bomber'), null); assert(!game.startFrenzy('tenpin')); assert(!game.startFrenzy('bomber'));
@@ -1160,4 +1159,36 @@
     equal(a.frenzyMode,'gridrunner'); equal(b.frenzyMode,'gridrunner');
     equal(a.levelData.bricks.map(function(x){return x.frenzyMeta&&[x.frenzyMeta.gridX,x.frenzyMeta.gridY];}).join('|'), b.levelData.bricks.map(function(x){return x.frenzyMeta&&[x.frenzyMeta.gridX,x.frenzyMeta.gridY];}).join('|'));
   });
+
+  test('handcrafted levels preserve frenzy type and reject a third frenzy power-up', function () {
+    const editor = new BJ.LevelEditor();
+    for (let col = 0; col < 16; col += 1) editor.placeBrick(col % 12, Math.floor(col / 12), 'standard', 1);
+    editor.placeBrick(0, 2, 'powerup_spawner', 1, 'space_invaders_frenzy', 'invaders');
+    editor.placeBrick(1, 2, 'powerup_spawner', 1, 'fps_frenzy', 'fps');
+    const level = editor.gridToLevel('frenzy_test', 'Frenzy Test', 'normal', '');
+    equal(level.bricks.filter(function (brick) { return brick.powerup && brick.powerup.indexOf('frenzy') > -1; }).length, 2);
+    equal(level.bricks.filter(function (brick) { return brick.frenzyType === 'invaders'; }).length, 1);
+    level.bricks.push({ col: 2, row: 2, type: 'powerup_spawner', durability: 1, powerup: 'pinball_frenzy', frenzyType: 'pinball' });
+    assert(!editor.validate(level).valid, 'A third frenzy power-up must be rejected');
+  });
+
+  test('custom campaign plays selected levels in order then resumes normal campaign at n plus one', function () {
+    const editor = new BJ.LevelEditor();
+    for (let col = 0; col < 16; col += 1) editor.placeBrick(col % 12, Math.floor(col / 12), 'standard', 1);
+    const first = editor.gridToLevel('custom_first', 'Custom First', 'normal', '');
+    editor.saveToStorage(first);
+    const second = Object.assign({}, first, { id: 'custom_second', title: 'Custom Second' });
+    editor.saveToStorage(second);
+    BJ.CustomCampaign = { levelIds: ['custom_second', 'custom_first'], currentLevelIndex: 0, resumeLevel: 3 };
+    const game = makeGame();
+    equal(game.levelData.title, 'Custom Second');
+    game.advanceLevel();
+    equal(game.levelData.title, 'Custom First');
+    game.advanceLevel();
+    equal(game.level, 3);
+    assert(!BJ.CustomCampaign, 'Custom campaign state must clear after its final level');
+  });
+
+  global.addEventListener('load', run);
+}(window));
 

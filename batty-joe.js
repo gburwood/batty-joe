@@ -5,6 +5,10 @@
   const BJ = global.BattyJoe = global.BattyJoe || {};
   const U = BJ.Utils;
 
+  // Version and build info
+  BJ.VERSION = '1.10.0-dev';
+  BJ.BUILD_TIME = new Date().toISOString();
+
   function Input(settings) {
     this.settings = settings;
     this.down = Object.create(null);
@@ -50,7 +54,6 @@
     global.addEventListener('blur', function () {
       self.down = Object.create(null);
       self.pressed = Object.create(null);
-      self.codeDown = Object.create(null);
       self.mouseDown = false;
       self.mousePressed = false;
       self.pointer.inside = false;
@@ -121,13 +124,23 @@
     this.settingsReturn = 'menu';
     this.pendingResult = null;
     this.loop = this.loop.bind(this);
+
+    // Create level editor UI with error handling
+    if (typeof BJ.LevelEditorUI !== 'function') {
+      console.error('BJ.LevelEditorUI not found. Available on BJ:', Object.keys(BJ));
+      throw new Error('LevelEditorUI module failed to load');
+    }
+    this.levelEditorUI = new BJ.LevelEditorUI();
+    this.initializeHandcraftedLevels();
     this.bindUi();
+    this.levelEditorUI.init(document.getElementById('gameShell'), this.game);
     this.applySettingsToUi();
     if (this.query.debug) {
       if (this.query.seed) document.getElementById('seedInput').value = this.query.seed;
       if (BJ.Config.difficulty[this.query.difficulty]) document.getElementById('difficultySelect').value = this.query.difficulty;
     }
     this.refreshContinueButton();
+    this.setVersionInfo();
     this.showMainMenu();
     requestAnimationFrame(this.loop);
   }
@@ -139,14 +152,17 @@
       if (el) el.addEventListener(event, fn);
     }
 
-    on('newGameBtn', 'click', function () { self.showPanel('newGamePanel'); });
+    on('newGameBtn', 'click', function () { self.startPrebuiltCampaign(); });
+    on('customCampaignBtn', 'click', function () { self.showCustomCampaignPanel(); });
     on('continueBtn', 'click', function () { self.continueSavedGame(); });
     on('highScoresBtn', 'click', function () { self.renderHighScores(); self.showPanel('highScoresPanel'); });
     on('howToBtn', 'click', function () { self.showPanel('howToPanel'); });
+    on('levelEditorBtn', 'click', function () { self.levelEditorUI.open(); });
     on('settingsBtn', 'click', function () { self.settingsReturn = 'menu'; self.applySettingsToUi(); self.showPanel('settingsPanel'); });
 
     on('randomSeedBtn', 'click', function () { document.getElementById('seedInput').value = U.randomSeed(); });
     on('startGameBtn', 'click', function () { self.startNewGame(); });
+    on('startCustomBtn', 'click', function () { self.startCustomCampaign(); });
     document.querySelectorAll('[data-back="menu"]').forEach(function (el) { el.addEventListener('click', function () { self.showMainMenu(); }); });
 
     on('resumeBtn', 'click', function () { self.hideOverlay(); self.game.resume(); });
@@ -205,6 +221,19 @@
     });
   };
 
+  App.prototype.initializeHandcraftedLevels = function () {
+    // Check if BJ.HandcraftedLevelsLoader is the constructor function (not yet instantiated)
+    if (BJ.HandcraftedLevelsData && typeof BJ.HandcraftedLevelsLoader === 'function') {
+      const LoaderClass = BJ.HandcraftedLevelsLoader;
+      const loader = new LoaderClass();
+      loader.loadFromYAML(BJ.HandcraftedLevelsData);
+      BJ.HandcraftedLevelsLoader = loader;
+      if (this.query.debug) {
+        console.log('[App] Handcrafted levels initialized:', loader.listDesignerLevels().length, 'designer levels');
+      }
+    }
+  };
+
   App.prototype.primaryKey = function (action) {
     return (this.settings.keys[action] || [])[0] || '';
   };
@@ -230,6 +259,19 @@
     if (this.query.debug && this.query.frenzy) global.setTimeout((function () { this.game.debugTriggerFrenzy(this.query.frenzyType || 'invaders'); }).bind(this), 350);
   };
 
+    App.prototype.startPrebuiltCampaign = function () {
+      BJ.Storage.clearCampaign();
+       BJ.CustomCampaign = null;
+       BJ.TestPlayLevel = null;
+      this.hideOverlay();
+      this.audio.resume();
+      this.game.newCampaign({
+        seed: 'PREBUILT',
+        difficulty: 'normal',
+        level: 1
+      });
+    };
+
   App.prototype.continueSavedGame = function () {
     const save = BJ.Storage.loadCampaign();
     if (!save) { this.refreshContinueButton(); return; }
@@ -240,6 +282,118 @@
     this.audio.resume();
     this.game.resumeCampaign(save);
     if (this.query.debug) this.game.highScoreEligible = false;
+  };
+
+  App.prototype.showCustomCampaignPanel = function () {
+    const self = this;
+    const listEl = document.getElementById('customLevelsList');
+    const noLevelsEl = document.getElementById('noCustomLevels');
+    const startBtn = document.getElementById('startCustomBtn');
+
+    // Get stored user levels
+    const levels = this.levelEditorUI.editor.listStoredLevels();
+
+    this.customCampaignSelection = [];
+
+    if (levels.length === 0) {
+      listEl.innerHTML = '';
+      noLevelsEl.style.display = 'block';
+      startBtn.disabled = true;
+      this.showPanel('customCampaignPanel');
+      return;
+    }
+
+    noLevelsEl.style.display = 'none';
+
+    function renderLevels() {
+      listEl.innerHTML = '';
+      const selected = self.customCampaignSelection;
+      const orderedLevels = levels.slice().sort(function (left, right) {
+        const leftIndex = selected.indexOf(left.id);
+        const rightIndex = selected.indexOf(right.id);
+        if (leftIndex < 0 && rightIndex < 0) return 0;
+        if (leftIndex < 0) return 1;
+        if (rightIndex < 0) return -1;
+        return leftIndex - rightIndex;
+      });
+
+      orderedLevels.forEach(function (level) {
+        const selectedIndex = selected.indexOf(level.id);
+        const itemEl = document.createElement('div');
+        itemEl.className = 'custom-level-item' + (selectedIndex >= 0 ? ' selected' : '');
+        itemEl.dataset.levelId = level.id;
+        itemEl.draggable = selectedIndex >= 0;
+
+        const infoEl = document.createElement('div');
+        infoEl.className = 'custom-level-item-info';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'custom-level-item-title';
+        titleEl.textContent = (selectedIndex >= 0 ? (selectedIndex + 1) + '. ' : '') + level.title;
+        const detailsEl = document.createElement('div');
+        detailsEl.className = 'custom-level-item-details';
+        detailsEl.textContent = level.difficulty.toUpperCase() + ' • ' + level.bricks + ' bricks';
+        infoEl.appendChild(titleEl);
+        infoEl.appendChild(detailsEl);
+        itemEl.appendChild(infoEl);
+
+        itemEl.addEventListener('click', function () {
+          if (selectedIndex >= 0) selected.splice(selectedIndex, 1);
+          else selected.push(level.id);
+          startBtn.disabled = selected.length === 0;
+          renderLevels();
+        });
+
+        itemEl.addEventListener('dragstart', function (event) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', level.id);
+          itemEl.classList.add('dragging');
+        });
+        itemEl.addEventListener('dragend', function () { itemEl.classList.remove('dragging'); });
+        itemEl.addEventListener('dragover', function (event) {
+          if (selectedIndex >= 0) event.preventDefault();
+        });
+        itemEl.addEventListener('drop', function (event) {
+          event.preventDefault();
+          const draggedId = event.dataTransfer.getData('text/plain');
+          const fromIndex = selected.indexOf(draggedId);
+          if (selectedIndex < 0 || fromIndex < 0 || fromIndex === selectedIndex) return;
+          selected.splice(fromIndex, 1);
+          selected.splice(selectedIndex, 0, draggedId);
+          renderLevels();
+        });
+        listEl.appendChild(itemEl);
+      });
+      startBtn.disabled = selected.length === 0;
+    }
+
+    renderLevels();
+
+    this.showPanel('customCampaignPanel');
+  };
+
+  App.prototype.startCustomCampaign = function () {
+    if (!this.customCampaignSelection || this.customCampaignSelection.length === 0) {
+      alert('Select at least one level');
+      return;
+    }
+
+    BJ.Storage.clearCampaign();
+    BJ.TestPlayLevel = null;
+    BJ.CustomCampaign = {
+      levelIds: this.customCampaignSelection.slice(0, 20),
+      currentLevelIndex: 0,
+      resumeLevel: Math.min(BJ.Config.campaignLevels + 1, this.customCampaignSelection.length + 1)
+    };
+
+    this.hideOverlay();
+    this.audio.resume();
+    this.game.newCampaign({
+      type: 'custom',
+      seed: 'CUSTOM-' + Date.now(),
+      difficulty: 'normal',
+      level: 1,
+      customCampaign: true
+    });
   };
 
   App.prototype.showMainMenu = function () {
@@ -271,6 +425,14 @@
     const save = BJ.Storage.loadCampaign();
     btn.disabled = !save;
     btn.textContent = save ? ('CONTINUE  L' + save.currentLevel) : 'CONTINUE';
+  };
+
+  App.prototype.setVersionInfo = function () {
+    const versionEl = document.getElementById('versionInfo');
+    if (versionEl) {
+      const buildTime = new Date(BJ.BUILD_TIME).toLocaleString();
+      versionEl.textContent = 'v' + BJ.VERSION + ' • Built: ' + buildTime;
+    }
   };
 
   App.prototype.onStateChange = function (next, old, detail) {

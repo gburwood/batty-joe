@@ -1,0 +1,45 @@
+id: CHG-0007
+title: Introduce handcrafted level authoring (designer and player)
+classification: feature
+status: completed
+priority: normal
+sources:
+- type: conversation
+  reference: user-request-2026-09-09-handcrafted-level-support
+  received_at: '2026-09-09T14:00:00+01:00'
+request:
+  summary: Add capability for designers to author handcrafted campaign levels and for players to create custom levels in-browser.
+  detail: The game currently generates all 20 campaign levels procedurally. This change introduces an optional handcrafted level system where (1) designers can commit authored levels to the specification as a replacement for procedural generation, and (2) players can build custom levels in a visual grid editor, test-play them, and export/import as JSON. Both types use the same grid-based architecture (12 columns × 10 rows, 16-96 bricks per level, max durability 5).
+clarification:
+  required: false
+  notes: Player-created levels live in browser localStorage (max 20 saved), with export/import for sharing. Designer levels are specification-governed and merged via CHG proposal workflow. Both fallback to procedural generation if a level is missing or corrupt.
+relationships:
+  depends_on:
+  - CHG-0006
+  conflicts_with: []
+  related_to: []
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0007-01
+proposal:
+  current: PROP-0007-02
+approvals:
+- APR-0007
+implementation:
+  attempts:
+  - IMP-0007-01
+requirements:
+  affected:
+  - REQ-0007
+  - REQ-0008
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-09T14:15:00+01:00'
+  created_by:
+    type: human
+    id: gary_burwood
+    display_name: Gary Burwood
+  completed_at: '2026-09-09T14:51:39+01:00'

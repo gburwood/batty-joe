@@ -1,0 +1,17 @@
+id: EVT-000045
+timestamp: '2026-09-09T14:51:39+01:00'
+actor:
+  type: automated_system
+  id: browser-test-harness
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0007
+related:
+  change: CHG-0007
+  implementation_attempt: IMP-0007-01
+resulting_state:
+  test_result: 113_of_113_passed
+evidence:
+  test_page: batty-joe-tests.html
+  browser: VS Code integrated browser

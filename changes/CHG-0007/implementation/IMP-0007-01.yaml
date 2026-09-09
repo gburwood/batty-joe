@@ -1,0 +1,27 @@
+id: IMP-0007-01
+change: CHG-0007
+proposal: PROP-0007-02
+attempt: 1
+started_at: '2026-09-09T14:15:00+01:00'
+completed_at: '2026-09-09T14:51:39+01:00'
+actor:
+  type: ai
+  id: github-copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: github
+    tool: VS Code GitHub Copilot
+approach: Added browser level-authoring modules, localStorage persistence, import/export, test play, designer-level loading, ordered Custom Campaign selection, normal campaign hand-off, and editor constraints including the two-frenzy-power-up maximum. Bound the committed tutorial to designer campaign level 1. Corrected module and UI startup defects discovered during implementation.
+source_revision:
+  system: git
+  before: f901c9b7532b522309bcaecdf76f0db41d7429bc
+  after: uncommitted_worktree
+  note: No immutable source revision exists yet; completion validation was run against the current working tree.
+outcome: passed
+tests:
+  passed:
+  - Browser suite: batty-joe-tests.html, 113/113 passed on 2026-09-09.
+  - Browser loader check: designer campaign level 1 resolves to Tutorial: The Basics.
+  - VS Code diagnostics: no errors in modified JavaScript, HTML, or CSS files.
+  failed: []
+notes: Python and Node.js are not installed in the local environment, so the Python SpecForge validator and Node syntax check could not be run. Browser execution provided feature and regression validation.
