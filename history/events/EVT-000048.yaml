@@ -1,0 +1,17 @@
+id: EVT-000048
+timestamp: '2026-09-09T14:58:21+01:00'
+actor:
+  type: ai
+  id: github-copilot
+  display_name: GitHub Copilot
+event_type: source_revision_recorded
+entity:
+  type: implementation_attempt
+  id: IMP-0007-01
+related:
+  change: CHG-0007
+  implementation_attempt: IMP-0007-01
+  source_revision: 5bd55e6974656e4bd347179c6f7631105fa22540
+resulting_state:
+  source_revision_after: 5bd55e6974656e4bd347179c6f7631105fa22540
+notes: The implementation commit contains the completed CHG-0007 source, v1.10 specification, approval, validation evidence, and prior forensic records. This follow-up event records its immutable SHA.
