@@ -1,0 +1,28 @@
+id: EVT-000059
+timestamp: '2026-09-10T20:18:30+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: historical_artifact_quarantined
+entity:
+  type: change
+  id: CHG-0007
+related:
+  change: CHG-0008
+  target_change: CHG-0007
+resulting_state:
+  original_artifact_preserved: true
+  active_yaml_parse_surface: valid_descriptor
+evidence:
+  original_path: batty-joe-dev-spec-v1.10.0.yaml
+  original_blob_sha: acde505fe909c7dd03ae76c66944ac706a36d7db
+  archive_path: history/artifacts/batty-joe-dev-spec-v1.10.0.original.yaml.txt
+  descriptor_path: batty-joe-dev-spec-v1.10.0.yaml
+notes: >
+  The malformed historical specification is preserved byte-for-byte outside the *.yaml
+  validation surface. The original Git history remains intact.

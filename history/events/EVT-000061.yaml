@@ -1,0 +1,22 @@
+id: EVT-000061
+timestamp: '2026-09-10T20:19:10+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: implementation_corrected
+entity:
+  type: implementation_attempt
+  id: IMP-0008-01
+related:
+  change: CHG-0008
+  implementation_attempt: IMP-0008-01
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: implemented
+evidence:
+  reason: Executable repository validation failed on retained YAML syntax defects; records corrected and validation must be rerun.

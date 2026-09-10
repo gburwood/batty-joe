@@ -1,0 +1,25 @@
+id: EVT-000060
+timestamp: '2026-09-10T20:19:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: validation_retest_requested
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  implementation_attempt: IMP-0008-01
+resulting_state:
+  change_status: implemented
+  validation_status: pending_retest
+evidence:
+  command: py tools/validate-specforge.py
+notes: >
+  Repository YAML syntax corrections are committed. A fresh executable validator run
+  is required before CHG-0008 can advance to validated or completed.

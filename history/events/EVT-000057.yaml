@@ -1,0 +1,27 @@
+id: EVT-000057
+timestamp: '2026-09-10T20:16:00+01:00'
+actor:
+  type: human
+  id: product-owner
+  display_name: Gary Burwood
+event_type: validation_failed
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  implementation_attempt: IMP-0008-01
+resulting_state:
+  change_status: implemented
+  validation_status: failed
+evidence:
+  command: py tools/validate-specforge.py
+  failures:
+  - batty-joe-dev-spec-v1.10.0.yaml was invalid YAML.
+  - changes/CHG-0007/IA-0007-01.yaml was invalid YAML.
+  - changes/CHG-0008/IA-0008-01.yaml was invalid YAML.
+  - changes/CHG-0007/implementation/IMP-0007-01.yaml was invalid YAML.
+  - Dependent canonical references were then reported broken because those records could not be loaded.
+notes: >
+  The product rollback remains applied. This event records the first actual execution
+  of the SpecForge repository validator after the rollback.

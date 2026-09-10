@@ -1,0 +1,31 @@
+id: EVT-000058
+timestamp: '2026-09-10T20:18:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: forensic_correction
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  target_change: CHG-0007
+resulting_state:
+  change_status: implemented
+  validation_status: pending_retest
+evidence:
+  corrected_records:
+  - changes/CHG-0007/IA-0007-01.yaml
+  - changes/CHG-0007/implementation/IMP-0007-01.yaml
+  - changes/CHG-0008/IA-0008-01.yaml
+  historical_spec_descriptor: batty-joe-dev-spec-v1.10.0.yaml
+  original_historical_spec_archive: history/artifacts/batty-joe-dev-spec-v1.10.0.original.yaml.txt
+  original_historical_spec_blob_sha: acde505fe909c7dd03ae76c66944ac706a36d7db
+notes: >
+  Corrections address YAML syntax only and do not reactivate CHG-0007 behaviour.
+  The exact malformed v1.10.0 artifact is retained by Git blob and archived path.
