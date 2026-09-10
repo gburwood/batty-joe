@@ -1,0 +1,23 @@
+id: EVT-000049
+timestamp: '2026-09-10T18:43:49+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  target_change: CHG-0007
+resulting_state:
+  change_status: awaiting_approval
+  rollback_target_revision: f901c9b7532b522309bcaecdf76f0db41d7429bc
+evidence:
+  repository_revision_examined: f06c8dab76dcc87546ad481dc3d32fb649189127
+  user_request: Back out CHG-0007.
