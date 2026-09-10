@@ -4,6 +4,7 @@ proposal: PROP-0008-01
 attempt: 1
 started_at: '2026-09-10T19:14:22+01:00'
 completed_at: '2026-09-10T19:22:52+01:00'
+validated_at: '2026-09-10T20:39:41+01:00'
 actor:
   type: ai
   id: chatgpt
@@ -21,12 +22,13 @@ approach: >
 source_revision:
   system: git
   before: ec3ad1040386b371e65d95aed9af20bc880e6041
-  after: 7489180c0f670c3fd61e73b4b623293a0358950b
+  after: c94e0b3bf4e3ac359809ed7e1c16ff3e64ab3911
   product_rollback_commit: 9556048d53477f33d5e65fb61be641e5a3d9574c
   note: >
-    The product rollback commit restores the runtime. Later governance-only corrections
-    do not alter those restored runtime blobs.
-outcome: in_progress
+    The product rollback commit restores the runtime. The validated source revision
+    includes the later governance-only YAML corrections and leaves those restored
+    runtime blobs unchanged.
+outcome: passed
 artifacts_restored_from_f901c9b:
 - batty-joe-game.js
 - batty-joe-levels.js
@@ -48,12 +50,14 @@ tests:
   - Direct blob checks confirm all seven restored files have the same Git blob SHAs as f901c9b.
   - The compare shows no CHG-0007-only runtime artifacts in the active tree.
   - Exact runtime equivalence to the post-CHG-0006 baseline preserves the approved CHG-0006 boss milestone implementation.
+  - 'Executable validation passed: py tools/validate-specforge.py.'
+  - 'Canonical records discovered: 107.'
+  - Nested SpecForge projects were excluded from parent validation as expected.
   failed:
-  - '2026-09-10 executable validation: py tools/validate-specforge.py failed because four retained YAML artifacts were syntactically invalid; dependent references then appeared broken.'
-  pending:
-  - Re-run py tools/validate-specforge.py after YAML forensic corrections.
+  - 'Initial 2026-09-10 executable validation failed because four retained YAML artifacts were syntactically invalid; those defects were corrected and the subsequent validation passed.'
   unavailable:
   - A disposable GitHub Actions validation branch/workflow produced no workflow run for the connector-authored push.
 notes: >
-  CHG-0008 remains implemented and not completed until the repository validator passes
-  in a normal checkout. The product rollback itself remains applied to main.
+  The failed validation attempt is retained as forensic evidence. The successful local
+  validator run against c94e0b3bf4e3ac359809ed7e1c16ff3e64ab3911 closes the remaining
+  validation gap for CHG-0008.
