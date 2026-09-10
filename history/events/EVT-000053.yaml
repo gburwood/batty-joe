@@ -1,0 +1,25 @@
+id: EVT-000053
+timestamp: '2026-09-10T19:19:37+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: forensic_record_corrected
+entity:
+  type: impact_analysis
+  id: IA-0007-01
+related:
+  change: CHG-0007
+  corrective_change: CHG-0008
+previous_state:
+  blob_sha: e7c9ff551d096ed5830882f8004344e50c2a0279
+  schema_valid: false
+resulting_state:
+  schema_required_revision_added: 1
+  schema_required_affected_added: true
+evidence:
+  reason: The preserved CHG-0007 impact analysis lacked fields required by impact-analysis.schema.json. The correction preserves its historical conclusions and records the original blob SHA.

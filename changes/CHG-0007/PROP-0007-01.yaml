@@ -1,105 +1,47 @@
 id: PROP-0007-01
 change: CHG-0007
 revision: 1
-status: proposed
+status: superseded
 created_at: '2026-09-09T14:15:00+01:00'
 based_on_impact_analysis:
 - IA-0007-01
 proposed_specification_version: 1.10.0
 behaviour_summary: Introduce an optional handcrafted level system allowing both designers to commit levels to the specification and players to create custom levels in-browser. Designer levels replace procedural generation when present; player-created levels are stored in localStorage (max 20) and are fully exportable/importable as JSON. All handcrafted levels use a 12×10 grid with 16-96 bricks, max durability 5, and optional power-up spawners. System gracefully falls back to procedural generation if any handcrafted level is missing or corrupt. No changes to physics, frenzy, boss encounters, or scoring.
-
 architecture:
   grid_system:
-    dimensions:
-      cols: 12
-      rows: 10
-      total_slots: 120
-    brick_constraints:
-      min_per_level: 16
-      max_per_level: 96
-      max_durability: 5
-    brick_types:
-      - standard (durability 1-5)
-      - indestructible (not subject to durability)
-      - powerup_spawner (spawns a power-up when destroyed; optional powerup_type field)
+    dimensions: {cols: 12, rows: 10, total_slots: 120}
+    brick_constraints: {min_per_level: 16, max_per_level: 96, max_durability: 5}
     powerup_types_supported:
-      - multi_ball
-      - laser
-      - slow_time
-      - paddle_expansion
-      - frenzy_pickup
-
+    - multi_ball
+    - laser
+    - slow_time
+    - paddle_expansion
+    - frenzy_pickup
   level_storage:
     designer_levels:
-      storage_location: batty-joe-levels-handcrafted.yaml (git-committed, SpecForge-governed)
-      format: 'YAML array of level objects under ''designer_levels'' key'
-      versioning: Per-specification version (v1.10.0, v1.11.0, etc.)
-      approval_workflow: standard CHG/PROP/APR for each update
-      example_structure:
-        id: designer_tutorial_01
-        title: Tutorial - The Basics
-        difficulty: easy
-        bricks: [array of brick placements]
-        metadata:
-          version: '1.10.0'
-          author: Designer Name
-          created_at: ISO 8601 timestamp
-          tags: [optional labels]
+      storage_location: batty-joe-levels-handcrafted.yaml
+      versioning: Per-specification version
     player_levels:
       storage_location: window.localStorage
-      key_format: 'BattyJoe_UserLevel_{levelId}'
+      key_format: BattyJoe_UserLevel_{levelId}
       index_key: BattyJoe_UserLevelIndex
-      capacity: 20 saved levels per browser (limit enforced at save time)
-      persistence: Survives browser close; lost on cache clear (not a defect, by design)
-      permanence: Can export any level as JSON for off-site backup
-      format: Same as designer levels internally; serialized as JSON in localStorage
-
+      capacity: 20
   level_editor_ui:
-    location: Accessible from main menu (e.g., "Level Editor" menu entry)
     capabilities:
-      - Visual 12×10 grid for brick placement
-      - Brick palette: select type (standard/indestructible/powerup_spawner), durability (1-5), optional powerup
-      - Single-click to place, single-click to remove
-      - Clear grid button (with confirmation)
-      - Real-time brick count display with min/max validation
-      - Test-play button: launch the current grid as a playable level
-      - Save dialog: enter level ID, title, difficulty, optional description
-      - Load dialog: list 20 user levels, sort/filter options, delete confirmation
-      - Export dialog: download as JSON file or copy to clipboard
-      - Import dialog: paste JSON text or drag-drop file; validate before import
-    ui_state:
-      modal_overlay: Level editor runs in a modal overlay; pause the game if playing
-      escape_key: Close editor without saving (ask for confirmation if unsaved changes exist)
-      test_play_return: Exiting test-play returns to editor with grid intact
-
+    - Visual 12×10 grid for brick placement
+    - Brick palette and durability controls
+    - Test-play
+    - Save/load/delete
+    - JSON export/import
   integration_with_campaign:
     level_loading_logic:
-      1. 'At start of campaign level N: check BattyJoe.HandcraftedLevelsLoader for level N'
-      2. 'If handcrafted level exists and validates: load it'
-      3. 'If not found or invalid: generate procedural level (existing code path)'
-      4. 'Player never sees the fallback; campaign always continues'
-    designer_vs_player_levels:
-      - Campaign mode: only designer levels from batty-joe-levels-handcrafted.yaml
-      - Player-created levels: separate "Custom Campaign" or "Challenge Mode" menu entry (not in main campaign progression)
-    no_campaign_break:
-      - Existing players with completed campaigns see no change
-      - New players can optionally use designer levels if authored and committed
-
+    - Check designer handcrafted level for campaign slot.
+    - If valid, load it.
+    - Otherwise fall back to procedural generation.
   test_play_integration:
     mechanics:
-      - Test-play uses identical physics and rendering as normal levels
-      - Paddle, ball, power-ups, and all gameplay rules unchanged
-      - Difficulty setting in test-play defaults to normal; user can override
-      - Frenzy system fully active
-      - Test duration: no time limit; player plays until all bricks destroyed or all lives lost
-    return_flow:
-      - Destroying all bricks: "Level Complete" screen; return to editor with grid intact
-      - Losing all lives: "Game Over" screen; offer to return to editor
-      - Pause: works normally; Escape returns to editor (ask if unsaved changes)
-    feedback:
-      - Display brick count in test-play HUD so designer can verify placement
-      - If level has fewer than min bricks, warn at test-play entry (but allow it for tuning)
-
+    - Test-play uses normal game physics and rendering.
+    - Frenzy system remains active.
 requirement_changes:
   add:
   - Requirement: Game must support loading handcrafted levels from batty-joe-levels-handcrafted.yaml
@@ -111,79 +53,38 @@ requirement_changes:
   modify: []
   deprecate: []
   supersede: []
-
 specification_changes:
 - Introduce v1.10.0 of batty-joe-dev-spec-v1.10.0.yaml
-- Add section under game.levels documenting handcrafted_level_system:
-  - handcrafted_levels_enabled: true
-  - fallback_to_procedural: true
-  - player_level_storage: localStorage (max 20)
-  - grid_dimensions: 12 columns × 10 rows
-  - brick_constraints: min 16, max 96, max durability 5
-  - designer_level_source: batty-joe-levels-handcrafted.yaml
-- Mark future_architecture.handcrafted_levels as implemented (was planned_possible in v1.9.0)
-- Update campaign.structure to clarify that levels 1-20 can be either handcrafted or procedural
-
+- Add handcrafted level system to product intent.
+- Mark future_architecture.handcrafted_levels as implemented.
 artifacts_expected:
   add:
-  - batty-joe-level-editor.js (grid-based editor, validation, localStorage)
-  - batty-joe-handcrafted-levels-loader.js (YAML parser for designer levels)
-  - batty-joe-levels-handcrafted.yaml (designer-committed levels; initially populated with examples)
-  - schemas/handcrafted-level.schema.json (validation schema)
-  - batty-joe-dev-spec-v1.10.0.yaml (updated spec)
-  - Updated HTML: level editor modal, buttons, dialogs
-  - Updated CSS: level editor grid, palette, modal styles
-  - Player-created level UI (part of batty-joe-tests.html or separate test harness)
+  - batty-joe-level-editor.js
+  - batty-joe-handcrafted-levels-loader.js
+  - batty-joe-levels-handcrafted.yaml
+  - schemas/handcrafted-level.schema.json
+  - batty-joe-dev-spec-v1.10.0.yaml
   modify:
-  - batty-joe-levels.js (add handcrafted level loading logic before procedural generation)
-  - batty-joe-game.js (integrate level editor menu entry, modal management)
-  - batty-joe.html (add level editor UI elements)
-  - batty-joe.css (level editor styles)
-  - batty-joe-tests.js (add tests for level validation, import/export, grid operations)
-
+  - batty-joe-levels.js
+  - batty-joe-game.js
+  - batty-joe.html
+  - batty-joe.css
+  - batty-joe-tests.js
 implementation_constraints:
 - Do not modify physics, frenzy, boss, or scoring systems
 - Do not break existing procedural level generation; it must remain as fallback
-- All handcrafted levels must be validated against handcrafted-level.schema.json before loading
-- Grid must enforce 12×10 dimensions; no off-grid placements
-- Test-play must render identical to normal campaign gameplay
-- localStorage errors (quota exceeded, not available) must not crash game; degrade to test-play mode only
-- Player level save must enforce 20-level localStorage limit with clear messaging
-- JSON import must validate schema before loading into grid
-- Grid editor must be usable with both keyboard and mouse
-
-testing_requirements:
-  unit:
-  - Grid placement: boundary checks (col 0-11, row 0-9), null handling
-  - Brick validation: type checking, durability limits, powerup type validation
-  - Grid-to-JSON and JSON-to-grid round-trip preservation
-  - localStorage read/write/delete for player levels
-  - Schema validation using handcrafted-level.schema.json
-  - Import: valid JSON, invalid JSON, truncated JSON, malformed powerup
-  - Export: JSON format correctness, round-trip fidelity
-  - Brick count: min/max enforcement
-  integration:
-  - Load designer level from batty-joe-levels-handcrafted.yaml; verify bricks appear
-  - Load player level from localStorage; verify exact state restored
-  - Test-play handcrafted level: ball physics, paddle control, brick destruction, frenzy
-  - Test-play with fewer than 16 bricks (warning only, should work)
-  - Fallback to procedural when handcrafted level is missing
-  - Fallback to procedural when handcrafted level is corrupt (e.g., invalid JSON in YAML)
-  - Test-play test-complete transitions (all bricks destroyed = success)
-  - Test-play game-over transitions (all lives lost)
-  - Pause/Resume in test-play
-  - Return from test-play to editor preserves grid state
-  - localStorage full: attempt to save 21st level (should reject with message)
-  - Export and re-import: exact recreation
-  regression:
-  - Existing campaign levels (no handcrafted) still generate procedurally
-  - Boss levels (CHG-0006) not affected
-  - Frenzy system unchanged
-  - Power-up drop rates unchanged
-  - Scoring unchanged
-  - Save/continue flow unchanged
-
-approvals:
-  - (Pending) Design and architecture review
-  - (Pending) Security review (localStorage safety, JSON parsing)
-  - (Pending) Specification governance review (new artifacts, versioning)
+- Validate handcrafted levels before loading
+- Grid must enforce 12×10 dimensions
+- localStorage errors must not crash game
+- JSON import must validate before loading into grid
+approvals: []
+superseded_by: PROP-0007-02
+extensions:
+  historical_pending_reviews:
+  - Design and architecture review
+  - Security review (localStorage safety, JSON parsing)
+  - Specification governance review (new artifacts, versioning)
+  forensic_correction:
+    corrected_by_change: CHG-0008
+    original_blob_sha: da3e3b3669dff00652fefadb06f794826829dcf2
+    correction: Canonicalised historical revision 1 as superseded by PROP-0007-02 and moved non-approval review notes out of the schema-constrained approvals field. Historical proposal intent is retained.

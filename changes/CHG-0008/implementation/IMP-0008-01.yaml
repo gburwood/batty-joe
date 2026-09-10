@@ -15,9 +15,9 @@ approach: Forward rollback of CHG-0007. Restore the seven CHG-0007-modified runt
 source_revision:
   system: git
   before: ec3ad1040386b371e65d95aed9af20bc880e6041
-  after: pending_implementation_commit
-  note: The immutable implementation commit is recorded after this Git tree is committed and validated.
-outcome: implemented_pending_validation
+  after: 9556048d53477f33d5e65fb61be641e5a3d9574c
+  note: 9556048d53477f33d5e65fb61be641e5a3d9574c is the immutable product rollback commit. Later governance-only corrections do not alter the restored runtime files.
+outcome: in_progress
 artifacts_restored_from_f901c9b:
 - batty-joe-game.js
 - batty-joe-levels.js
@@ -34,8 +34,10 @@ artifacts_removed:
 - batty-joe-levels-handcrafted.yaml
 - schemas/handcrafted-level.schema.json
 tests:
-  passed: []
+  passed:
+  - Git compare against f901c9b7532b522309bcaecdf76f0db41d7429bc shows no differences in the seven active runtime/test files, proving exact byte restoration.
+  - The same compare shows no CHG-0007-only runtime artifacts, proving they are absent from the active tree.
+  - Because f901c9b is post-CHG-0006, exact runtime equivalence preserves the approved CHG-0006 boss milestone implementation.
   failed: []
   pending:
-  - SpecForge repository validation
-  - Static rollback acceptance checks
+  - Canonical repository validation after historical schema correction.

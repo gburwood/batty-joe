@@ -1,0 +1,27 @@
+id: EVT-000054
+timestamp: '2026-09-10T19:19:37+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: forensic_record_corrected
+entity:
+  type: proposal
+  id: PROP-0007-01
+related:
+  change: CHG-0007
+  corrective_change: CHG-0008
+  superseded_by: PROP-0007-02
+previous_state:
+  blob_sha: da3e3b3669dff00652fefadb06f794826829dcf2
+  status: proposed
+  approvals_field_contained_non_canonical_review_notes: true
+resulting_state:
+  status: superseded
+  approvals: []
+evidence:
+  reason: proposal.schema.json has no proposed status and permits only APR identifiers in approvals. The correction records the historical revision as superseded and preserves the pending review notes under extensions.

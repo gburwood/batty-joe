@@ -1,13 +1,30 @@
 id: IA-0007-01
 change: CHG-0007
+revision: 1
 created_at: '2026-09-09T14:15:00+01:00'
 created_by:
   type: human
   id: gary_burwood
   display_name: Gary Burwood
-
+affected:
+  requirements:
+  - REQ-0007
+  - REQ-0008
+  components:
+  - level_generation
+  - ui_menu
+  - player_persistence
+  - specification_artifacts
+  artifacts:
+  - batty-joe-level-editor.js
+  - batty-joe-handcrafted-levels-loader.js
+  - batty-joe-levels-handcrafted.yaml
+  - schemas/handcrafted-level.schema.json
+  - batty-joe-dev-spec-v1.10.0.yaml
+  - batty-joe-levels.js
+  - batty-joe-game.js
+  - batty-joe-storage.js
 summary: 'Handcrafted level authoring adds two parallel workflows: designer-committed levels (specification-governed) and player-created levels (localStorage, transient by default but exportable). Both use a shared grid architecture and validation framework. The system is additive and gracefully falls back to procedural generation if handcrafted levels are missing.'
-
 scope_of_change:
   areas_affected:
     - level_generation
@@ -20,7 +37,6 @@ scope_of_change:
     - boss_encounters
     - scoring_system
     - power_ups
-
 architectural_impact:
   new_modules:
     - batty-joe-level-editor.js (grid-based level creation, validation, localStorage management)
@@ -35,14 +51,12 @@ architectural_impact:
     - handcrafted-level.schema.json (validation schema for all handcrafted levels)
   modified_artifacts:
     - batty-joe-dev-spec-v1.9.0.yaml (update or create v1.10.0 to document handcrafted system)
-
 data_flow_impact:
   level_loading_sequence: |
     1. Check if current campaign level has a handcrafted definition (in batty-joe-levels-handcrafted.yaml).
     2. If found, validate against schema and load.
     3. If not found or invalid, generate procedural level (existing fallback).
     4. Player-created levels stored separately in localStorage under BattyJoe_UserLevel_* keys.
-
 persistence_impact:
   player_created_levels:
     storage_mechanism: window.localStorage
@@ -54,7 +68,6 @@ persistence_impact:
     storage_mechanism: batty-joe-levels-handcrafted.yaml (git-committed)
     versioning: Follows specification version (v1.10.0, v1.11.0, etc.)
     durability: Permanent; part of SpecForge change control
-
 ui_ux_impact:
   menu_additions:
     - New "Level Editor" menu entry (top-level or under "Options")
@@ -62,7 +75,6 @@ ui_ux_impact:
     - Export dialog: download JSON or copy to clipboard
     - Import dialog: paste JSON or drag-drop file
   no_breaking_changes: Existing campaign and menu flows remain unchanged; level editor is opt-in
-
 fallback_behavior:
   scenario_1: 'A designer-committed level is missing or corrupt'
     action: 'Game generates procedural level for that campaign slot. Player can still complete the campaign.'
@@ -70,7 +82,6 @@ fallback_behavior:
     action: 'Cannot save new level. User must delete or export an existing level first.'
   scenario_3: 'Player imports an invalid JSON level'
     action: 'Import fails with clear error message. User remains in import dialog to retry.'
-
 testing_scope:
   unit_tests_required:
     - Grid placement validation (boundary checks, brick limits)
@@ -88,7 +99,6 @@ testing_scope:
     - Existing campaign procedural generation (no changes)
     - Existing boss encounters (no changes)
     - Existing frenzy system (no changes)
-
 performance_impact:
   storage:
     - localStorage per-level: ~1-2 KB per user level (12×10 grid, ~50 bricks average)
@@ -100,7 +110,6 @@ performance_impact:
   memory:
     - Handcrafted levels loaded into memory on-demand
     - Procedural generation unchanged
-
 risk_assessment:
   low_risk_areas:
     - Player level editor is sandboxed in localStorage
@@ -113,7 +122,6 @@ risk_assessment:
     - Clear error messages if localStorage unavailable
     - Validation before import
     - Extensive testing of fallback paths
-
 backward_compatibility:
   game_behavior:
     - Existing campaigns with no handcrafted levels load as before (procedural)
@@ -122,8 +130,12 @@ backward_compatibility:
   specification:
     - batty-joe-dev-spec-v1.9.0 is complete and unmodified
     - Handcrafted system is v1.10.0+ feature; can be cleanly separated if needed
-
 dependencies:
   on_chg_0006: Yes, handcrafted boss milestone architecture assumes CHG-0006 boss refactoring is in place
   new_third_party_libraries: None (vanilla JavaScript, localStorage API)
   browser_support: All modern browsers with localStorage and Object.create() support (IE10+)
+extensions:
+  forensic_correction:
+    corrected_by_change: CHG-0008
+    original_blob_sha: e7c9ff551d096ed5830882f8004344e50c2a0279
+    correction: Added schema-required revision and affected fields without changing the historical analysis conclusions.
