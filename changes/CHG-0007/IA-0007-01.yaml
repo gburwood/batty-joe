@@ -24,118 +24,70 @@ affected:
   - batty-joe-levels.js
   - batty-joe-game.js
   - batty-joe-storage.js
-summary: 'Handcrafted level authoring adds two parallel workflows: designer-committed levels (specification-governed) and player-created levels (localStorage, transient by default but exportable). Both use a shared grid architecture and validation framework. The system is additive and gracefully falls back to procedural generation if handcrafted levels are missing.'
-scope_of_change:
-  areas_affected:
-    - level_generation
-    - ui_menu
-    - player_persistence
-    - specification_artifacts
-  areas_not_affected:
-    - core_physics_engine
-    - frenzy_system
-    - boss_encounters
-    - scoring_system
-    - power_ups
-architectural_impact:
-  new_modules:
-    - batty-joe-level-editor.js (grid-based level creation, validation, localStorage management)
-    - batty-joe-handcrafted-levels-loader.js (YAML parser for designer levels)
-    - Level editor UI components (HTML/CSS in batty-joe.html, batty-joe.css)
-  modified_modules:
-    - batty-joe-levels.js (add branching: try handcrafted, fallback to procedural)
-    - batty-joe-game.js (integrate level editor in menu system)
-    - batty-joe-storage.js (preserve player settings; level data stored separately in localStorage)
-  new_artifacts:
-    - batty-joe-levels-handcrafted.yaml (specification for designer-committed levels)
-    - handcrafted-level.schema.json (validation schema for all handcrafted levels)
-  modified_artifacts:
-    - batty-joe-dev-spec-v1.9.0.yaml (update or create v1.10.0 to document handcrafted system)
-data_flow_impact:
-  level_loading_sequence: |
-    1. Check if current campaign level has a handcrafted definition (in batty-joe-levels-handcrafted.yaml).
-    2. If found, validate against schema and load.
-    3. If not found or invalid, generate procedural level (existing fallback).
-    4. Player-created levels stored separately in localStorage under BattyJoe_UserLevel_* keys.
-persistence_impact:
-  player_created_levels:
-    storage_mechanism: window.localStorage
-    key_pattern: BattyJoe_UserLevel_{levelId}
-    index_key: BattyJoe_UserLevelIndex
-    capacity: 20 levels per browser
-    durability: Transient (survives browser close but not cache clear); permanent export via JSON download
-  designer_levels:
-    storage_mechanism: batty-joe-levels-handcrafted.yaml (git-committed)
-    versioning: Follows specification version (v1.10.0, v1.11.0, etc.)
-    durability: Permanent; part of SpecForge change control
-ui_ux_impact:
-  menu_additions:
-    - New "Level Editor" menu entry (top-level or under "Options")
-    - Level editor modal: grid view, brick palette, test-play button, save/load/delete
-    - Export dialog: download JSON or copy to clipboard
-    - Import dialog: paste JSON or drag-drop file
-  no_breaking_changes: Existing campaign and menu flows remain unchanged; level editor is opt-in
-fallback_behavior:
-  scenario_1: 'A designer-committed level is missing or corrupt'
-    action: 'Game generates procedural level for that campaign slot. Player can still complete the campaign.'
-  scenario_2: 'Player''s localStorage is full (20 levels)'
-    action: 'Cannot save new level. User must delete or export an existing level first.'
-  scenario_3: 'Player imports an invalid JSON level'
-    action: 'Import fails with clear error message. User remains in import dialog to retry.'
-testing_scope:
-  unit_tests_required:
-    - Grid placement validation (boundary checks, brick limits)
-    - Level serialization (grid-to-JSON, JSON-to-grid round-trip)
-    - Schema validation against handcrafted-level.schema.json
-    - localStorage read/write/delete operations
-    - Export/import (JSON format preservation)
-  integration_tests_required:
-    - Campaign flow with mix of handcrafted and procedural levels
-    - Test-play loads handcrafted level correctly into game state
-    - Fallback to procedural on missing or corrupt handcrafted level
-    - Player-created level persists across browser session close/reopen
-    - Exported JSON can be re-imported to recreate exact level
-  regression_tests:
-    - Existing campaign procedural generation (no changes)
-    - Existing boss encounters (no changes)
-    - Existing frenzy system (no changes)
-performance_impact:
-  storage:
-    - localStorage per-level: ~1-2 KB per user level (12×10 grid, ~50 bricks average)
-    - 20 user levels: ~40 KB total (negligible)
-    - YAML parsing: one-time at game boot
-  rendering:
-    - Grid UI: DOM-based or canvas; both performant for 12×10
-    - No impact on gameplay rendering
-  memory:
-    - Handcrafted levels loaded into memory on-demand
-    - Procedural generation unchanged
-risk_assessment:
-  low_risk_areas:
-    - Player level editor is sandboxed in localStorage
-    - Designer levels in YAML are change-controlled via SpecForge
-    - Fallback to procedural ensures campaign is always playable
-  moderate_risk_areas:
-    - localStorage capacity is browser-dependent; policy differs across browsers
-    - JSON import could theoretically be abused (mitigated by schema validation)
-  mitigation:
-    - Clear error messages if localStorage unavailable
-    - Validation before import
-    - Extensive testing of fallback paths
-backward_compatibility:
-  game_behavior:
-    - Existing campaigns with no handcrafted levels load as before (procedural)
-    - All existing save/load logic unchanged
-    - Player continues can still restore saves
-  specification:
-    - batty-joe-dev-spec-v1.9.0 is complete and unmodified
-    - Handcrafted system is v1.10.0+ feature; can be cleanly separated if needed
-dependencies:
-  on_chg_0006: Yes, handcrafted boss milestone architecture assumes CHG-0006 boss refactoring is in place
-  new_third_party_libraries: None (vanilla JavaScript, localStorage API)
-  browser_support: All modern browsers with localStorage and Object.create() support (IE10+)
+summary: >
+  Historical CHG-0007 analysis described two parallel handcrafted-level workflows:
+  designer-committed campaign levels and player-created browser levels. Both used a
+  shared 12 by 10 grid model with validation and procedural fallback.
+compatibility:
+  breaking: false
+  notes: >
+    The original analysis characterised the feature as additive and expected existing
+    campaigns to continue procedurally when handcrafted data was unavailable.
+migration:
+  required: false
+  notes: >
+    Player-created levels were intended to live in browser localStorage. Designer
+    levels were intended to be Git-committed specification artifacts.
+risks:
+- id: RISK-0007-01
+  description: >
+    Browser localStorage behaviour and capacity vary by browser and could make saved
+    player levels unavailable.
+  severity: medium
+  mitigation: >
+    The original analysis proposed graceful errors and JSON export/import.
+- id: RISK-0007-02
+  description: >
+    Imported JSON could contain invalid or unsupported level data.
+  severity: medium
+  mitigation: >
+    The original analysis required validation before import or play.
+- id: RISK-0007-03
+  description: >
+    Handcrafted-level integration could interfere with existing campaign, boss,
+    frenzy or power-up behaviour.
+  severity: high
+  mitigation: >
+    The original analysis required procedural fallback and regression testing.
+open_changes:
+  overlaps_with: []
+historical_analysis:
+  level_loading_sequence:
+  - Check for a designer handcrafted definition for the current campaign level.
+  - Validate and load it when available.
+  - Fall back to existing procedural generation when unavailable or invalid.
+  - Keep player-created levels separately in browser localStorage.
+  player_level_capacity: 20
+  grid:
+    columns: 12
+    rows: 10
+    minimum_bricks: 16
+    maximum_bricks: 96
+    maximum_durability: 5
+  intended_ui:
+  - Level Editor menu entry
+  - Grid editor and palette
+  - Save, load and delete
+  - JSON export and import
+  - Test play
+  - Ordered Custom Campaign
 extensions:
   forensic_correction:
     corrected_by_change: CHG-0008
     original_blob_sha: e7c9ff551d096ed5830882f8004344e50c2a0279
-    correction: Added schema-required revision and affected fields without changing the historical analysis conclusions.
+    previous_correction_blob_sha: b032edb145ae3eb0c6258b247cd033a3202dd59c
+    reason: >
+      The historical file contained invalid YAML where fallback scenario scalar values
+      were followed by nested action mappings. This canonical summary preserves the
+      historical conclusions while making the record parseable and schema-valid.
+    original_history_preserved_in_git: true
