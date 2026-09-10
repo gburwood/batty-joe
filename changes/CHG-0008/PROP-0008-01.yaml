@@ -1,7 +1,7 @@
 id: PROP-0008-01
 change: CHG-0008
 revision: 1
-status: awaiting_approval
+status: approved
 created_at: '2026-09-10T18:43:49+01:00'
 based_on_impact_analysis:
 - IA-0008-01
@@ -72,4 +72,5 @@ implementation_constraints:
 - Do not silently reactivate any CHG-0007 behaviour during rollback.
 - Do not delete browser localStorage data created by CHG-0007.
 - Implementation must not begin until this exact proposal revision is explicitly approved.
-approvals: []
+approvals:
+- APR-0008
