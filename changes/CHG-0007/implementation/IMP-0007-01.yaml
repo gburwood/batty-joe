@@ -11,7 +11,12 @@ actor:
   ai:
     provider: github
     tool: VS Code GitHub Copilot
-approach: Added browser level-authoring modules, localStorage persistence, import/export, test play, designer-level loading, ordered Custom Campaign selection, normal campaign hand-off, and editor constraints including the two-frenzy-power-up maximum. Bound the committed tutorial to designer campaign level 1. Corrected module and UI startup defects discovered during implementation.
+approach: >
+  Added browser level-authoring modules, localStorage persistence, import/export,
+  test play, designer-level loading, ordered Custom Campaign selection, normal
+  campaign hand-off and editor constraints including the two-frenzy-power-up maximum.
+  Bound the committed tutorial to designer campaign level 1 and corrected module and
+  UI startup defects discovered during implementation.
 source_revision:
   system: git
   before: f901c9b7532b522309bcaecdf76f0db41d7429bc
@@ -20,8 +25,20 @@ source_revision:
 outcome: passed
 tests:
   passed:
-  - Browser suite: batty-joe-tests.html, 113/113 passed on 2026-09-09.
-  - Browser loader check: designer campaign level 1 resolves to Tutorial: The Basics.
-  - VS Code diagnostics: no errors in modified JavaScript, HTML, or CSS files.
+  - 'Browser suite: batty-joe-tests.html, 113/113 passed on 2026-09-09.'
+  - 'Browser loader check: designer campaign level 1 resolves to Tutorial: The Basics.'
+  - 'VS Code diagnostics: no errors in modified JavaScript, HTML or CSS files.'
   failed: []
-notes: Python and Node.js are not installed in the local environment, so the Python SpecForge validator and Node syntax check could not be run. Browser execution provided feature and regression validation.
+notes: >
+  Python and Node.js were not installed in the local environment, so the Python
+  SpecForge validator and Node syntax check could not be run. Browser execution
+  provided the validation claimed by the historical implementation record.
+extensions:
+  forensic_correction:
+    corrected_by_change: CHG-0008
+    original_blob_sha: 3791933b896856a42aa65450f237a0214cb3b048
+    previous_blob_sha: c2dfb0372c5b98ecd158410ccfb04a1f5cd347bb
+    reason: >
+      Historical test evidence contained unquoted colon-bearing list scalars that made
+      the YAML unparseable. Quoting and folding those strings changes no historical claim.
+    original_history_preserved_in_git: true
