@@ -1,0 +1,79 @@
+id: IA-0008-01
+change: CHG-0008
+revision: 1
+created_at: '2026-09-10T18:43:49+01:00'
+affected:
+  requirements:
+  - REQ-0007
+  - REQ-0008
+  components:
+  - level_generation
+  - main_menu
+  - level_editor
+  - custom_campaign
+  - handcrafted_level_loading
+  - gameplay_regression_tests
+  - product_specification
+  - specforge_manifest
+  artifacts:
+    restore_from_f901c9b7532b522309bcaecdf76f0db41d7429bc:
+    - batty-joe-game.js
+    - batty-joe-levels.js
+    - batty-joe-tests.html
+    - batty-joe-tests.js
+    - batty-joe.css
+    - batty-joe.html
+    - batty-joe.js
+    remove_from_active_runtime:
+    - batty-joe-handcrafted-levels-loader.js
+    - batty-joe-level-editor-ui.js
+    - batty-joe-level-editor.js
+    - batty-joe-levels-handcrafted-data.js
+    - batty-joe-levels-handcrafted.yaml
+    - schemas/handcrafted-level.schema.json
+    preserve_as_history:
+    - batty-joe-dev-spec-v1.10.0.yaml
+    - changes/CHG-0007.yaml
+    - changes/CHG-0007/**
+    - history/events/EVT-000043.yaml
+    - history/events/EVT-000044.yaml
+    - history/events/EVT-000045.yaml
+    - history/events/EVT-000046.yaml
+    - history/events/EVT-000047.yaml
+    - history/events/EVT-000048.yaml
+    add:
+    - batty-joe-dev-spec-v1.11.0.yaml
+  tests:
+    required:
+    - Existing pre-CHG-0007 regression suite passes after restoration.
+    - Normal campaign levels load through the pre-CHG-0007 generation path.
+    - CHG-0006 boss milestones at levels 5, 10, 15 and 20 remain present and unchanged.
+    - No level-editor or Custom Campaign UI remains reachable from the active game.
+    - Active runtime files contain no dependency on CHG-0007-only modules or global state.
+    - SpecForge manifest points to v1.11.0 and repository validation passes.
+compatibility:
+  breaking: true
+  notes: Player-created custom levels and Custom Campaign UI introduced by CHG-0007 will no longer be available. Existing localStorage entries created by CHG-0007 may remain inert in the browser; the rollback should not delete user browser data automatically.
+migration:
+  required: true
+  notes: The authoritative product specification advances to 1.11.0 rather than moving backwards to 1.9.0. Version 1.11.0 explicitly withdraws the CHG-0007 behaviour and restores the 1.9.0 gameplay contract while retaining the historical 1.10.0 artifact.
+risks:
+- id: RISK-0008-01
+  description: A blunt git reset or revert of repository history would erase or obscure the evidence needed to understand why CHG-0007 failed.
+  severity: high
+  mitigation: Perform a forward rollback. Restore only CHG-0007-touched product files from the pre-change revision and preserve all CHG-0007 governance and forensic records.
+- id: RISK-0008-02
+  description: Restoring complete files could accidentally undo CHG-0006 behaviour if the rollback source predates CHG-0006.
+  severity: high
+  mitigation: Use f901c9b7532b522309bcaecdf76f0db41d7429bc, which is immediately before the CHG-0007 implementation and already includes the completed CHG-0006 source revision.
+- id: RISK-0008-03
+  description: CHG-0007 introduced active requirements REQ-0007 and REQ-0008; leaving them active after runtime rollback would make the specification and implementation inconsistent.
+  severity: high
+  mitigation: Withdraw those requirements under CHG-0008 with explicit history entries, and document their withdrawal in v1.11.0.
+- id: RISK-0008-04
+  description: CHG-0007-created localStorage data may survive the rollback and confuse future reintroduction of a redesigned editor.
+  severity: low
+  mitigation: Leave browser data untouched during rollback and reserve any migration or cleanup for a future explicitly approved change.
+open_changes:
+  overlaps_with: []
+summary: CHG-0007 should be backed out as a forward corrective change. Its lifecycle evidence is internally inconsistent: IA-0007-01 does not conform to the repository impact-analysis schema, IMP-0007-01 records implementation starting before APR-0007 approval in Controlled mode, and mandatory Python/Node validation was unavailable despite the change being marked completed. Product inspection also finds implementation/specification mismatches, including unsupported power-up identifiers in the editor and a test-play path that changes game state without loading the edited level. The safest recovery is to restore the seven modified runtime/test files from the immediate pre-CHG-0007 revision f901c9b7532b522309bcaecdf76f0db41d7429bc, remove CHG-0007-only runtime artifacts, retain all CHG-0007 evidence, withdraw its active requirements, and publish v1.11.0 as the new authoritative specification.
