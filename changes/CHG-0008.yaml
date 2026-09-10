@@ -1,7 +1,7 @@
 id: CHG-0008
 title: Back out CHG-0007 handcrafted level authoring
 classification: defect
-status: implemented
+status: completed
 priority: high
 sources:
 - type: conversation
@@ -12,7 +12,7 @@ request:
   detail: Repository examination found that CHG-0007 is internally inconsistent and its delivered behaviour is unreliable. The user requested that the change be backed out. Recovery must preserve CHG-0007 as historical evidence rather than rewriting git or deleting its governance trail.
 clarification:
   required: false
-  notes: The immediate pre-CHG-0007 source revision is f901c9b7532b522309bcaecdf76f0db41d7429bc. The rollback selectively restores CHG-0007-touched runtime and regression-test files from that revision, retains CHG-0007 forensic records and the historical v1.10.0 specification, and creates a new authoritative v1.11.0 specification representing the restored product intent.
+  notes: The immediate pre-CHG-0007 source revision is f901c9b7532b522309bcaecdf76f0db41d7429bc. The rollback selectively restores CHG-0007-touched runtime and regression-test files from that revision, retains CHG-0007 forensic records and the historical v1.10.0 evidence, and creates a new authoritative v1.11.0 specification representing the restored product intent.
 relationships:
   depends_on:
   - CHG-0006
@@ -42,6 +42,7 @@ reconciliation:
   strategy: forward_rollback_preserve_history
 metadata:
   created_at: '2026-09-10T18:43:49+01:00'
+  completed_at: '2026-09-10T20:39:42+01:00'
   created_by:
     type: ai
     id: chatgpt
