@@ -1,7 +1,7 @@
 id: CHG-0008
 title: Back out CHG-0007 handcrafted level authoring
 classification: defect
-status: awaiting_approval
+status: in_progress
 priority: high
 sources:
 - type: conversation
@@ -26,7 +26,8 @@ impact_analysis:
   current: IA-0008-01
 proposal:
   current: PROP-0008-01
-approvals: []
+approvals:
+- APR-0008
 implementation:
   attempts: []
 requirements:
