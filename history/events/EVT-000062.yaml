@@ -1,0 +1,24 @@
+id: EVT-000062
+timestamp: '2026-09-10T20:39:41+01:00'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  implementation_attempt: IMP-0008-01
+  source_revision: c94e0b3bf4e3ac359809ed7e1c16ff3e64ab3911
+previous_state:
+  change_status: implemented
+resulting_state:
+  change_status: validated
+evidence:
+  command: py tools/validate-specforge.py
+  result: SpecForge validation PASSED
+  repository: C:\Users\Gary Burwood\repos\batty-joe
+  canonical_records_discovered: 107
+  nested_projects: excluded_from_parent_validation
