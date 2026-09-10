@@ -1,0 +1,29 @@
+id: EVT-000063
+timestamp: '2026-09-10T20:39:42+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: change_completed
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  proposal: PROP-0008-01
+  approval: APR-0008
+  implementation_attempt: IMP-0008-01
+  validated_source_revision: c94e0b3bf4e3ac359809ed7e1c16ff3e64ab3911
+previous_state:
+  change_status: validated
+resulting_state:
+  change_status: completed
+evidence:
+  validation_event: EVT-000062
+  rollback_target_change: CHG-0007
+  product_rollback_commit: 9556048d53477f33d5e65fb61be641e5a3d9574c
+  authoritative_specification: 1.11.0
