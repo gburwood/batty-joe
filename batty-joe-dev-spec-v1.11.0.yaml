@@ -1,0 +1,71 @@
+application:
+  name: Batty Joe
+  type: browser_arcade_brick_breaker
+  version: 1.11.0
+  status: active_development_specification
+  source_of_truth: true
+specification_governance:
+  authority: This file is the authoritative Batty Joe product specification for version 1.11.0.
+  composition: full_inheritance_with_explicit_withdrawal
+  inherited_specification: batty-joe-dev-spec-v1.9.0.yaml
+  inheritance_rule: All product intent, behaviour, constraints, architecture and acceptance expectations from batty-joe-dev-spec-v1.9.0.yaml are incorporated by reference in full unless explicitly changed below.
+  reader_instruction: Read batty-joe-dev-spec-v1.9.0.yaml as the complete inherited product contract, then apply the explicit CHG-0008 withdrawal below. CHG-0007 and batty-joe-dev-spec-v1.10.0.yaml remain historical evidence only and are not active product intent.
+  change: CHG-0008
+rollback:
+  backs_out_change: CHG-0007
+  rollback_source_revision: f901c9b7532b522309bcaecdf76f0db41d7429bc
+  restored_product_contract: batty-joe-dev-spec-v1.9.0.yaml
+  preserves_changes:
+  - CHG-0001
+  - CHG-0002
+  - CHG-0003
+  - CHG-0004
+  - CHG-0005
+  - CHG-0006
+  withdrawn_behaviour:
+  - Player-authored handcrafted level editor.
+  - Designer-authored handcrafted campaign level loading.
+  - Ordered Custom Campaign playback.
+  - CHG-0007-only runtime modules and globals.
+  retained_behaviour:
+  - All Batty Joe v1.9.0 behaviour including CHG-0006 boss milestones at levels 5, 10, 15 and 20.
+  - Procedural campaign level generation and existing fallback/gameplay behaviour as defined by v1.9.0.
+  browser_data:
+    delete_existing_chg_0007_local_storage: false
+    note: Any CHG-0007 browser-local data is intentionally left inert and untouched.
+requirements:
+  withdrawn:
+  - id: REQ-0007
+    by_change: CHG-0008
+    reason: Handcrafted level authoring is backed out.
+  - id: REQ-0008
+    by_change: CHG-0008
+    reason: Ordered custom campaigns are backed out.
+historical_artifacts:
+  retained:
+  - batty-joe-dev-spec-v1.10.0.yaml
+  - changes/CHG-0007.yaml
+  - changes/CHG-0007/
+  - history/events/EVT-000043.yaml
+  - history/events/EVT-000044.yaml
+  - history/events/EVT-000045.yaml
+  - history/events/EVT-000046.yaml
+  - history/events/EVT-000047.yaml
+  - history/events/EVT-000048.yaml
+active_runtime_contract:
+  source_equivalence_revision: f901c9b7532b522309bcaecdf76f0db41d7429bc
+  restored_files:
+  - batty-joe-game.js
+  - batty-joe-levels.js
+  - batty-joe-tests.html
+  - batty-joe-tests.js
+  - batty-joe.css
+  - batty-joe.html
+  - batty-joe.js
+  absent_chg_0007_modules:
+  - batty-joe-handcrafted-levels-loader.js
+  - batty-joe-level-editor-ui.js
+  - batty-joe-level-editor.js
+  - batty-joe-levels-handcrafted-data.js
+  - batty-joe-levels-handcrafted.yaml
+  - schemas/handcrafted-level.schema.json

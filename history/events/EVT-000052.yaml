@@ -1,0 +1,21 @@
+id: EVT-000052
+timestamp: '2026-09-10T19:14:22+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: implementation_started
+entity:
+  type: implementation_attempt
+  id: IMP-0008-01
+related:
+  change: CHG-0008
+  proposal: PROP-0008-01
+  approval: APR-0008
+resulting_state:
+  change_status: in_progress
+  rollback_source_revision: f901c9b7532b522309bcaecdf76f0db41d7429bc

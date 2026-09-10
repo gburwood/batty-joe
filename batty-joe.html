@@ -22,15 +22,12 @@
         </div>
         <div class="menu-buttons">
           <button id="newGameBtn" class="arcade-button primary" type="button">NEW GAME</button>
-          <button id="customCampaignBtn" class="arcade-button" type="button">CUSTOM CAMPAIGN</button>
           <button id="continueBtn" class="arcade-button" type="button">CONTINUE</button>
           <button id="highScoresBtn" class="arcade-button" type="button">HIGH SCORES</button>
           <button id="howToBtn" class="arcade-button" type="button">HOW TO PLAY</button>
-          <button id="levelEditorBtn" class="arcade-button" type="button">LEVEL EDITOR</button>
           <button id="settingsBtn" class="arcade-button" type="button">SETTINGS</button>
         </div>
         <p class="tiny-note">*No actual coin required. Joe has overheads, but not those overheads.</p>
-        <p id="versionInfo" class="version-info"></p>
       </section>
 
       <section id="newGamePanel" class="panel card-panel" aria-labelledby="newGameHeading">
@@ -51,17 +48,6 @@
         <div class="button-row">
           <button class="arcade-button" type="button" data-back="menu">BACK</button>
           <button id="startGameBtn" class="arcade-button primary" type="button">START</button>
-        </div>
-      </section>
-
-      <section id="customCampaignPanel" class="panel card-panel" aria-labelledby="customCampaignHeading">
-        <h2 id="customCampaignHeading">CUSTOM CAMPAIGN</h2>
-        <p class="help-text">Create a campaign by selecting your custom levels.</p>
-        <div id="customLevelsList" class="custom-levels-list"></div>
-        <p id="noCustomLevels" class="help-text">No custom levels saved. Create some in the LEVEL EDITOR!</p>
-        <div class="button-row">
-          <button class="arcade-button" type="button" data-back="menu">BACK</button>
-          <button id="startCustomBtn" class="arcade-button primary" type="button" disabled>START CAMPAIGN</button>
         </div>
       </section>
 
@@ -101,100 +87,6 @@
         </div>
         <div class="button-row">
           <button id="saveSettingsBtn" class="arcade-button primary" type="button">SAVE SETTINGS</button>
-        </div>
-      </section>
-
-      <section id="levelEditorPanel" class="panel card-panel wide-panel level-editor-panel" aria-labelledby="levelEditorHeading">
-        <h2 id="levelEditorHeading">LEVEL EDITOR</h2>
-        <div class="editor-layout">
-          <div class="editor-grid-area">
-            <div class="grid-info">
-              <span>BRICKS: <strong id="brickCount">0</strong> / 96</span>
-              <span id="brickWarning" class="warning-text" style="display:none;">Min 16 required</span>
-            </div>
-            <div id="levelEditorGrid" class="level-editor-grid"></div>
-          </div>
-          <div class="editor-palette-area">
-            <div class="palette-section">
-              <h3>BRICK TYPE</h3>
-              <div class="brick-type-buttons">
-                <button class="palette-btn" data-type="standard" type="button">STANDARD</button>
-                <button class="palette-btn" data-type="indestructible" type="button">SOLID</button>
-                <button class="palette-btn" data-type="powerup_spawner" type="button">POWERUP</button>
-              </div>
-            </div>
-            <div class="palette-section">
-              <h3>DURABILITY</h3>
-              <div class="durability-buttons">
-                <button class="durability-btn" data-durability="1" type="button">1</button>
-                <button class="durability-btn" data-durability="2" type="button">2</button>
-                <button class="durability-btn" data-durability="3" type="button">3</button>
-                <button class="durability-btn" data-durability="4" type="button">4</button>
-                <button class="durability-btn" data-durability="5" type="button">5</button>
-              </div>
-            </div>
-            <div class="palette-section">
-              <h3>POWERUP TYPE</h3>
-              <select id="powerupSelect" class="arcade-input">
-                <option value="">NONE</option>
-                <option value="multi_ball">MULTI-BALL</option>
-                <option value="laser">LASER</option>
-                <option value="slow_time">SLOW TIME</option>
-                <option value="paddle_expansion">PADDLE UP</option>
-                <option value="frenzy_pickup">FRENZY</option>
-              </select>
-            </div>
-            <div class="palette-section" id="frenzyTypeSection" style="display:none;">
-              <h3>FRENZY TYPE</h3>
-              <select id="frenzyTypeSelect" class="arcade-input">
-                <option value="invaders">INVADERS</option>
-                <option value="fps">FPS</option>
-                <option value="pinball">PINBALL</option>
-                <option value="asteroids">ASTEROIDS</option>
-                <option value="missile_command">MISSILE CMD</option>
-                <option value="arkanoid_revenge">ARKANOID REV</option>
-                <option value="grid_runner">GRID RUNNER</option>
-              </select>
-            </div>
-            <div class="palette-section">
-              <h3>TOOLS</h3>
-              <div class="tool-buttons">
-                <button id="clearGridBtn" class="arcade-button" type="button">CLEAR GRID</button>
-                <button id="testPlayBtn" class="arcade-button" type="button">TEST PLAY</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="editor-form-area">
-          <div class="form-row">
-            <label class="field-label" for="levelIdInput">LEVEL ID</label>
-            <input id="levelIdInput" class="arcade-input" type="text" maxlength="32" placeholder="my_level_001" autocomplete="off">
-          </div>
-          <div class="form-row">
-            <label class="field-label" for="levelTitleInput">TITLE</label>
-            <input id="levelTitleInput" class="arcade-input" type="text" maxlength="64" placeholder="My Level" autocomplete="off">
-          </div>
-          <div class="form-row">
-            <label class="field-label" for="levelDifficultySelect">DIFFICULTY</label>
-            <select id="levelDifficultySelect" class="arcade-input">
-              <option value="easy">EASY</option>
-              <option value="normal" selected>NORMAL</option>
-              <option value="hard">HARD</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label class="field-label" for="levelDescriptionInput">DESCRIPTION</label>
-            <textarea id="levelDescriptionInput" class="arcade-input" maxlength="256" placeholder="Optional notes..."></textarea>
-          </div>
-        </div>
-        <div class="editor-actions">
-          <div class="button-row">
-            <button class="arcade-button" type="button" data-back="menu">BACK</button>
-            <button id="loadLevelBtn" class="arcade-button" type="button">LOAD</button>
-            <button id="saveLevelBtn" class="arcade-button primary" type="button">SAVE</button>
-            <button id="exportLevelBtn" class="arcade-button" type="button">EXPORT</button>
-            <button id="importLevelBtn" class="arcade-button" type="button">IMPORT</button>
-          </div>
         </div>
       </section>
 
@@ -277,10 +169,6 @@
   <script src="batty-joe-physics.js"></script>
   <script src="batty-joe-levels.js"></script>
   <script src="batty-joe-audio.js"></script>
-  <script src="batty-joe-level-editor.js"></script>
-  <script src="batty-joe-handcrafted-levels-loader.js"></script>
-  <script src="batty-joe-levels-handcrafted-data.js"></script>
-  <script src="batty-joe-level-editor-ui.js"></script>
   <script src="batty-joe-game.js"></script>
   <script src="batty-joe.js"></script>
 </body>

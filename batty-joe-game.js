@@ -135,7 +135,7 @@
 
   Game.prototype.loadLevel = function (level, fresh) {
     this.level = level;
-    this.levelData = BJ.Levels.getLevel(this.seed, this.difficulty, level);
+    this.levelData = BJ.Levels.generateLevel(this.seed, this.difficulty, level);
     this.levelInitial = U.deepClone(this.levelData);
     this.rng = BJ.Levels.campaignRng(this.seed, this.difficulty, level, 'gameplay');
     this.fxRng = BJ.Levels.campaignRng(this.seed, this.difficulty, level, 'fx');
@@ -2195,31 +2195,6 @@
   };
 
   Game.prototype.advanceLevel = function () {
-    const customCampaign = BJ.CustomCampaign;
-    if (customCampaign && customCampaign.levelIds && customCampaign.levelIds.length > 0) {
-      customCampaign.currentLevelIndex += 1;
-      this.level += 1;
-      if (customCampaign.currentLevelIndex < customCampaign.levelIds.length) {
-        this.loadLevel(this.level, true);
-        this.setState(this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING);
-        if (!this.attract) this.autosave('level_start');
-        return;
-      }
-      BJ.CustomCampaign = null;
-      const resumeLevel = customCampaign.resumeLevel || this.level + 1;
-      if (resumeLevel > C.campaignLevels) {
-        this.campaignCompleted = true;
-        BJ.Storage.clearCampaign();
-        this.setState(BJ.State.VICTORY);
-        if (this.callbacks.onVictory) this.callbacks.onVictory(this.getResult(), this);
-        return;
-      }
-      this.level = resumeLevel;
-      this.loadLevel(this.level, true);
-      this.setState(this.isBossLevel(this.level) ? BJ.State.BOSS : (this.attract ? BJ.State.ATTRACT : BJ.State.PLAYING));
-      if (!this.attract) this.autosave('level_start');
-      return;
-    }
     if (this.level >= C.campaignLevels) {
       this.campaignCompleted = true;
       BJ.Storage.clearCampaign();
