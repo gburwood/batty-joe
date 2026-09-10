@@ -1,0 +1,19 @@
+id: EVT-000056
+timestamp: '2026-09-10T19:22:52+01:00'
+actor:
+  type: external_system
+  id: github-actions
+event_type: validation_unavailable
+entity:
+  type: change
+  id: CHG-0008
+related:
+  change: CHG-0008
+  validation_branch: validation/chg0008
+resulting_state:
+  change_status: implemented
+  full_repository_validator_execution: unavailable
+evidence:
+  attempted_workflow: .github/workflows/specforge-validate.yml on validation/chg0008
+  workflow_runs_returned: 0
+  note: No GitHub Actions run was created for the connector-authored push. This is recorded as unavailable, not passed or failed.

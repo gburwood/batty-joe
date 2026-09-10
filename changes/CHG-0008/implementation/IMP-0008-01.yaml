@@ -3,6 +3,7 @@ change: CHG-0008
 proposal: PROP-0008-01
 attempt: 1
 started_at: '2026-09-10T19:14:22+01:00'
+completed_at: '2026-09-10T19:22:52+01:00'
 actor:
   type: ai
   id: chatgpt
@@ -11,13 +12,14 @@ actor:
     provider: openai
     tool: ChatGPT
     model: GPT-5.6 Sol
-approach: Forward rollback of CHG-0007. Restore the seven CHG-0007-modified runtime/test files by reusing the exact blobs from pre-CHG-0007 revision f901c9b7532b522309bcaecdf76f0db41d7429bc, remove CHG-0007-only active runtime artifacts, withdraw REQ-0007 and REQ-0008, retain all CHG-0007 forensic evidence and historical v1.10.0, and publish v1.11.0 as an explicit specification rollback inheriting the complete v1.9.0 product contract.
+approach: Forward rollback of CHG-0007. Restore the seven CHG-0007-modified runtime/test files by reusing the exact blobs from pre-CHG-0007 revision f901c9b7532b522309bcaecdf76f0db41d7429bc, remove CHG-0007-only active runtime artifacts, withdraw REQ-0007 and REQ-0008, retain all CHG-0007 forensic evidence and historical v1.10.0, publish v1.11.0 as an explicit specification rollback inheriting the complete v1.9.0 product contract, and canonically reconcile malformed CHG-0007 records without concealing their original blob identities.
 source_revision:
   system: git
   before: ec3ad1040386b371e65d95aed9af20bc880e6041
-  after: 9556048d53477f33d5e65fb61be641e5a3d9574c
-  note: 9556048d53477f33d5e65fb61be641e5a3d9574c is the immutable product rollback commit. Later governance-only corrections do not alter the restored runtime files.
-outcome: in_progress
+  after: 7489180c0f670c3fd61e73b4b623293a0358950b
+  product_rollback_commit: 9556048d53477f33d5e65fb61be641e5a3d9574c
+  note: 9556048d53477f33d5e65fb61be641e5a3d9574c restores the product runtime. 7489180c0f670c3fd61e73b4b623293a0358950b adds the required forensic canonical corrections while leaving those restored runtime blobs unchanged.
+outcome: passed
 artifacts_restored_from_f901c9b:
 - batty-joe-game.js
 - batty-joe-levels.js
@@ -36,8 +38,11 @@ artifacts_removed:
 tests:
   passed:
   - Git compare against f901c9b7532b522309bcaecdf76f0db41d7429bc shows no differences in the seven active runtime/test files, proving exact byte restoration.
-  - The same compare shows no CHG-0007-only runtime artifacts, proving they are absent from the active tree.
+  - Direct blob checks confirm all seven restored files have the same Git blob SHAs as f901c9b.
+  - The compare shows no CHG-0007-only runtime artifacts, proving they are absent from the active tree.
   - Because f901c9b is post-CHG-0006, exact runtime equivalence preserves the approved CHG-0006 boss milestone implementation.
+  - The current validator JSON Schema constraints and referential-integrity logic were applied to every canonical record added or modified by CHG-0008 and to the corrected CHG-0007 neighborhood; no errors were found.
   failed: []
-  pending:
-  - Canonical repository validation after historical schema correction.
+  unavailable:
+  - A disposable GitHub Actions validation branch/workflow was created, but GitHub produced no workflow run for the connector-authored push. Therefore a full checked-out invocation of python tools/validate-specforge.py is not claimed as executed.
+notes: CHG-0008 is intentionally left at implemented rather than completed until the repository validator is executed in a normal checkout or another executable environment. The product rollback itself is applied to main.
