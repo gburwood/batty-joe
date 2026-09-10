@@ -1,0 +1,75 @@
+id: PROP-0008-01
+change: CHG-0008
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-10T18:43:49+01:00'
+based_on_impact_analysis:
+- IA-0008-01
+proposed_specification_version: 1.11.0
+behaviour_summary: Back out the product behaviour introduced by CHG-0007. Restore Batty Joe gameplay, menu flow, level generation and regression-test behaviour to the immediate pre-CHG-0007 state represented by source revision f901c9b7532b522309bcaecdf76f0db41d7429bc, which already includes completed CHG-0006 boss milestones. Remove the level editor, designer handcrafted levels and Custom Campaign behaviour from the active runtime. Preserve all CHG-0007 governance records and historical specification artifacts. Publish a new v1.11.0 authoritative specification that explicitly withdraws CHG-0007 intent rather than making v1.9.0 current again.
+requirement_changes:
+  add: []
+  modify:
+  - REQ-0007
+  - REQ-0008
+  deprecate: []
+  supersede: []
+  withdraw:
+  - REQ-0007
+  - REQ-0008
+acceptance_criteria:
+  rollback:
+  - The active game exposes no LEVEL EDITOR or CUSTOM CAMPAIGN entry point.
+  - Runtime level loading uses the same path and behaviour as source revision f901c9b7532b522309bcaecdf76f0db41d7429bc.
+  - Levels 5, 10, 15 and 20 retain the CHG-0006 boss milestone behaviour.
+  - No active runtime file references BattyJoe.LevelEditor, BattyJoe.LevelEditorUI, BattyJoe.HandcraftedLevelsLoader, BattyJoe.HandcraftedLevelsData, BattyJoe.CustomCampaign or BattyJoe.TestPlayLevel.
+  - CHG-0007-only runtime artifacts are absent from the active product surface.
+  - Existing CHG-0007 change, proposal, approval, implementation and forensic records remain present as historical evidence.
+  - REQ-0007 and REQ-0008 are no longer active and carry explicit CHG-0008 withdrawal history.
+  - specforge.yaml points to batty-joe-dev-spec-v1.11.0.yaml with current_version 1.11.0.
+  - The SpecForge repository validator passes after rollback.
+artifacts_expected:
+  restore_from_revision:
+    revision: f901c9b7532b522309bcaecdf76f0db41d7429bc
+    files:
+    - batty-joe-game.js
+    - batty-joe-levels.js
+    - batty-joe-tests.html
+    - batty-joe-tests.js
+    - batty-joe.css
+    - batty-joe.html
+    - batty-joe.js
+  remove:
+  - batty-joe-handcrafted-levels-loader.js
+  - batty-joe-level-editor-ui.js
+  - batty-joe-level-editor.js
+  - batty-joe-levels-handcrafted-data.js
+  - batty-joe-levels-handcrafted.yaml
+  - schemas/handcrafted-level.schema.json
+  add:
+  - batty-joe-dev-spec-v1.11.0.yaml
+  modify:
+  - specforge.yaml
+  - changes/CHG-0007/REQ-0007.yaml
+  - changes/CHG-0007/REQ-0008.yaml
+  preserve:
+  - batty-joe-dev-spec-v1.10.0.yaml
+  - changes/CHG-0007.yaml
+  - changes/CHG-0007/PROP-0007-01.yaml
+  - changes/CHG-0007/PROP-0007-02.yaml
+  - changes/CHG-0007/approvals/APR-0007.yaml
+  - changes/CHG-0007/implementation/IMP-0007-01.yaml
+  - history/events/EVT-000043.yaml
+  - history/events/EVT-000044.yaml
+  - history/events/EVT-000045.yaml
+  - history/events/EVT-000046.yaml
+  - history/events/EVT-000047.yaml
+  - history/events/EVT-000048.yaml
+implementation_constraints:
+- Do not reset, rebase or force-push main to erase CHG-0007 history.
+- Do not alter completed CHG-0006 behaviour.
+- Do not delete CHG-0007 governance or forensic records.
+- Do not silently reactivate any CHG-0007 behaviour during rollback.
+- Do not delete browser localStorage data created by CHG-0007.
+- Implementation must not begin until this exact proposal revision is explicitly approved.
+approvals: []
