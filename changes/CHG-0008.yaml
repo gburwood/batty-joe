@@ -1,0 +1,50 @@
+id: CHG-0008
+title: Back out CHG-0007 handcrafted level authoring
+classification: defect
+status: awaiting_approval
+priority: high
+sources:
+- type: conversation
+  reference: user-request-2026-09-10-back-out-CHG-0007
+  received_at: '2026-09-10T18:43:49+01:00'
+request:
+  summary: Back out CHG-0007 and restore Batty Joe to the last pre-CHG-0007 gameplay behaviour while preserving the forensic record.
+  detail: Repository examination found that CHG-0007 is internally inconsistent and its delivered behaviour is unreliable. The user requested that the change be backed out. Recovery must preserve CHG-0007 as historical evidence rather than rewriting git or deleting its governance trail.
+clarification:
+  required: false
+  notes: The immediate pre-CHG-0007 source revision is f901c9b7532b522309bcaecdf76f0db41d7429bc. The rollback will selectively restore CHG-0007-touched runtime and regression-test files from that revision, retain CHG-0007 forensic records and the historical v1.10.0 specification, and create a new authoritative v1.11.0 specification representing the restored product intent.
+relationships:
+  depends_on:
+  - CHG-0006
+  conflicts_with: []
+  related_to:
+  - CHG-0007
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0008-01
+proposal:
+  current: PROP-0008-01
+approvals: []
+implementation:
+  attempts: []
+requirements:
+  affected:
+  - REQ-0007
+  - REQ-0008
+release:
+  completed_in: null
+reconciliation:
+  target_change: CHG-0007
+  strategy: forward_rollback_preserve_history
+metadata:
+  created_at: '2026-09-10T18:43:49+01:00'
+  created_by:
+    type: ai
+    id: chatgpt
+    display_name: ChatGPT
+    ai:
+      provider: openai
+      tool: ChatGPT
+      model: GPT-5.6 Sol
