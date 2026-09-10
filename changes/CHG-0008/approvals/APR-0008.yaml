@@ -1,0 +1,17 @@
+id: APR-0008
+change: CHG-0008
+proposal: PROP-0008-01
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-10T19:13:36+01:00'
+scope:
+  proposed_specification_version: 1.11.0
+  approved_behaviour: Back out CHG-0007 product behaviour, restore the immediate pre-CHG-0007 runtime behaviour while retaining CHG-0006, withdraw REQ-0007 and REQ-0008, preserve CHG-0007 forensic history, and publish v1.11.0 as the new authoritative specification.
+mechanism:
+  type: conversation
+  reference: User explicitly approved PROP-0008-01.
+evidence:
+  proposal_blob_sha: f0de22423178ce8091b1c75202ec297fa95cf12b
