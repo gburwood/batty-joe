@@ -1,0 +1,25 @@
+id: EVT-000050
+timestamp: '2026-09-10T18:43:49+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0008-01
+related:
+  change: CHG-0008
+  impact_analysis: IA-0008-01
+  target_change: CHG-0007
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.11.0
+evidence:
+  rollback_source_revision: f901c9b7532b522309bcaecdf76f0db41d7429bc
+  observed_failed_change_revision: f06c8dab76dcc87546ad481dc3d32fb649189127
