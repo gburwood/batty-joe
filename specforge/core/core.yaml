@@ -1,0 +1,23 @@
+core_version: 0.1.0-alpha.7
+data_model_version: 0.1.0-alpha.2
+compatibility:
+  project_formats:
+  - 1
+ownership:
+  package_root: framework_owned
+  may_replace:
+  - specforge/core/
+  may_not_replace:
+  - specforge/project.yaml
+  - specforge/changes/
+  - specforge/decisions/
+  - specforge/history/
+  - specforge/evidence/
+canonical_integrity:
+  version: 1
+  encoding: utf-8
+  strip_utf8_bom: true
+  line_endings: lf
+distribution:
+  package_metadata: package.yaml
+  candidate_project_state: false

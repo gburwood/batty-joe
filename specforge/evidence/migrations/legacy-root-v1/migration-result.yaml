@@ -1,0 +1,50 @@
+operation: project_format_migration
+source:
+  layout: legacy_root
+  project_format: null
+  core_version: 0.1.0-alpha.3
+  authority: specforge.yaml
+candidate_distribution:
+  version: 0.1.0-alpha.7
+  package: C:\Users\Gary Burwood\repos\batty-joe\specforge-dist\0.1.0-alpha.7\core\package.yaml
+target:
+  project_format: 1
+  core_version: 0.1.0-alpha.7
+executed_steps:
+- MIG-legacy-alpha3-to-format1
+result: migrated
+preserved_identity_contract: true
+retired_framework_artifacts:
+- schemas/acceptance-criterion.schema.json
+- schemas/approval.schema.json
+- schemas/build.schema.json
+- schemas/change.schema.json
+- schemas/decision.schema.json
+- schemas/deployment.schema.json
+- schemas/environment.schema.json
+- schemas/forensic-event.schema.json
+- schemas/impact-analysis.schema.json
+- schemas/implementation-attempt.schema.json
+- schemas/proposal.schema.json
+- schemas/release.schema.json
+- schemas/requirement.schema.json
+- schemas/specforge.schema.json
+- rules/forensic-traceability.md
+- rules/repository-completeness.md
+- rules/source-of-truth.md
+- rules/versioning.md
+- workflows/amend-specification.md
+- workflows/emergency-change.md
+- workflows/fix-defect.md
+- workflows/implement-change.md
+- tools/specforge-status.py
+- tools/specforge-trace.py
+- tools/validate-specforge.js
+- tools/validate-specforge.py
+- docs/specforge-core-canonical-data-model-0.1.0-alpha.1.md
+preserved_legacy_files:
+- tests/run-adoption-tests.py
+- tests/run-chg0004-tests.js
+- tests/run-chg0005-tests.js
+- tests/run-physics-v160-tests.js
+- tests/run-v170-tests.js
