@@ -29,6 +29,10 @@ def run(root, *args):
     )
 
 
+def git(root, *args):
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=True)
+
+
 def check(name, condition):
     if not condition:
         raise AssertionError(name)
@@ -61,6 +65,20 @@ def isolated_repo():
     return td, dst
 
 
+def isolated_git_repo():
+    td = tempfile.TemporaryDirectory()
+    dst = Path(td.name) / 'repo'
+    result = subprocess.run(
+        ['git', 'clone', '--quiet', '--local', '--no-hardlinks', str(ROOT), str(dst)],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        td.cleanup()
+        raise AssertionError('local Git fixture clone failed: ' + result.stdout + result.stderr)
+    return td, dst
+
+
 def changes_root(root):
     layout = discover_layout(root)
     declared = (layout.manifest.get('paths') or {}).get('changes')
@@ -85,7 +103,7 @@ check('bootstrap-ready', r.returncode == 0)
 r = run(ROOT, 'transition', 'CHG-1004', '--to', 'in_progress')
 check('exact-approval-permits-implementation', r.returncode == 0)
 
-# A genuinely completed change with valid completion evidence must remain completable.
+# A genuinely completed historical change with valid legacy evidence remains completable.
 r = run(ROOT, 'transition', 'CHG-1004', '--to', 'completed')
 check('completed-change-has-valid-completion-evidence', r.returncode == 0)
 
@@ -126,6 +144,46 @@ try:
     check(
         'proposal-digest-tamper-blocked',
         r.returncode != 0 and 'valid_exact_human_approval_missing' in out.get('blockers', []),
+    )
+finally:
+    td.cleanup()
+
+# Reproduce the Batty Joe / Copilot false-completion pattern in a clone that preserves
+# the authoritative Git history. The approved implementation exists only in the working
+# tree while before and after both claim the unchanged pre-implementation HEAD.
+td, dst = isolated_git_repo()
+try:
+    baseline = git(dst, 'rev-parse', 'HEAD').stdout.strip()
+
+    chg_path = change_path(dst, 'CHG-1009.yaml')
+    chg = yaml.safe_load(chg_path.read_text(encoding='utf-8'))
+    chg['status'] = 'validated'
+    chg.setdefault('implementation', {})['attempts'] = ['IMP-1009-99']
+    chg_path.write_text(yaml.safe_dump(chg, sort_keys=False), encoding='utf-8', newline='\n')
+
+    imp_path = change_path(dst, 'CHG-1009/implementation/IMP-1009-99.yaml')
+    imp_path.parent.mkdir(parents=True, exist_ok=True)
+    imp = {
+        'id': 'IMP-1009-99',
+        'change': 'CHG-1009',
+        'proposal': 'PROP-1009-02',
+        'attempt': 99,
+        'actor': {'type': 'ai', 'id': 'copilot-regression-fixture'},
+        'source_revision': {'system': 'git', 'before': baseline, 'after': baseline},
+        'outcome': 'passed',
+        'validation_checks': [{'name': 'fixture-validation', 'required': True, 'status': 'passed'}],
+        'tests': {'status': 'passed', 'passed': ['fixture'], 'failed': []},
+    }
+    imp_path.write_text(yaml.safe_dump(imp, sort_keys=False), encoding='utf-8', newline='\n')
+    (dst / 'batty-joe.js').write_text('// approved implementation remains uncommitted\n', encoding='utf-8', newline='\n')
+
+    r = run(dst, 'transition', 'CHG-1009', '--to', 'completed')
+    out = result_json(r)
+    check(
+        'copilot-false-completion-refused',
+        r.returncode != 0
+        and 'source_revision_not_advanced' in out.get('blockers', [])
+        and 'passed_implementation_with_required_evidence_and_source_revision_missing' in out.get('blockers', []),
     )
 finally:
     td.cleanup()

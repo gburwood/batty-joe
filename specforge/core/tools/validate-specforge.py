@@ -16,7 +16,14 @@ except ImportError:
     print("ERROR: jsonschema is required: pip install jsonschema")
     sys.exit(2)
 
-from specforge_project import canonical_artifact_digest, discover_layout, iter_record_files, load_yaml, relative
+from specforge_project import (
+    canonical_artifact_digest,
+    discover_layout,
+    iter_record_files,
+    load_yaml,
+    relative,
+    verify_source_revision,
+)
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd().resolve()
 errors = []
@@ -84,8 +91,6 @@ for name, value in (manifest.get("paths") or {}).items():
 specification = manifest.get("specification") or {}
 for key in ("product_specification", "canonical_data_model"):
     value = specification.get(key)
-    # Project format 1 makes both authorities explicit and mandatory. Legacy projects may
-    # predate that contract, so validate a declared authority but do not invent a missing one.
     if not value and layout.mode != "project_format_1":
         continue
     target = (ROOT / value).resolve() if value else None
@@ -233,6 +238,7 @@ for rid, rec in records.items():
         errors.append(f"Lifecycle gate violation in {rec['path']}: valid exact human approval missing")
     if d.get("status") == "completed":
         supported = False
+        revision_failures = []
         for attempt_id in ((d.get("implementation") or {}).get("attempts") or []):
             attempt_rec = records.get(str(attempt_id))
             if not attempt_rec:
@@ -242,16 +248,28 @@ for rid, rec in records.items():
             required = [check for check in checks if check.get("required")]
             tests = attempt.get("tests") or {}
             tests_passed = tests.get("status") == "passed" or (bool(tests.get("passed")) and not tests.get("failed"))
-            if (
+            if not (
                 attempt.get("outcome") == "passed"
                 and required
                 and all(check.get("status") == "passed" for check in required)
                 and tests_passed
-                and (attempt.get("source_revision") or {}).get("after")
             ):
+                continue
+            revision = verify_source_revision(
+                layout,
+                attempt.get("source_revision") or {},
+                mode="static",
+                require_provider=False,
+            )
+            if revision.get("valid"):
                 supported = True
+                break
+            revision_failures += revision.get("blockers") or []
         if not supported:
-            errors.append(f"Lifecycle gate violation in {rec['path']}: completion lacks passing implementation, mandatory validation/test evidence, or source revision")
+            detail = ", ".join(sorted(set(revision_failures))) if revision_failures else "missing immutable source revision evidence"
+            errors.append(
+                f"Lifecycle gate violation in {rec['path']}: completion lacks passing implementation, mandatory validation/test evidence, or verifiable material revision ({detail})"
+            )
 
 if errors:
     print("SpecForge validation FAILED")

@@ -37,6 +37,7 @@ compatibility:
     - 0.1.0-alpha.5
     - 0.1.0-alpha.6
     - 0.1.0-alpha.7
+    - 0.1.0-alpha.8
     packs: version_declared
 policy:
   distribution_source: candidate_package

@@ -30,7 +30,7 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)/"repo"; root.mkdir(); write_fixture(root)
         before={p.relative_to(root):p.read_bytes() for p in root.rglob("*") if p.is_file()}
-        dist_core=root/"specforge-dist"/"0.1.0-alpha.7"/"core"; shutil.copytree(CORE,dist_core,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
+        dist_core=root/"specforge-dist"/"0.1.0-alpha.8"/"core"; shutil.copytree(CORE,dist_core,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
         migrator=load_migrator(dist_core/"tools"/"specforge-migrate.py")
         distribution=migrator.discover_distribution(tool_file=dist_core/"tools"/"specforge-migrate.py")
         step=next(s for s in migrator.load_registry(distribution)["steps"] if s["id"]=="MIG-legacy-alpha3-to-format1")

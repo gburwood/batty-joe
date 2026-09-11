@@ -1,14 +1,14 @@
 specforge:
   project_format: 1
-  core_version: 0.1.0-alpha.7
-  data_model_version: 0.1.0-alpha.2
+  core_version: 0.1.0-alpha.8
+  data_model_version: 0.1.0-alpha.3
 project:
   id: PRJ-0001
   name: Batty Joe
 specification:
   root: ./
   product_specification: ./batty-joe-dev-spec-v1.11.0.yaml
-  canonical_data_model: ./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.2.md
+  canonical_data_model: ./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.3.md
   current_version: 1.11.0
 paths:
   core: ./specforge/core

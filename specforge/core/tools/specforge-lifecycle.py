@@ -18,6 +18,7 @@ from specforge_project import (
     iter_record_files,
     load_yaml,
     relative,
+    verify_source_revision,
 )
 
 
@@ -127,7 +128,14 @@ def completion_gate(layout, recs, chg):
     if not ready["ready"]: blockers += ["bootstrap:" + item for item in ready["blockers"]]
     attempts = (chg.get("implementation") or {}).get("attempts") or []
     if not attempts: return blockers + ["implementation_attempt_missing"]
+
+    # A change already recorded as completed may carry pre-alpha.8 historical source
+    # evidence. Re-evaluating that terminal state must not retroactively require a
+    # live provider. A new transition to completed is strict and verifies that the
+    # current material tree is captured by the declared immutable after state.
+    historical_terminal = chg.get("status") == "completed"
     passed = []
+    source_blockers = []
     for implementation_id in attempts:
         if implementation_id not in recs: continue
         implementation, _ = recs[implementation_id]
@@ -138,10 +146,23 @@ def completion_gate(layout, recs, chg):
         tests = implementation.get("tests") or {}
         test_ok = tests.get("status") == "passed" or (isinstance(tests.get("passed"), list) and tests.get("passed") and not tests.get("failed"))
         if not test_ok: continue
-        after = (implementation.get("source_revision") or {}).get("after")
-        if not after: continue
+
+        verification = verify_source_revision(
+            layout,
+            implementation.get("source_revision") or {},
+            mode="static" if historical_terminal else "transition",
+            require_provider=not historical_terminal,
+        )
+        if not verification.get("valid"):
+            source_blockers += verification.get("blockers") or []
+            for path in (verification.get("details") or {}).get("material_differences") or []:
+                source_blockers.append("uncaptured_material_path:" + path)
+            continue
         passed.append(implementation_id)
-    if not passed: blockers.append("passed_implementation_with_required_evidence_and_source_revision_missing")
+
+    if not passed:
+        blockers += source_blockers
+        blockers.append("passed_implementation_with_required_evidence_and_source_revision_missing")
     return blockers
 
 

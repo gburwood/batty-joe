@@ -1,5 +1,5 @@
-core_version: 0.1.0-alpha.7
-data_model_version: 0.1.0-alpha.2
+core_version: 0.1.0-alpha.8
+data_model_version: 0.1.0-alpha.3
 compatibility:
   project_formats:
   - 1
@@ -18,6 +18,10 @@ canonical_integrity:
   encoding: utf-8
   strip_utf8_bom: true
   line_endings: lf
+material_revision:
+  verification_profile: immutable_material_v1
+  fallback_provider: specforge_snapshot
+  snapshot_algorithm: sha256
 distribution:
   package_metadata: package.yaml
   candidate_project_state: false

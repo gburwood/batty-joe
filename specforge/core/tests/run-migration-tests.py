@@ -3,7 +3,7 @@ from pathlib import Path
 import json, os, shutil, subprocess, sys, tempfile
 
 CORE = Path(__file__).resolve().parents[1]
-TARGET_VERSION = "0.1.0-alpha.7"
+TARGET_VERSION = "0.1.0-alpha.8"
 
 
 def run(args, cwd=None):
@@ -24,7 +24,6 @@ def write_legacy_fixture(root,core_version):
     (root/"changes").mkdir(); (root/"history").mkdir()
     (root/"changes"/"CHG-0007.yaml").write_text("id: CHG-0007\nstatus: blocked\n",encoding="utf-8")
     (root/"history"/"EVT-000701.yaml").write_text("id: EVT-000701\nevent_type: implementation_failed\n",encoding="utf-8")
-    # Legacy framework-shaped files plus project-owned neighbours in conventionally named folders.
     for key, rel in (("rules","source-of-truth.md"),("tools","specforge_project.py"),("tests","run-migration-tests.py")):
         d=root/key; d.mkdir(); (d/rel).write_text(f"legacy framework {key}\n",encoding="utf-8")
     (root/"tests"/"batty-project-test.txt").write_text("keep me\n",encoding="utf-8")
@@ -66,7 +65,7 @@ def migrate_fixture(core_version):
         manifest=(root/"specforge"/"project.yaml").read_text(encoding="utf-8")
         expect("./batty-joe-dev-spec.yaml" in manifest,"product specification authority not preserved")
         expect(TARGET_VERSION in manifest,"target Core version not installed")
-        expect("./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.2.md" in manifest,"canonical data model was not rebound to installed Core")
+        expect("./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.3.md" in manifest,"canonical data model was not rebound to installed Core")
         expect(not (root/"specforge.yaml").exists(),"legacy manifest still authoritative")
         expect(not (root/"rules"/"source-of-truth.md").exists(),"known legacy framework rule survived")
         expect(not (root/"tools"/"specforge_project.py").exists(),"known legacy framework tool survived")
