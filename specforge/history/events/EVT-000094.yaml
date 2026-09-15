@@ -1,0 +1,24 @@
+id: EVT-000094
+timestamp: '2026-09-15T14:36:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: implementation_started
+entity:
+  type: implementation_attempt
+  id: IMP-0012-01
+related:
+  change: CHG-0012
+  proposal: PROP-0012-01
+  approval: APR-0012
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: in_progress
+evidence:
+  source_revision_before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
+  working_branch: chatgpt/chg-0012-risk-classifier-impl
