@@ -69,6 +69,21 @@ unbounded = mod.bounded_legacy_manifest_documents(before, after_unbounded)
 check(unbounded["bounded"] is False, unbounded)
 check("policy.approval_mode" in unbounded["changed_keys"], unbounded)
 
+legacy_manifest = {
+    "paths": {
+        "changes": "./changes",
+        "history": "./history",
+        "evidence": "./evidence",
+        "tests": "./tests",
+    }
+}
+legacy_roots = mod.bookkeeping_roots_from_manifest_document(legacy_manifest)
+check(legacy_roots == ["changes", "evidence", "history"], legacy_roots)
+check(mod.is_historical_bookkeeping_path("changes/CHG-0001.yaml", legacy_roots), legacy_roots)
+check(mod.is_historical_bookkeeping_path("history/events/EVT-000001.yaml", legacy_roots), legacy_roots)
+check(mod.is_historical_bookkeeping_path("evidence/run.yaml", legacy_roots), legacy_roots)
+check(not mod.is_historical_bookkeeping_path("tests/run-v170-tests.js", legacy_roots), legacy_roots)
+
 excluded = mod.classify_entries([
     {"path": "specforge-dist/x/y.yaml", "status": "A"},
     {"path": "x/__pycache__/a.pyc", "status": "A"},
