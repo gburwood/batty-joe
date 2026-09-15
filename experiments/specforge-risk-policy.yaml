@@ -1,4 +1,4 @@
-version: 1
+version: 2
 name: batty-joe-retrospective-risk-experiment
 non_authoritative: true
 tiers:
@@ -64,9 +64,27 @@ rules:
       - package-lock.json
       - Makefile
       - experiments/**
-  - id: ordinary_tests
+  - id: existing_test_harness_change
+    tier: MEDIUM
+    description: Modification, deletion, rename, copy or type change of an existing ordinary test/regression harness.
+    statuses:
+      - M
+      - D
+      - R
+      - C
+      - T
+      - U
+      - X
+      - B
+    globs:
+      - tests/**
+      - batty-joe-tests.js
+      - batty-joe-tests.html
+  - id: new_ordinary_test
     tier: LOW
-    description: Ordinary regression and test harness material.
+    description: Addition of a new ordinary regression or test harness.
+    statuses:
+      - A
     globs:
       - tests/**
       - batty-joe-tests.js
