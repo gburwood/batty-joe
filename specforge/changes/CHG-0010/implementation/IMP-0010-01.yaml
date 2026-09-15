@@ -16,6 +16,14 @@ approach: Normalize the freshly-read contents of batty-joe-game.js and batty-joe
   runs). No expected string or regex literal in the harness changes. No product file is modified.
 source_revision:
   system: git
-  before: 5cb84ccbcbf8e6ee5b03ebfd31a6cb477c8c145a
+  before: 1810fb8d9241cf917d4e588abe7ebb28ba7970b0
 outcome: in_progress
+correction:
+  reason: source_revision.before was initially recorded as 5cb84ccbcbf8e6ee5b03ebfd31a6cb477c8c145a (HEAD at
+    attempt-start time), but specforge-authorization.py's material-authority check requires an active
+    implementation's before to match the durable trusted material baseline
+    (specforge/evidence/material-authority.yaml) exactly, not merely an ancestor with no intervening material
+    diffs. Corrected before to the actual trusted revision. 5cb84cc remains a real, valid ancestor commit; only
+    the declared authorization anchor was wrong.
+  see_event: EVT-000083
 notes: Implementation attempt created before modifying tests/run-chg0005-tests.js.
