@@ -1,0 +1,29 @@
+id: EVT-000074
+timestamp: '2026-09-15T10:14:37.1192337+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+event_type: correction
+entity:
+  type: implementation_attempt
+  id: IMP-0009-01
+related:
+  change: CHG-0009
+  proposal: PROP-0009-01
+  prior_event: EVT-000071
+previous_state:
+  tests_status: failed
+  chg0005_result: false_negative
+resulting_state:
+  tests_status: passed
+  chg0005_result: passed_on_canonical_lf_content
+evidence:
+  reason: Windows CRLF materialization made the LF-sensitive CHG-0005 harness assertion fail; byte-preserving Git LF content contains the handler and passes.
+  commits:
+  - fc916ccd4b6c5e725263998245deef816c9c3d03
+  - 8d4987881b00d481979b2d7764fe417363a3d079
+  portability_defect: CHG-0010

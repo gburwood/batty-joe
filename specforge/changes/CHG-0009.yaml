@@ -1,7 +1,7 @@
 id: CHG-0009
 title: Show campaign status on the pause panel
 classification: feature
-status: implemented
+status: completed
 priority: low
 sources:
 - type: conversation
@@ -46,3 +46,4 @@ metadata:
       provider: openai
       tool: ChatGPT Work
       model: GPT-5
+  completed_at: '2026-09-15T10:14:37.1192337+01:00'
