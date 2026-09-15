@@ -1,0 +1,37 @@
+id: IMP-0012-01
+change: CHG-0012
+proposal: PROP-0012-01
+attempt: 1
+started_at: '2026-09-15T14:36:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+approach: >-
+  Implement the approved non-authoritative retrospective risk classifier entirely outside specforge/core and specforge/packs. The classifier will consume an executable YAML policy, inspect actual Git diffs for passed historical implementation source revisions, exclude governance bookkeeping/transient paths consistently with current material-authority behaviour, and emit deterministic LOW/MEDIUM/HIGH/BLOCKED results. No lifecycle, authorization, product or trusted-authority behaviour is changed.
+source_revision:
+  system: git
+  before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
+outcome: in_progress
+tests:
+  status: pending
+  passed: []
+  failed: []
+validation_checks:
+- name: risk_classifier_unit_tests
+  required: true
+  status: blocked
+- name: retrospective_chg0001_to_chg0011
+  required: true
+  status: blocked
+- name: existing_regression_harnesses
+  required: true
+  status: blocked
+- name: specforge_validation
+  required: true
+  status: blocked
+notes: Implementation attempt created before any material experiment file is added or modified. source_revision.before is bound to the durable trusted material baseline from specforge/evidence/material-authority.yaml, not branch HEAD.
