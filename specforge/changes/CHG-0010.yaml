@@ -1,0 +1,36 @@
+id: CHG-0010
+title: Make CHG-0005 regression harness line-ending portable
+classification: defect
+status: proposed
+priority: low
+sources:
+- type: conversation
+  reference: user-request-2026-09-15-chg0009-evidence-correction
+  received_at: '2026-09-15T10:14:37.1192337+01:00'
+request:
+  summary: Track the CHG-0005 test harness portability defect for a future change.
+  detail: tests/run-chg0005-tests.js matches LF-only source text and reports a false negative from Windows CRLF checkouts even when the canonical Git content passes.
+clarification:
+  required: false
+  notes: This portability defect is recorded for future work and is not fixed within CHG-0009.
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to:
+  - CHG-0009
+  supersedes: []
+  parent: null
+  children: []
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-15T10:14:37.1192337+01:00'
+  created_by:
+    type: ai
+    id: github_copilot
+    display_name: GitHub Copilot
+    ai:
+      provider: microsoft
+      tool: GitHub Copilot in VS Code

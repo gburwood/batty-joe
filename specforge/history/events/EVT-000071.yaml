@@ -1,0 +1,27 @@
+id: EVT-000071
+timestamp: '2026-09-15T10:05:57.183+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+event_type: correction
+entity:
+  type: proposal
+  id: PROP-0009-01
+related:
+  change: CHG-0009
+  approval: APR-0009
+  implementation_attempt: IMP-0009-01
+previous_state:
+  proposal_document_status: awaiting_approval
+resulting_state:
+  proposal_document_status: awaiting_approval
+evidence:
+  reason: The requested document-status change to approved would alter the approved proposal bytes and invalidate APR-0009's exact digest binding.
+  proposal_revision: 1
+  proposal_digest: 5255497be78dcc0b27450ebfa29965de468edd3aefb3e36909d5956b8826f357
+  independent_review_claim: CHG-0005 passes on fc916ccd4b6c5e725263998245deef816c9c3d03
+  observed_result: CHG-0005 fails on the same commit because Game.prototype.onFrenzyPlayerHit is absent.

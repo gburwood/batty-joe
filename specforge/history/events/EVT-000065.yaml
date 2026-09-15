@@ -1,0 +1,24 @@
+id: EVT-000065
+timestamp: '2026-09-15T08:02:49Z'
+actor:
+  type: ai
+  id: codex
+  display_name: Codex
+  ai:
+    provider: openai
+    tool: ChatGPT Work
+    model: GPT-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0009-01
+related:
+  change: CHG-0009
+  impact_analysis: IA-0009-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.12.0
+evidence:
+  source_revision: 352bbe070f0b3640b05cddc60684efcb9d3ed329
+  working_branch: copilot/chg-0009-pause-status

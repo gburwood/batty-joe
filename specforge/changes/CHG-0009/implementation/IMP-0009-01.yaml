@@ -1,0 +1,63 @@
+id: IMP-0009-01
+change: CHG-0009
+proposal: PROP-0009-01
+attempt: 1
+started_at: '2026-09-15T09:33:33.3011172+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+approach: >
+  Project the live Game level, formatted score and remaining lives into the existing
+  pause panel from App.onStateChange on each transition into PAUSED. Add focused
+  regression coverage and the v1.12.0 product specification while leaving gameplay,
+  physics, controls and persistence unchanged.
+source_revision:
+  system: git
+  before: 366648e1ee31d13601e3865acccf50c3b02fc088
+  after: 41b471633a862ff4c5d94bb2b2ac7d1c425eb833
+completed_at: '2026-09-15T09:50:19.300+01:00'
+outcome: passed
+tests:
+  status: passed
+  rerun_at: '2026-09-15T10:14:37.1192337+01:00'
+  rerun_commits:
+  - fc916ccd4b6c5e725263998245deef816c9c3d03
+  - 8d4987881b00d481979b2d7764fe417363a3d079
+  passed:
+  - node tests/run-chg0009-tests.js (focused regression)
+  - node tests/run-chg0004-tests.js
+  - node tests/run-physics-v160-tests.js
+  - node tests/run-chg0005-tests.js from byte-preserving LF checkout of fc916ccd4b6c5e725263998245deef816c9c3d03
+  - node tests/run-chg0005-tests.js from byte-preserving LF checkout of 8d4987881b00d481979b2d7764fe417363a3d079
+  failed: []
+  portability_observation: Windows CRLF checkout produces a false negative because the harness matches LF-only source text; this is tracked as CHG-0010 and is outside CHG-0009.
+validation_checks:
+- name: focused_chg0009_regression
+  required: true
+  status: passed
+- name: current_gameplay_browser_regression
+  required: true
+  status: passed
+- name: chg0004_regression
+  required: true
+  status: passed
+- name: chg0005_regression
+  required: true
+  status: passed
+  evidence: Passed from canonical LF Git content at fc916ccd4b6c5e725263998245deef816c9c3d03 and 8d4987881b00d481979b2d7764fe417363a3d079; Windows CRLF false negative tracked by CHG-0010.
+- name: current_physics_regression
+  required: true
+  status: passed
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: python -B specforge/core/tools/validate-specforge.py .
+correction:
+  reason: The earlier Windows result was a line-ending-sensitive false negative. The canonical LF Git content contains Game.prototype.onFrenzyPlayerHit and passes CHG-0005.
+  portability_defect: CHG-0010
+validated_at: '2026-09-15T10:14:37.1192337+01:00'
+notes: Implementation attempt created before modifying product files.

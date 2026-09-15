@@ -1,0 +1,29 @@
+id: EVT-000078
+timestamp: '2026-09-15T10:22:49+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+event_type: correction
+entity:
+  type: implementation_attempt
+  id: IMP-0009-01
+related:
+  change: CHG-0009
+  prior_event: EVT-000074
+previous_state:
+  tests_failed:
+  - node tests/run-chg0005-tests.js from byte-preserving LF checkout of fc916ccd4b6c5e725263998245deef816c9c3d03
+  - node tests/run-chg0005-tests.js from byte-preserving LF checkout of 8d4987881b00d481979b2d7764fe417363a3d079
+resulting_state:
+  tests_failed: []
+  tests_status: passed
+evidence:
+  reason: Canonical-LF CHG-0005 results belong in tests.passed, not tests.failed.
+  commits:
+  - fc916ccd4b6c5e725263998245deef816c9c3d03
+  - 8d4987881b00d481979b2d7764fe417363a3d079
+  portability_observation: Windows CRLF materialization remains a separate CHG-0010 defect and is not fixed here.
