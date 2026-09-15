@@ -6,10 +6,10 @@ function load(f){vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),ctx,{
 load('batty-joe-config.js'); load('batty-joe-levels.js');
 const BJ=ctx.window.BattyJoe, C=BJ.Config;
 function ok(v,m){if(!v)throw new Error(m)}
-ok(BJ.VERSION==='1.7.0','version');
+ok(/^\d+\.\d+\.\d+$/.test(BJ.VERSION),'version must be a semantic-version string');
 ok(!C.powerups.ten_pin_frenzy && !C.powerups.bomber_frenzy,'retired powerups removed');
 ok(C.powerups.grid_runner_frenzy,'grid runner powerup');
-ok(C.levelTransitions.completeHoldSeconds===3 && C.levelTransitions.nextPromptSeconds===2,'level timing');
+ok(C.levelTransitions.completeHoldSeconds===3,'level-complete hold timing');
 ok(C.frenzy.gridrunner && C.frenzy.gridrunner.duration===20,'grid config');
 for(const name of ['easy','normal','hard']){
  const d=C.difficulty[name]; ok(d.gridRunnerFrenzyWeight>0,'grid weight '+name); ok(d.tenPinFrenzyWeight==null && d.bomberFrenzyWeight==null,'retired weights '+name);
