@@ -1,4 +1,4 @@
 version: 1
 trusted:
   provider: git
-  revision: 0777802d053b0ea0e5d65a84509389e08be476fe
+  revision: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
