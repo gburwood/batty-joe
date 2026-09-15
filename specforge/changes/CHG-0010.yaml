@@ -1,7 +1,7 @@
 id: CHG-0010
 title: Make CHG-0005 regression harness line-ending portable
 classification: defect
-status: proposed
+status: completed
 priority: low
 sources:
 - type: conversation
@@ -21,6 +21,18 @@ relationships:
   supersedes: []
   parent: null
   children: []
+impact_analysis:
+  current: IA-0010-01
+proposal:
+  current: PROP-0010-01
+approvals:
+- APR-0010
+implementation:
+  attempts:
+  - IMP-0010-01
+governance:
+  lifecycle_enforcement: controlled_v1
+  enforced_from_change: CHG-0009
 requirements:
   affected: []
 release:
@@ -34,3 +46,4 @@ metadata:
     ai:
       provider: microsoft
       tool: GitHub Copilot in VS Code
+  completed_at: '2026-09-15T12:30:00+01:00'

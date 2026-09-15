@@ -1,0 +1,83 @@
+id: IMP-0010-01
+change: CHG-0010
+proposal: PROP-0010-01
+attempt: 1
+started_at: '2026-09-15T12:05:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: Normalize the freshly-read contents of batty-joe-game.js and batty-joe-config.js inside
+  tests/run-chg0005-tests.js (translate CRLF to LF immediately after fs.readFileSync, before any matching
+  runs). No expected string or regex literal in the harness changes. No product file is modified.
+source_revision:
+  system: git
+  before: 1810fb8d9241cf917d4e588abe7ebb28ba7970b0
+  after: e6f6c80b442edb017d887c1a2bcd22eae0a78564
+completed_at: '2026-09-15T12:20:00+01:00'
+outcome: passed
+correction:
+  reason: source_revision.before was initially recorded as 5cb84ccbcbf8e6ee5b03ebfd31a6cb477c8c145a (HEAD at
+    attempt-start time), but specforge-authorization.py's material-authority check requires an active
+    implementation's before to match the durable trusted material baseline
+    (specforge/evidence/material-authority.yaml) exactly, not merely an ancestor with no intervening material
+    diffs. Corrected before to the actual trusted revision. 5cb84cc remains a real, valid ancestor commit; only
+    the declared authorization anchor was wrong.
+  see_event: EVT-000083
+tests:
+  status: passed
+  passed:
+  - node tests/run-chg0005-tests.js against the current Windows CRLF working-tree copy of batty-joe-game.js -
+    previously threw "collision handler must report successful exit"; now passes.
+  - node tests/run-chg0005-tests.js (fixed harness copy) against a scratch checkout of the canonical LF Git
+    blob content of batty-joe-game.js and batty-joe-config.js - confirms no regression on the
+    previously-passing LF case.
+  - node tests/run-chg0005-tests.js (fixed harness copy) against a scratch copy with the shared collision-exit
+    call deliberately removed from Game.prototype.onFrenzyPlayerHit - fails with "normal collision must begin
+    shared exit", proving the regression guard is not made vacuous.
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  failed: []
+  out_of_scope_pre_existing_failures:
+  - tests/run-v170-tests.js fails on an unrelated stale hardcoded BJ.VERSION==='1.7.0' assertion against the
+    current 1.12.0 specification; pre-existing, unrelated to line endings, out of PROP-0010-01 scope, not
+    modified.
+  - tests/run-adoption-tests.py fails on a stale pre-format-1-migration path
+    (changes/CHG-0001/PROP-0001-01.yaml); pre-existing, unrelated to line endings, out of PROP-0010-01 scope,
+    not modified.
+validation_checks:
+- name: chg0005_portability_crlf
+  required: true
+  status: passed
+  evidence: node tests/run-chg0005-tests.js passes on the current CRLF working-tree copy of batty-joe-game.js.
+- name: chg0005_portability_lf
+  required: true
+  status: passed
+  evidence: Fixed harness passes against a scratch LF copy of the canonical Git blob content; no regression on
+    the previously-passing case.
+- name: chg0005_regression_guard_not_vacuous
+  required: true
+  status: passed
+  evidence: Fixed harness fails against a scratch copy with the shared collision-exit call removed from
+    onFrenzyPlayerHit.
+- name: chg0004_regression
+  required: true
+  status: passed
+- name: chg0009_regression
+  required: true
+  status: passed
+- name: physics_v160_regression
+  required: true
+  status: passed
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: python -B specforge/core/tools/validate-specforge.py . passed (139 canonical records).
+notes: Implementation attempt created before modifying tests/run-chg0005-tests.js. Scope limited exactly to
+  that one file, matching PROP-0010-01's implementation_constraints; no product source file or other test
+  harness was modified.

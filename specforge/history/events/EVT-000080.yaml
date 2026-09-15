@@ -1,0 +1,24 @@
+id: EVT-000080
+timestamp: '2026-09-15T11:31:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0010-01
+related:
+  change: CHG-0010
+  impact_analysis: IA-0010-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.12.0
+evidence:
+  scope: Test-tooling-only defect fix confined to tests/run-chg0005-tests.js; no product code or gameplay
+    behaviour change is proposed.

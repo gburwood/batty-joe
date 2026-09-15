@@ -1,0 +1,65 @@
+id: PROP-0010-01
+change: CHG-0010
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-15T11:31:00+01:00'
+based_on_impact_analysis:
+- IA-0010-01
+proposed_specification_version: 1.12.0
+behaviour_summary: No product or gameplay behaviour changes. tests/run-chg0005-tests.js is made line-ending
+  portable by normalizing the freshly-read contents of batty-joe-game.js and batty-joe-config.js (translating
+  CRLF to LF) immediately after fs.readFileSync, before any String.includes() or regex matching runs. Every
+  expected string and regex literal in the harness stays exactly as written; only the representation of the
+  file content being matched against is normalized, so the harness reports the same result whether the working
+  tree checks batty-joe-game.js and batty-joe-config.js out with LF or CRLF line endings.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+acceptance_criteria:
+  portability:
+  - tests/run-chg0005-tests.js passes on the current Windows CRLF checkout of batty-joe-game.js.
+  - tests/run-chg0005-tests.js passes when batty-joe-game.js and batty-joe-config.js are LF (no regression on
+    the currently-passing case).
+  - Every existing assertion in the harness keeps its current pass/fail meaning; none are loosened, removed, or
+    made vacuous to achieve portability.
+  - The onFrenzyPlayerHit handler body extracted by the harness's regex and passed to `new Function(...)` remains
+    syntactically valid JavaScript after normalization.
+  non_regression:
+  - No product source file (batty-joe-game.js, batty-joe-config.js, or any other .js/.html/.css product file) is
+    modified.
+  - No gameplay, physics, scoring, lives, timing or persistence behaviour changes.
+  - No other test harness under tests/ is modified.
+  - The authoritative product specification (currently 1.12.0) is not changed or superseded; this is a defect
+    fix confined to test tooling, not a product-behaviour change.
+  verification:
+  - Run tests/run-chg0005-tests.js against the current CRLF working-tree copy of batty-joe-game.js and confirm
+    it passes.
+  - Run tests/run-chg0005-tests.js against an LF copy of the same files (e.g. the canonical Git blob content)
+    and confirm it still passes.
+  - Temporarily revert the shared collision exit call in a scratch copy and confirm the harness still fails,
+    proving the fix does not make the regression guard vacuous.
+  - SpecForge repository validation (validate-specforge.py) passes.
+artifacts_expected:
+  modify:
+  - tests/run-chg0005-tests.js
+  add:
+  - specforge/changes/CHG-0010/implementation/IMP-0010-01.yaml
+  - forensic events under specforge/history/events/ recording implementation start, test results, and
+    validation/completion for CHG-0010, allocated sequentially at implementation time
+implementation_constraints:
+- Implementation must not begin until this exact proposal revision is explicitly approved and an approval
+  record binds its digest.
+- Follow the SpecForge bootstrap, authorization, implementation-attempt, validation and completion lifecycle on
+  a dedicated branch.
+- Limit edits to tests/run-chg0005-tests.js only; do not modify batty-joe-game.js, batty-joe-config.js, any
+  other product file, or any other test harness.
+- Normalize only the in-memory read of source content immediately after fs.readFileSync (e.g. translate CRLF to
+  LF before matching); do not alter any expected string or regex literal to work around the defect by weakening
+  the check.
+- Before recording the implementation as passed, verify the harness still fails against a deliberately reverted
+  collision exit call, so the fix is proven not to make the regression guard vacuous.
+- Allocate new forensic event IDs sequentially from the current repository tip at implementation time; do not
+  reuse or pre-reserve specific EVT-* numbers from this proposal.
+approvals: []

@@ -1,7 +1,8 @@
 const fs=require('fs'), path=require('path');
 const root=path.resolve(__dirname,'..');
-const game=fs.readFileSync(path.join(root,'batty-joe-game.js'),'utf8');
-const cfg=fs.readFileSync(path.join(root,'batty-joe-config.js'),'utf8');
+function readSourceLF(file){return fs.readFileSync(path.join(root,file),'utf8').replace(/\r\n/g,'\n');}
+const game=readSourceLF('batty-joe-game.js');
+const cfg=readSourceLF('batty-joe-config.js');
 
 function ok(value,message){if(!value)throw new Error(message);}
 

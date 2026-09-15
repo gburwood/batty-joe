@@ -1,0 +1,26 @@
+id: EVT-000083
+timestamp: '2026-09-15T12:10:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: correction
+entity:
+  type: implementation_attempt
+  id: IMP-0010-01
+related:
+  change: CHG-0010
+  prior_event: EVT-000082
+previous_state:
+  source_revision_before: 5cb84ccbcbf8e6ee5b03ebfd31a6cb477c8c145a
+resulting_state:
+  source_revision_before: 1810fb8d9241cf917d4e588abe7ebb28ba7970b0
+evidence:
+  reason: python -B specforge/core/tools/validate-specforge.py . failed with unauthorized_material_changes
+    because IMP-0010-01's source_revision.before did not match the durable trusted material baseline in
+    specforge/evidence/material-authority.yaml. Corrected before to the trusted revision; no material file
+    content changed as a result of this correction.

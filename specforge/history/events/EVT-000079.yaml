@@ -1,0 +1,25 @@
+id: EVT-000079
+timestamp: '2026-09-15T11:30:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0010-01
+related:
+  change: CHG-0010
+resulting_state:
+  change_status: analysed
+evidence:
+  reproduction: Ran node tests/run-chg0005-tests.js on the current Windows CRLF working-tree copy of
+    batty-joe-game.js and observed the exact false failure ("collision handler must report successful exit").
+    Confirmed the canonical Git blob (git show HEAD:batty-joe-game.js, LF) satisfies the same check.
+  prior_evidence:
+  - EVT-000068
+  - EVT-000078

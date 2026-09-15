@@ -1,0 +1,55 @@
+id: IA-0010-01
+change: CHG-0010
+revision: 1
+created_at: '2026-09-15T11:30:00+01:00'
+affected:
+  requirements: []
+  components:
+  - chg0005_regression_harness
+  - test_tooling
+  artifacts:
+  - tests/run-chg0005-tests.js
+  tests:
+    required:
+    - The CHG-0005 collision-exit regression harness passes on a checkout where batty-joe-game.js and/or
+      batty-joe-config.js have CRLF line endings.
+    - The harness continues to fail if the shared Grid Runner collision exit regresses; the fix must not make
+      the regression guard vacuous.
+    - No other CHG-0005 assertion changes meaning, and no other test harness is touched.
+compatibility:
+  breaking: false
+  notes: Test-tooling-only change confined to tests/run-chg0005-tests.js. No product source, gameplay, physics,
+    persistence or specification behaviour is touched.
+migration:
+  required: false
+  notes: No persisted data, configuration or specification changes.
+risks:
+- id: RISK-0010-01
+  description: Normalizing line endings before matching could silently widen or narrow what the harness accepts
+    if the normalization is applied carelessly, e.g. by loosening an expected string instead of normalizing the
+    read content.
+  severity: low
+  mitigation: Normalize only the freshly-read source text (translate CRLF to LF) immediately after fs.readFileSync,
+    before any matching runs. Every expected string and regex literal stays exactly as written, so the same
+    logical content is still required, independent of the file's on-disk line-ending style.
+- id: RISK-0010-02
+  description: An incorrect fix could mask a genuine future reintroduction of the CHG-0005 collision-exit defect
+    by making the harness pass unconditionally.
+  severity: low
+  mitigation: Before recording the implementation as passed, verify the harness still fails when the shared
+    collision exit call is deliberately reverted.
+open_changes:
+  overlaps_with:
+  - CHG-0009
+summary: 'tests/run-chg0005-tests.js reads batty-joe-game.js and batty-joe-config.js with fs.readFileSync(path,
+  ''utf8'') and then runs several String.includes() checks against literals that embed hard-coded LF ("\n")
+  sequences, plus one regex extraction terminated by the literal "\n  };". Reproduced directly on this checkout:
+  the canonical Git blob for batty-joe-game.js (LF) satisfies the "collision handler must report successful
+  exit" check, but the current CRLF Windows working-tree copy of the same file does not, because the byte
+  sequence "\r\n" does not contain the literal substring "\n  };" the harness searches for. Running `node
+  tests/run-chg0005-tests.js` against this checkout throws that exact false failure. This is the same false
+  failure already observed and explicitly set aside during CHG-0009 (EVT-000068 recorded "chg0005:
+  failed_pre_existing_stale_harness"; EVT-000078 recorded "Windows CRLF materialization remains a separate
+  CHG-0010 defect and is not fixed here"). The defect is confined to the harness''s own string/regex matching;
+  it does not indicate any defect in batty-joe-game.js, batty-joe-config.js, or the CHG-0005 behaviour they
+  implement, and the fix requires no change to either product file.'
