@@ -1,7 +1,7 @@
 id: CHG-0012
 title: Experimental deterministic risk-tier classifier for retrospective SpecForge changes
 classification: tooling_infrastructure
-status: validated
+status: completed
 priority: normal
 sources:
 - type: conversation
@@ -54,4 +54,4 @@ metadata:
       provider: openai
       tool: ChatGPT
       model: gpt-5.6-sol
-  completed_at: null
+  completed_at: '2026-09-15T16:29:00+01:00'
