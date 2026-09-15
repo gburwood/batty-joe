@@ -1,0 +1,47 @@
+id: EVT-000101
+timestamp: '2026-09-15T16:23:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0012
+related:
+  change: CHG-0012
+  proposal: PROP-0012-02
+  approval: APR-0013
+  implementation_attempt: IMP-0012-02
+  source_revision: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+resulting_state:
+  change_status: validated
+  implementation_outcome: passed
+evidence:
+  independent_verifier: Claude
+  focused_classifier_tests: 23/23 passed
+  retrospective_result:
+    CHG-0001: HIGH
+    CHG-0002: HIGH
+    CHG-0003: HIGH
+    CHG-0004: HIGH
+    CHG-0005: HIGH
+    CHG-0006: HIGH
+    CHG-0007: HIGH
+    CHG-0008: HIGH
+    CHG-0009: HIGH
+    CHG-0010: MEDIUM
+    CHG-0011: MEDIUM
+  blocked_results: 0
+  low_results: 0
+  historical_bookkeeping_leak: fixed and independently verified absent from material_paths
+  regressions: all six requested Batty Joe regression harnesses passed
+  specforge_validation: PASSED with 169 canonical records
+  approval_digest_binding: PROP-0012-02 recomputed and confirmed against APR-0013
+  non_authoritative_isolation: confirmed
+notes: >-
+  Validation evidence comes from an independent full-checkout post-fix rerun of the exact corrected branch tip. The pre-fix findings remain preserved separately and were not reused as completion evidence.
