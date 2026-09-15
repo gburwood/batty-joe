@@ -1,0 +1,31 @@
+id: EVT-000102
+timestamp: '2026-09-15T16:25:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: material_authority_advanced
+entity:
+  type: material_authority
+  id: project-material-authority
+related:
+  change: CHG-0012
+  implementation_attempt: IMP-0012-02
+  validation_event: EVT-000101
+resulting_state:
+  change_status: validated
+  trusted_material_revision: dfa76a25c115d350bcc95ef43680ad1d0180bdfa
+evidence:
+  previous_trusted_material_revision: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
+  implementation_source_revision_after: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+  post_source_revision_changes_before_authority_advance:
+  - specforge/changes/CHG-0012.yaml
+  - specforge/changes/CHG-0012/implementation/IMP-0012-02.yaml
+  - specforge/history/events/EVT-000101.yaml
+  material_difference_assessment: governance bookkeeping only
+notes: >-
+  The durable trusted baseline was advanced only after IMP-0012-02 passed independent post-fix verification while CHG-0012 remained in validated state. The terminal completed transition is intentionally not recorded here; the executable SpecForge completion gate must still be run in a real checkout.
