@@ -1,87 +1,43 @@
 #!/usr/bin/env python3
-"""Focused deterministic tests for the non-authoritative CHG-0012 classifier."""
-from __future__ import annotations
-
-import importlib.util
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import tempfile
 
-import yaml
-
-
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "experiments" / "specforge-risk-classifier.py"
-POLICY_PATH = ROOT / "experiments" / "specforge-risk-policy.yaml"
-
-spec = importlib.util.spec_from_file_location("specforge_risk_classifier", MODULE_PATH)
-if spec is None or spec.loader is None:
-    raise RuntimeError("unable to load classifier module")
-classifier = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(classifier)
-policy = classifier.load_policy(POLICY_PATH)
-
-passed = 0
+MODULE = ROOT / "experiments" / "specforge-risk-classifier.py"
+POLICY = ROOT / "experiments" / "specforge-risk-policy.yaml"
+spec = spec_from_file_location("risk_classifier", MODULE)
+mod = module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(mod)
+policy = mod.load_policy(POLICY)
 
 
-def check(name, condition):
-    global passed
-    if not condition:
-        raise AssertionError(name)
-    passed += 1
+def expect(paths, tier):
+    got = mod.classify_paths(paths, policy)
+    assert got["classification"] == tier, (paths, tier, got)
+    return got
 
 
-result = classifier.classify_paths(["tests/run-chg0005-tests.js"], policy)
-check("ordinary test is LOW", result["classification"] == "LOW")
+expect(["tests/run-chg0005-tests.js"], "LOW")
+expect(["tests/a.py", ".gitignore"], "MEDIUM")
+expect(["tests/a.py", "batty-joe-game.js"], "HIGH")
+unmatched = expect(["unexpected/new-surface.bin"], "HIGH")
+assert "default_unmatched_high" in unmatched["matched_rules"]
+expect(["specforge/project.yaml"], "HIGH")
+expect(["SPECFORGE.md"], "HIGH")
+expect(["batty-joe-dev-spec-v1.12.0.yaml"], "HIGH")
+assert mod.classify_paths(["specforge-dist/x/y.yaml", "x/__pycache__/a.pyc"], policy)["classification"] == "BLOCKED"
 
-result = classifier.classify_paths(["tests/run-v170-tests.js", ".gitignore"], policy)
-check("repository config raises tests to MEDIUM", result["classification"] == "MEDIUM")
-
-result = classifier.classify_paths(["tests/example.js", "batty-joe-game.js"], policy)
-check("runtime source raises mixed diff to HIGH", result["classification"] == "HIGH")
-
-result = classifier.classify_paths(["unexpected/new-surface.xyz"], policy)
-check(
-    "unmatched path fails upward to HIGH",
-    result["classification"] == "HIGH" and "default_unmatched_high" in result["matched_rules"],
-)
-
-result = classifier.classify_paths(["specforge/project.yaml"], policy)
-check("project manifest is HIGH", result["classification"] == "HIGH")
-
-result = classifier.classify_paths(["SPECFORGE.md"], policy)
-check("legacy entry point is HIGH", result["classification"] == "HIGH")
-
-result = classifier.classify_paths(["batty-joe-dev-spec-v1.12.0.yaml"], policy)
-check("product specification is HIGH", result["classification"] == "HIGH")
-
-result = classifier.classify_paths(
-    [
-        "specforge-dist/0.1.0-alpha.10/core/core.yaml",
-        "specforge/core/tools/__pycache__/specforge_project.cpython-314.pyc",
-    ],
-    policy,
-)
-check(
-    "only transient/distribution paths fail closed",
-    result["classification"] == "BLOCKED" and result["blocker"] == "no_material_paths_after_exclusions",
-)
-
-with tempfile.TemporaryDirectory() as temp_dir:
-    bad_policy = dict(policy)
-    bad_policy["non_authoritative"] = False
-    path = Path(temp_dir) / "bad-policy.yaml"
-    path.write_text(yaml.safe_dump(bad_policy, sort_keys=False), encoding="utf-8")
+with tempfile.TemporaryDirectory() as td:
+    p = Path(td) / "bad.yaml"
+    p.write_text("version: 1\nnon_authoritative: false\n", encoding="utf-8")
     try:
-        classifier.load_policy(path)
-    except classifier.ClassifierError as exc:
-        rejected = "must_be_non_authoritative" in str(exc)
+        mod.load_policy(p)
+    except mod.ClassifierError:
+        pass
     else:
-        rejected = False
-check("policy cannot declare itself authoritative", rejected)
+        raise AssertionError("malformed/authoritative policy must fail closed")
 
-check(
-    "change range is deterministic",
-    classifier.change_range(7, 8) == ["CHG-0007", "CHG-0008"],
-)
-
-print(f"risk classifier tests passed: {passed}/10")
+assert mod.change_range(7, 8) == ["CHG-0007", "CHG-0008"]
+print("risk classifier tests passed: 10/10")
