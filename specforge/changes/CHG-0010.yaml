@@ -1,7 +1,7 @@
 id: CHG-0010
 title: Make CHG-0005 regression harness line-ending portable
 classification: defect
-status: approved
+status: in_progress
 priority: low
 sources:
 - type: conversation
@@ -27,6 +27,9 @@ proposal:
   current: PROP-0010-01
 approvals:
 - APR-0010
+implementation:
+  attempts:
+  - IMP-0010-01
 governance:
   lifecycle_enforcement: controlled_v1
   enforced_from_change: CHG-0009

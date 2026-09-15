@@ -1,0 +1,21 @@
+id: IMP-0010-01
+change: CHG-0010
+proposal: PROP-0010-01
+attempt: 1
+started_at: '2026-09-15T12:05:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: Normalize the freshly-read contents of batty-joe-game.js and batty-joe-config.js inside
+  tests/run-chg0005-tests.js (translate CRLF to LF immediately after fs.readFileSync, before any matching
+  runs). No expected string or regex literal in the harness changes. No product file is modified.
+source_revision:
+  system: git
+  before: 5cb84ccbcbf8e6ee5b03ebfd31a6cb477c8c145a
+outcome: in_progress
+notes: Implementation attempt created before modifying tests/run-chg0005-tests.js.
