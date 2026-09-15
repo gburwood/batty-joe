@@ -1,0 +1,20 @@
+id: APR-0012
+change: CHG-0012
+proposal: PROP-0012-01
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-15T14:27:00+01:00'
+scope:
+  proposal_revision: 1
+  proposed_specification_version: 1.12.0
+  approved_behaviour: >-
+    Non-authoritative, read-only retrospective deterministic risk classifier experiment exactly per PROP-0012-01. The classifier may inspect CHG-0001 through CHG-0011 and their actual material Git diffs using executable policy rules, but it must not alter SpecForge lifecycle, authorization, Core behaviour, product behaviour, trusted authority or current change state as a consequence of classification results.
+mechanism:
+  type: conversation
+  reference: User explicitly approved PROP-0012-01.
+evidence:
+  proposal_digest_algorithm: sha256
+  proposal_digest: b995e6ff62d7dd48c125934eb7b362476c8409fd0148d12ad1dd6b21f41ac926

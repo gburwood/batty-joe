@@ -1,0 +1,54 @@
+id: IA-0012-01
+change: CHG-0012
+revision: 1
+created_at: '2026-09-15T14:30:00+01:00'
+affected:
+  requirements: []
+  components:
+  - experimental_risk_classifier
+  - retrospective_change_analysis
+  artifacts:
+  - experiments/specforge-risk-classifier.py
+  - experiments/specforge-risk-policy.yaml
+  - tests/run-risk-classifier-tests.py
+  tests:
+    required:
+    - Classifier runs read-only against CHG-0001 through CHG-0011 and emits a deterministic result with reasons for every change it can resolve.
+    - CHG-0010 classifies LOW from its actual material diff.
+    - CHG-0007 classifies HIGH from its actual material diff.
+    - CHG-0008 classifies HIGH from its actual material diff.
+    - CHG-0011 classifies MEDIUM or higher if its actual material diff includes repository configuration outside the low-risk test-only class.
+    - Unknown material paths fail upward to HIGH.
+    - Missing or invalid policy, unresolved source revisions, or git-diff failure return BLOCKED rather than silently selecting a permissive tier.
+compatibility:
+  breaking: false
+  notes: >-
+    This is a non-authoritative experiment. It does not modify product files, the current product specification, SpecForge Core, lifecycle enforcement, material-authority state or approval semantics.
+migration:
+  required: false
+  notes: No data or specification migration.
+risks:
+- id: RISK-0012-01
+  description: A prototype classifier could be mistaken for live SpecForge policy and accidentally treated as authority.
+  severity: high
+  mitigation: >-
+    Keep all classifier code and policy under experiments/, label outputs experimental/non-authoritative, and do not import or call the classifier from any SpecForge Core lifecycle, authorization, validation or completion tool.
+- id: RISK-0012-02
+  description: Governance bookkeeping in historical diffs could cause every governed change to appear high risk and make the experiment meaningless.
+  severity: medium
+  mitigation: >-
+    Reuse the current Core definition of governance bookkeeping via specforge_project.is_governance_bookkeeping_path and classify only material paths, mirroring the existing authority model without modifying it.
+- id: RISK-0012-03
+  description: A path-only policy can produce false confidence by treating unmatched or classifier-error cases as low risk.
+  severity: high
+  mitigation: >-
+    Highest matching tier wins; unmatched material paths default to HIGH; evaluator errors, missing policy, malformed policy and unresolved required source revisions produce BLOCKED.
+- id: RISK-0012-04
+  description: Historical implementation records may not all contain resolvable before/after Git revisions in the current schema.
+  severity: medium
+  mitigation: >-
+    Report unresolved historical changes as BLOCKED with an explicit reason. Do not invent or infer revisions from narrative text merely to force a classification.
+open_changes:
+  overlaps_with: []
+summary: >-
+  The experiment is deliberately smaller than a Core architecture change. It asks one concrete question: can a deterministic, declarative path policy classify Batty Joe's existing governed changes in a way that broadly matches the risk decisions we would want today? The classifier will use the latest passed implementation attempt for each change, read source_revision.before/source_revision.after, obtain the literal Git diff, remove paths already defined by current Core as governance bookkeeping, and classify the remaining material paths. The initial policy uses three tiers, LOW, MEDIUM and HIGH, plus BLOCKED for classifier failure. Product runtime/specification and framework authority paths are HIGH; repository configuration and general development infrastructure are MEDIUM; ordinary tests/docs are LOW; any unmatched material path is HIGH. No LLM judgment participates in the classification decision.
