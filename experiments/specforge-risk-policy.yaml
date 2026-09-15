@@ -1,0 +1,90 @@
+version: 1
+name: batty-joe-retrospective-risk-experiment
+non_authoritative: true
+
+tiers:
+  LOW: 1
+  MEDIUM: 2
+  HIGH: 3
+
+defaults:
+  unmatched_tier: HIGH
+
+exclusions:
+  prefixes:
+    - specforge-dist/
+  path_parts:
+    - __pycache__
+  suffixes:
+    - .pyc
+
+rules:
+  - id: protected_governance_control
+    tier: HIGH
+    description: Installed SpecForge control surface, current or legacy project manifests, entry points and legacy framework controls.
+    globs:
+      - specforge/core/**
+      - specforge/packs/**
+      - specforge/project.yaml
+      - specforge/SPECFORGE.md
+      - SPECFORGE.md
+      - specforge.yaml
+      - rules/**
+      - schemas/**
+      - tools/**
+      - workflows/**
+
+  - id: authoritative_product_specification
+    tier: HIGH
+    description: Batty Joe authoritative or historical product specification material.
+    globs:
+      - batty-joe-dev-spec-*.yaml
+
+  - id: product_runtime_source
+    tier: HIGH
+    description: Batty Joe executable/runtime source and authored level data.
+    globs:
+      - batty-joe.js
+      - batty-joe-game.js
+      - batty-joe-physics.js
+      - batty-joe-levels.js
+      - batty-joe-config.js
+      - batty-joe-audio.js
+      - batty-joe-storage.js
+      - batty-joe.html
+      - batty-joe.css
+      - batty-joe-handcrafted-*.js
+      - batty-joe-level-editor*.js
+      - batty-joe-levels-handcrafted*.js
+      - batty-joe-levels-handcrafted*.yaml
+
+  - id: repository_and_ci_infrastructure
+    tier: MEDIUM
+    description: Repository-level configuration and general development or CI infrastructure.
+    globs:
+      - .gitignore
+      - .gitattributes
+      - .github/**
+      - pyproject.toml
+      - requirements*.txt
+      - package.json
+      - package-lock.json
+      - Makefile
+      - experiments/**
+
+  - id: ordinary_tests
+    tier: LOW
+    description: Ordinary regression and test harness material.
+    globs:
+      - tests/**
+      - batty-joe-tests.js
+      - batty-joe-tests.html
+
+  - id: ordinary_documentation
+    tier: LOW
+    description: Non-authoritative ordinary documentation.
+    globs:
+      - docs/**
+      - README
+      - README.*
+      - '**/*.md'
