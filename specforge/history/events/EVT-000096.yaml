@@ -1,0 +1,25 @@
+id: EVT-000096
+timestamp: '2026-09-15T15:17:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0012-02
+related:
+  change: CHG-0012
+  impact_analysis: IA-0012-01
+  previous_proposal: PROP-0012-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+evidence:
+  revision: 2
+  reason: >-
+    Revise the non-authoritative experiment after the first controlled attempt exposed a path-only manifest dominance issue and an insufficient LOW rule for modifications to existing regression harnesses.
