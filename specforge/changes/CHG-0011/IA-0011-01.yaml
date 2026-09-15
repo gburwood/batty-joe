@@ -1,0 +1,114 @@
+id: IA-0011-01
+change: CHG-0011
+revision: 1
+created_at: '2026-09-15T13:05:00+01:00'
+affected:
+  requirements: []
+  components:
+  - v170_regression_harness
+  - adoption_regression_harness
+  - git_tracked_bytecode_cache
+  - repository_root_configuration
+  artifacts:
+  - tests/run-v170-tests.js
+  - tests/run-adoption-tests.py
+  - .gitignore
+  - specforge/core/tools/__pycache__/specforge_authority.cpython-314.pyc
+  - specforge/core/tools/__pycache__/specforge_project.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.9/core/tools/__pycache__/specforge_project.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.10/core/tools/__pycache__/specforge_authority.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.10/core/tools/__pycache__/specforge_project.cpython-314.pyc
+  tests:
+    required:
+    - tests/run-v170-tests.js passes on the current product state without pinning to superseded historical
+      values.
+    - tests/run-adoption-tests.py passes against the current project_format_1 repository layout.
+    - No .pyc or __pycache__ path is tracked by git after the change.
+    - Running validate-specforge.py (and other specforge/core/tools/*.py scripts) directly, repeatedly, on an
+      otherwise-clean checkout produces no git status changes.
+compatibility:
+  breaking: false
+  notes: Test-tooling and repository-configuration only. No product source file, gameplay behaviour, or
+    specforge/core/ framework-owned material is modified.
+migration:
+  required: false
+  notes: No persisted data, configuration or specification changes. Removing already-tracked .pyc files from
+    git is a one-time tracking change, not a data migration.
+risks:
+- id: RISK-0011-01
+  description: Relaxing pinned assertions in run-v170-tests.js or run-adoption-tests.py could accidentally
+    remove real regression coverage instead of just the parts that are genuinely obsolete.
+  severity: medium
+  mitigation: Every currently-passing assertion in both harnesses is preserved verbatim except the specific
+    ones identified below as factually superseded by later approved changes; only those are relaxed or
+    redirected, never simply deleted without a replacement check.
+- id: RISK-0011-02
+  description: specforge/core/tools/ is framework-owned material (per specforge/SPECFORGE.md and
+    specforge/project.yaml ownership.framework_owned); editing tool source there from an ordinary project change
+    would blur the framework/project ownership boundary the project itself declares.
+  severity: low
+  mitigation: Item 4 (validation never dirties a clean checkout) is achieved entirely through project-owned
+    means (root .gitignore) rather than by editing any file under specforge/core/. No framework-owned file is
+    modified by this change.
+- id: RISK-0011-03
+  description: git rm --cached on files still referenced by a caller (e.g. an import path) could break
+    something if anything actually depends on the committed .pyc bytes rather than regenerating them.
+  severity: low
+  mitigation: .pyc files are pure, disposable bytecode caches regenerated automatically by the Python
+    interpreter on next import; nothing in the repository's tooling reads or depends on the committed bytes
+    (confirmed no code path loads .pyc directly rather than importing the corresponding .py module).
+open_changes:
+  overlaps_with: []
+summary: 'Investigated all four items directly rather than taking the one-line descriptions at face value.
+
+
+  (1) tests/run-v170-tests.js: reproducibly fails on two independent stale assertions, not one.
+  BJ.VERSION===''1.7.0'' (actual: ''1.9.0'') and C.levelTransitions.nextPromptSeconds===2 (actual: 5.0, changed
+  by a later approved change improving level-complete pacing). The other 10 of 12 assertions in the file
+  currently pass and remain meaningful regression coverage (retired powerups/runtime removed, Grid Runner
+  Frenzy present, intermission phase and difficulty-weight checks).
+
+
+  (2) tests/run-adoption-tests.py: fails immediately and unconditionally post-migration, and has five distinct
+  stale points, not just a path: (a) reads changes/CHG-0001/PROP-0001-01.yaml, which now lives at
+  specforge/changes/CHG-0001/PROP-0001-01.yaml; (b) reads specforge.yaml, which no longer exists post-migration
+  (manifest is now specforge/project.yaml, a different schema); (c) asserts
+  manifest.specification.current_version==''1.5.0'', now stale (current: 1.12.0); (d) asserts
+  manifest.adoption.mode and manifest.adoption.historical_forensic_reconstruction, but project_format_1''s
+  manifest schema has no adoption key at all - that historical fact was correctly relocated to
+  specforge/evidence/migrations/legacy-root-v1/specforge.yaml.before.yaml during migration, which still carries
+  adoption.mode: existing_project_baseline and adoption.historical_forensic_reconstruction:
+  not_permitted_without_evidence unchanged; (e) asserts the set of CHG-*.yaml files equals exactly [''CHG-0001''],
+  which was only ever true immediately after adoption and is now permanently false by design now that CHG-0002
+  through CHG-0010 exist; and (f) loops over PROP-0001-01.yaml''s baseline_artifact_hashes and asserts each
+  named artifact''s CURRENT sha256 still matches its hash at adoption time - but several of those artifacts
+  (batty-joe-config.js, batty-joe-game.js, batty-joe-levels.js) have legitimately changed since adoption via
+  CHG-0002 through CHG-0009, so this equality is now provably false for reasons that are correct, not
+  regressions.
+
+
+  (3) __pycache__/*.pyc tracking: no .gitignore exists anywhere in the repository. Five compiled bytecode files
+  are currently tracked in git: two under specforge/core/tools/__pycache__/ (specforge_authority and
+  specforge_project, cpython-314) and three more under specforge-dist/0.1.0-alpha.9/ and
+  specforge-dist/0.1.0-alpha.10/ candidate-distribution snapshots. The two under specforge/core/tools/ already
+  show as modified on a completely fresh checkout of main before running anything, because Python regenerates
+  their bytecode differently on this machine''s interpreter than whatever produced the committed bytes.
+
+
+  (4) Python validation dirtying a clean checkout: reproduced directly - running `python3
+  specforge/core/tools/validate-specforge.py .` on a clean checkout leaves
+  specforge/core/tools/__pycache__/*.pyc modified in git status, every time, because validate-specforge.py
+  imports specforge_project (and transitively specforge_authority), and Python writes/updates their compiled
+  bytecode cache on import unless bytecode writing is suppressed. validate-specforge.py itself performs no
+  writes of its own (confirmed: no write_text/open(...,"w")/write_bytes/dump/mkdir calls in the file) - the only
+  dirtying mechanism is the interpreter''s own bytecode cache. specforge-lifecycle.py already defends against
+  this for its OWN subprocess invocations of the validator and pack resolver (sets PYTHONDONTWRITEBYTECODE=1
+  and passes -B), but that protection does not apply when a session invokes validate-specforge.py directly - which
+  is exactly what specforge/SPECFORGE.md''s own bootstrap instructions (step 8, "run bootstrap/status before
+  governed mutation") call for. Fixing this by editing the interpreter-suppression behaviour into
+  specforge/core/tools/validate-specforge.py itself would mean a project-level change editing framework-owned
+  material (RISK-0011-02). Item 3''s fix (untracking and ignoring __pycache__/*.pyc repository-wide) fully
+  resolves item 4''s observable symptom without touching any framework-owned file: once untracked and ignored,
+  repeated regeneration of that bytecode is invisible to git status/diff no matter how many times any tool
+  runs, on any interpreter. This is treated as one fix (item 3) verified against two acceptance criteria (item
+  3''s own tracking state, and item 4''s repeated-clean-run behaviour), not two separate code changes.'

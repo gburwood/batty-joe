@@ -1,0 +1,26 @@
+id: EVT-000092
+timestamp: '2026-09-15T13:40:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: change_completed
+entity:
+  type: change
+  id: CHG-0011
+related:
+  change: CHG-0011
+  proposal: PROP-0011-01
+  approval: APR-0011
+  implementation_attempt: IMP-0011-01
+  validated_source_revision: aba3e3662e7b726f9fb6092cbe89b7f7dbeaddae
+resulting_state:
+  change_status: completed
+evidence:
+  validation_event: EVT-000091
+  authoritative_specification: 1.12.0
+  trusted_material_baseline: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe

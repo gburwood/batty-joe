@@ -1,0 +1,115 @@
+id: PROP-0011-01
+change: CHG-0011
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-15T13:10:00+01:00'
+based_on_impact_analysis:
+- IA-0011-01
+proposed_specification_version: 1.12.0
+behaviour_summary: >-
+  No product or gameplay behaviour changes. Four repository-hygiene fixes, each scoped to project-owned test
+  tooling and repository configuration only.
+
+  (1) tests/run-v170-tests.js - replace its two assertions that pin superseded historical values
+  (BJ.VERSION==='1.7.0'; levelTransitions.nextPromptSeconds===2) with assertions of enduring intent, a
+  semantic-version-shaped BJ.VERSION check, and removal of the now product-superseded nextPromptSeconds pin,
+  while every other currently-passing assertion in the file is kept verbatim.
+
+  (2) tests/run-adoption-tests.py - repoint the two stale paths at their project_format_1 locations, relax the
+  stale current_version pin to a format check, redirect the adoption-mode check to the preserved historical
+  evidence at specforge/evidence/migrations/legacy-root-v1/specforge.yaml.before.yaml, change the
+  exact-change-list assertion to an existence check for CHG-0001, and retire the baseline_artifact_hashes
+  content-equality loop (its premise, that nothing has changed since adoption, is now false by design) in
+  favour of an existence check for the same artifact paths.
+
+  (3) Add a repository-root .gitignore for __pycache__/ and *.pyc, and git rm --cached the five
+  currently-tracked instances.
+
+  (4) Verified as a direct consequence of (3); no framework-owned file under specforge/core/ is modified.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+acceptance_criteria:
+  v170_harness:
+  - tests/run-v170-tests.js passes on the current, unmodified product state (no product file is touched to make
+    it pass).
+  - The version assertion no longer pins an exact historical string; it asserts BJ.VERSION is a non-empty
+    semantic-version-shaped string (e.g. matches /^\d+\.\d+\.\d+$/), so it does not need editing on every future
+    version bump.
+  - The nextPromptSeconds assertion is removed or updated to the current authoritative value (5.0), whichever
+    the implementer determines reads more honestly as of this change; if updated rather than removed, it must
+    not silently re-introduce the same brittleness for unrelated future timing tweaks.
+  - Every other currently-passing assertion in the file (retired powerups/runtime removed, Grid Runner Frenzy
+    present, level-transition hold timing, difficulty weights, intermission phase and grid-runner-frenzy runtime
+    checks) is preserved with unchanged meaning.
+  adoption_harness:
+  - tests/run-adoption-tests.py passes against the current project_format_1 repository layout, unmodified.
+  - It reads specforge/changes/CHG-0001/PROP-0001-01.yaml and specforge/project.yaml, not their pre-migration
+    paths.
+  - Its specification-version check no longer pins '1.5.0'; it asserts the manifest's current_version is a
+    non-empty semantic-version-shaped string.
+  - Its adoption-mode check reads specforge/evidence/migrations/legacy-root-v1/specforge.yaml.before.yaml and
+    asserts that preserved historical record's adoption.mode and adoption.historical_forensic_reconstruction
+    values, rather than looking for an adoption key on the current manifest.
+  - Its change-set check asserts CHG-0001 specifically exists among specforge/changes/*.yaml, not that it is
+    the only entry.
+  - Its baseline_artifact_hashes check no longer asserts current byte-for-byte content equality with the
+    adoption-time hashes; it asserts every named artifact path still exists in the repository. The original
+    adoption-time hashes remain permanently on record in specforge/changes/CHG-0001/PROP-0001-01.yaml itself and
+    are not deleted or altered.
+  git_hygiene:
+  - A repository-root .gitignore exists and ignores __pycache__/ directories and *.pyc files anywhere in the
+    tree.
+  - git ls-files contains no .pyc path and no __pycache__ path anywhere in the repository (including under
+    specforge-dist/) after this change.
+  - No specforge/core/ or specforge/packs/ file is modified by this change; only its already-tracked, disposable
+    .pyc byproducts are removed from tracking.
+  validation_cleanliness:
+  - On a checkout with no other pending changes, running python3 specforge/core/tools/validate-specforge.py .
+    twice in a row produces no git status change after either run.
+  - python3 specforge/core/tools/specforge-status.py and python3 specforge/core/tools/specforge-authorization.py
+    check likewise leave a clean checkout clean.
+  non_regression:
+  - No product source file (any batty-joe-*.js/.html/.css) is modified.
+  - No other test harness (run-chg0004-tests.js, run-chg0005-tests.js, run-chg0009-tests.js,
+    run-physics-v160-tests.js) is modified.
+  - No file under specforge/core/ or specforge/packs/ is modified.
+  - The original adoption-time baseline hashes recorded in PROP-0001-01.yaml are preserved unchanged as the
+    permanent historical record; only tests/run-adoption-tests.py's live check against them changes.
+  verification:
+  - Run tests/run-v170-tests.js and tests/run-adoption-tests.py and confirm both pass.
+  - Run tests/run-chg0004-tests.js, tests/run-chg0005-tests.js, tests/run-chg0009-tests.js and
+    tests/run-physics-v160-tests.js and confirm all still pass (no incidental regression).
+  - Confirm git ls-files has no .pyc/__pycache__ entries.
+  - Run validate-specforge.py twice on a clean tree and confirm git status is empty after each run.
+  - SpecForge repository validation (validate-specforge.py) passes.
+artifacts_expected:
+  modify:
+  - tests/run-v170-tests.js
+  - tests/run-adoption-tests.py
+  add:
+  - .gitignore
+  - specforge/changes/CHG-0011/implementation/IMP-0011-01.yaml
+  - forensic events under specforge/history/events/ recording implementation start, validation and completion
+    for CHG-0011, allocated sequentially at implementation time
+  remove_from_tracking:
+  - specforge/core/tools/__pycache__/specforge_authority.cpython-314.pyc
+  - specforge/core/tools/__pycache__/specforge_project.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.9/core/tools/__pycache__/specforge_project.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.10/core/tools/__pycache__/specforge_authority.cpython-314.pyc
+  - specforge-dist/0.1.0-alpha.10/core/tools/__pycache__/specforge_project.cpython-314.pyc
+implementation_constraints:
+- Implementation must not begin until this exact proposal revision is explicitly approved and an approval
+  record binds its digest.
+- Follow the SpecForge bootstrap, authorization, implementation-attempt, validation and completion lifecycle on
+  a dedicated branch, kept separate from product development.
+- Do not modify any product source file, any other test harness, or any file under specforge/core/ or
+  specforge/packs/.
+- Do not alter the original adoption-time baseline_artifact_hashes values recorded in
+  specforge/changes/CHG-0001/PROP-0001-01.yaml; only tests/run-adoption-tests.py's live check against them
+  changes.
+- Allocate new forensic event IDs sequentially from the current repository tip at implementation time; do not
+  reuse or pre-reserve specific EVT-* numbers from this proposal.
+approvals: []

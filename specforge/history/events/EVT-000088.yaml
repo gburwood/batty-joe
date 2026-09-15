@@ -1,0 +1,25 @@
+id: EVT-000088
+timestamp: '2026-09-15T13:10:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0011-01
+related:
+  change: CHG-0011
+  impact_analysis: IA-0011-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.12.0
+evidence:
+  scope: Repository-hygiene fixes confined to tests/run-v170-tests.js, tests/run-adoption-tests.py, and a new
+    root .gitignore removing already-tracked .pyc files from tracking. No product code, other test harness, or
+    specforge/core/ framework-owned file is modified.

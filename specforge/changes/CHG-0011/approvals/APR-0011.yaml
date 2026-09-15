@@ -1,0 +1,21 @@
+id: APR-0011
+change: CHG-0011
+proposal: PROP-0011-01
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-15T13:20:00+01:00'
+scope:
+  proposal_revision: 1
+  proposed_specification_version: 1.12.0
+  approved_behaviour: Repository-hygiene fixes confined to tests/run-v170-tests.js, tests/run-adoption-tests.py,
+    and a new root .gitignore removing already-tracked .pyc files from tracking, exactly per PROP-0011-01's
+    acceptance criteria. No product code, other test harness, or specforge/core/ framework-owned file changes.
+mechanism:
+  type: conversation
+  reference: User explicitly approved PROP-0011-01.
+evidence:
+  proposal_digest_algorithm: sha256
+  proposal_digest: 2987de0785de412bb33f696075b6f031d065d50ded9b681c842abd07f935c912

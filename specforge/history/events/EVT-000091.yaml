@@ -1,0 +1,31 @@
+id: EVT-000091
+timestamp: '2026-09-15T13:35:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0011
+related:
+  change: CHG-0011
+  implementation_attempt: IMP-0011-01
+  source_revision: aba3e3662e7b726f9fb6092cbe89b7f7dbeaddae
+resulting_state:
+  change_status: validated
+  implementation_outcome: passed
+evidence:
+  command: python -B specforge/core/tools/validate-specforge.py .
+  result: SpecForge validation PASSED
+  canonical_records_discovered: 151
+  clean_checkout_verification: 'validate-specforge.py run twice, plus specforge-status.py and
+    specforge-authorization.py check, all left git status --short empty on the committed state.'
+  pyc_tracking: git ls-files contains no .pyc or __pycache__ path anywhere in the repository.
+  scope: git diff --stat main...HEAD confined to governance records, .gitignore, removal of five already-tracked
+    .pyc files, tests/run-v170-tests.js and tests/run-adoption-tests.py. No product source file, other test
+    harness, or specforge/core/ file modified.
