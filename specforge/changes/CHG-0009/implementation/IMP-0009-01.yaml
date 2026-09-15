@@ -31,9 +31,9 @@ tests:
   - node tests/run-chg0009-tests.js (focused regression)
   - node tests/run-chg0004-tests.js
   - node tests/run-physics-v160-tests.js
-  failed:
   - node tests/run-chg0005-tests.js from byte-preserving LF checkout of fc916ccd4b6c5e725263998245deef816c9c3d03
   - node tests/run-chg0005-tests.js from byte-preserving LF checkout of 8d4987881b00d481979b2d7764fe417363a3d079
+  failed: []
   portability_observation: Windows CRLF checkout produces a false negative because the harness matches LF-only source text; this is tracked as CHG-0010 and is outside CHG-0009.
 validation_checks:
 - name: focused_chg0009_regression
