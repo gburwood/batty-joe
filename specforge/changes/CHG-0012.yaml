@@ -2,7 +2,7 @@ id: CHG-0012
 title: Experimental deterministic risk-tier classifier for retrospective SpecForge changes
 classification: tooling_infrastructure
 status: in_progress
-priority: medium
+priority: normal
 sources:
 - type: conversation
   reference: user-request-2026-09-15-create-risk-classifier
