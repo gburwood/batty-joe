@@ -1,0 +1,22 @@
+id: IMP-0011-01
+change: CHG-0011
+proposal: PROP-0011-01
+attempt: 1
+started_at: '2026-09-15T13:25:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: Fix tests/run-v170-tests.js and tests/run-adoption-tests.py per PROP-0011-01's acceptance criteria;
+  add a repository-root .gitignore for __pycache__/ and *.pyc; git rm --cached the five currently-tracked
+  bytecode files. No product file, other test harness, or specforge/core/ framework-owned file is modified.
+source_revision:
+  system: git
+  before: 0777802d053b0ea0e5d65a84509389e08be476fe
+outcome: in_progress
+notes: Implementation attempt created before modifying any file. source_revision.before set to the current
+  trusted material baseline directly, matching the correction recorded against IMP-0010-01 (EVT-000083).

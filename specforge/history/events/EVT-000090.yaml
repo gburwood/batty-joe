@@ -1,0 +1,24 @@
+id: EVT-000090
+timestamp: '2026-09-15T13:25:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: implementation_started
+entity:
+  type: implementation_attempt
+  id: IMP-0011-01
+related:
+  change: CHG-0011
+  proposal: PROP-0011-01
+  approval: APR-0011
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: in_progress
+evidence:
+  source_revision_before: 0777802d053b0ea0e5d65a84509389e08be476fe
+  working_branch: claude/chg-0011-repo-hygiene
