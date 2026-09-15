@@ -12,7 +12,7 @@ actor:
     tool: ChatGPT
     model: gpt-5.6-sol
 approach: >-
-  Continue the non-authoritative CHG-0012 experiment under the revised approved proposal. Preserve the existing read-only classifier structure, add deterministic Git-status-sensitive treatment for existing test harness modifications/deletions, and add bounded parsed-YAML semantic handling for legacy root specforge.yaml where only specification.product_specification and/or specification.current_version changed. No change-specific outcome hard-coding, diff-size scoring, Core behaviour, lifecycle behaviour, product source or product specification changes are permitted.
+  Continue the non-authoritative CHG-0012 experiment under the revised approved proposal. Preserve the existing read-only classifier structure, add deterministic Git-status-sensitive treatment for existing test harness modifications/deletions, add bounded parsed-YAML semantic handling for legacy root specforge.yaml, and exclude historical governance bookkeeping using bookkeeping roots declared by the legacy manifest at the recorded source revisions. No change-specific outcome hard-coding, diff-size scoring, Core behaviour, lifecycle behaviour, product source or product specification changes are permitted.
 source_revision:
   system: git
   before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
@@ -20,33 +20,49 @@ outcome: in_progress
 tests:
   status: blocked
   passed:
-  - Local focused deterministic suite over the revised implementation logic passed 18/18 before branch verification handoff.
+  - Independent pre-fix full-checkout verification reproduced CHG-0001..0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM with zero BLOCKED/LOW and passed all six requested Batty Joe regression harnesses.
+  - Exact committed corrected classifier/test blobs passed the focused deterministic suite 23/23 in the local execution sandbox.
   failed: []
   blocked:
-  - Exact committed branch bytes have not yet been executed in a full Git checkout with repository history.
-  - Full CHG-0001 through CHG-0011 classifier run is pending independent/full-checkout execution.
-  - Existing Batty Joe regression harness set is pending independent/full-checkout execution.
-  - SpecForge repository validation is pending independent/full-checkout execution.
+  - Post-fix full CHG-0001 through CHG-0011 classifier run is pending independent/full-checkout execution.
+  - Post-fix existing Batty Joe regression harness set is pending independent/full-checkout execution.
+  - Post-fix SpecForge repository validation is pending independent/full-checkout execution.
 validation_checks:
 - name: revised_classifier_unit_tests
   required: true
-  status: blocked
+  status: passed
   evidence: >-
-    The revised implementation logic passed 18/18 focused deterministic checks locally, covering new-test LOW, existing-harness MEDIUM, product/protected HIGH, unmatched HIGH, bounded manifest key-level handling, unbounded manifest rejection, Git name-status parsing, exclusion behaviour and fail-closed policy loading. Completion evidence still requires executing the committed branch copy in a real checkout.
+    Exact committed blobs experiments/specforge-risk-classifier.py (git blob 2cd533de73793d9e722d9bb569e2fd1783425b1a) and tests/run-risk-classifier-tests.py (git blob 449fd31dc79f8f151d879ce8db5548c7eba9b755) passed 23/23 focused deterministic checks. Five new checks prove legacy manifest-declared changes/, history/ and evidence/ roots are recognised as historical governance bookkeeping while an unrelated tests/ path is not excluded.
 - name: retrospective_second_run_chg0001_to_chg0011
   required: true
   status: blocked
   evidence: >-
-    Git compare cross-checks over the recorded historical implementation boundaries predict CHG-0001 through CHG-0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM, with no LOW result. This is preliminary structural evidence only and is not a substitute for running the committed classifier over repository history.
+    Independent pre-fix execution reproduced the expected HIGH x9 / MEDIUM x2 verdicts but discovered that pre-migration root-level governance records leaked into material_paths because the classifier used only today's project layout. The leak was verdict-neutral for CHG-0001 through CHG-0008 because each also contained genuine HIGH material. The corrected classifier now derives historical bookkeeping roots from legacy specforge.yaml at the recorded before/after revisions; the full post-fix history-dependent rerun remains required.
 - name: existing_regression_harnesses
   required: true
   status: blocked
+  evidence: >-
+    All requested regressions passed in the independent pre-fix verification. A final post-fix rerun is retained as completion evidence even though the correction changes only classifier/test/governance records.
 - name: specforge_validation
   required: true
   status: blocked
+  evidence: >-
+    Independent verification found the only validator failure was CHG-0012.yaml priority 'medium', which is not a valid change.schema enum. The record has been corrected to priority 'normal'; full repository validation must be rerun before completion.
 scope_check:
   status: passed
   evidence: >-
-    PR #7 changed-file inspection is confined to experiments/specforge-risk-classifier.py, experiments/specforge-risk-policy.yaml, tests/run-risk-classifier-tests.py and CHG-0012 governance/history records. No Batty Joe product source, product specification, specforge/core or specforge/packs file is modified.
+    The corrective work changes only experiments/specforge-risk-classifier.py, tests/run-risk-classifier-tests.py and CHG-0012 governance/history metadata. No Batty Joe product source, product specification, specforge/core or specforge/packs file is modified.
+independent_verification_findings:
+  verifier: Claude
+  pre_fix_results:
+    focused_classifier_tests: 18/18 passed
+    retrospective: CHG-0001..CHG-0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM
+    regressions: all requested harnesses passed
+    specforge_validation: failed only on invalid CHG-0012 priority enum
+  defects_found:
+  - Historical pre-migration changes/ and history/ governance paths were not excluded because current project layout was used to interpret old diffs.
+  - CHG-0012 priority used invalid enum value medium.
+  impact: >-
+    Neither defect changed the observed historical tier table. The bookkeeping leak nevertheless contaminated the reasons for HIGH classifications and was corrected before completion evidence is accepted.
 notes: >-
-  Attempt 2 began only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound. The experiment remains intentionally in_progress until a full checkout independently executes the committed classifier, regression harnesses and SpecForge validator.
+  Attempt 2 began only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound. The experiment remains intentionally in_progress until the corrected branch is independently rerun end-to-end and SpecForge validation passes.
