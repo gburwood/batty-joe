@@ -17,6 +17,57 @@ approach: Fix tests/run-v170-tests.js and tests/run-adoption-tests.py per PROP-0
 source_revision:
   system: git
   before: 0777802d053b0ea0e5d65a84509389e08be476fe
-outcome: in_progress
+  after: aba3e3662e7b726f9fb6092cbe89b7f7dbeaddae
+completed_at: '2026-09-15T13:35:00+01:00'
+outcome: passed
+tests:
+  status: passed
+  passed:
+  - node tests/run-v170-tests.js
+  - python3 tests/run-adoption-tests.py
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  failed: []
+validation_checks:
+- name: v170_harness
+  required: true
+  status: passed
+  evidence: node tests/run-v170-tests.js passes without any product file being touched; version and hold-timing
+    assertions no longer pin superseded values; nextPromptSeconds pin removed (already correctly covered at its
+    current value by run-chg0004-tests.js).
+- name: adoption_harness
+  required: true
+  status: passed
+  evidence: python3 tests/run-adoption-tests.py passes against the project_format_1 layout; adoption-mode check
+    verified against specforge/evidence/migrations/legacy-root-v1/specforge.yaml.before.yaml; baseline artifact
+    existence (not content-hash equality) verified for all 12 paths in PROP-0001-01.yaml's
+    baseline_artifact_hashes; original hashes left unchanged on record.
+- name: no_regression_other_harnesses
+  required: true
+  status: passed
+  evidence: run-chg0004-tests.js, run-chg0005-tests.js, run-chg0009-tests.js, run-physics-v160-tests.js all
+    still pass.
+- name: pyc_untracked
+  required: true
+  status: passed
+  evidence: 'git ls-files | grep -i "pycache\.pyc$" returns nothing after this change; .gitignore added at
+    repository root for __pycache__/ and *.pyc.'
+- name: validation_never_dirties_clean_checkout
+  required: true
+  status: passed
+  evidence: On the committed state (aba3e36), ran validate-specforge.py twice consecutively, plus
+    specforge-status.py and specforge-authorization.py check - git status --short was empty after every run.
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: python -B specforge/core/tools/validate-specforge.py . passed (151 canonical records).
+- name: scope_discipline
+  required: true
+  status: passed
+  evidence: git diff --stat confined to .gitignore, tests/run-v170-tests.js, tests/run-adoption-tests.py, and
+    removal of five already-tracked .pyc files. No product source file, other test harness, or file under
+    specforge/core/ or specforge/packs/ is modified.
 notes: Implementation attempt created before modifying any file. source_revision.before set to the current
   trusted material baseline directly, matching the correction recorded against IMP-0010-01 (EVT-000083).
