@@ -1,0 +1,23 @@
+id: EVT-000086
+timestamp: '2026-09-15T13:00:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0011
+related:
+  change: CHG-0011
+  prior_change: CHG-0010
+resulting_state:
+  change_status: proposed
+evidence:
+  reason: User-directed repository-hygiene sweep covering stale run-v170-tests.js and run-adoption-tests.py,
+    tracked bytecode cache, and validation cleanliness, kept separate from product development ahead of a
+    larger gameplay feature.

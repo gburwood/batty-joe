@@ -1,0 +1,24 @@
+id: EVT-000087
+timestamp: '2026-09-15T13:05:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0011-01
+related:
+  change: CHG-0011
+resulting_state:
+  change_status: analysed
+evidence:
+  reproduction: Ran both stale harnesses directly. run-v170-tests.js fails on two independent assertions
+    (BJ.VERSION pin, levelTransitions.nextPromptSeconds pin), not the one visible failure alone. run-adoption-tests.py
+    fails immediately post-migration; inspected it in full and found five distinct stale points, including one
+    (baseline_artifact_hashes) whose premise is now false by design rather than merely path-stale. Confirmed no
+    .gitignore exists anywhere in the repository and five .pyc files are currently tracked in git.
