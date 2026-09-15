@@ -1,0 +1,38 @@
+id: IMP-0012-02
+change: CHG-0012
+proposal: PROP-0012-02
+attempt: 2
+started_at: '2026-09-15T15:44:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+approach: >-
+  Continue the non-authoritative CHG-0012 experiment under the revised approved proposal. Preserve the existing read-only classifier structure, add deterministic Git-status-sensitive treatment for existing test harness modifications/deletions, and add bounded parsed-YAML semantic handling for legacy root specforge.yaml where only specification.product_specification and/or specification.current_version changed. No change-specific outcome hard-coding, diff-size scoring, Core behaviour, lifecycle behaviour, product source or product specification changes are permitted.
+source_revision:
+  system: git
+  before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
+outcome: in_progress
+tests:
+  status: pending
+  passed: []
+  failed: []
+validation_checks:
+- name: revised_classifier_unit_tests
+  required: true
+  status: blocked
+- name: retrospective_second_run_chg0001_to_chg0011
+  required: true
+  status: blocked
+- name: existing_regression_harnesses
+  required: true
+  status: blocked
+- name: specforge_validation
+  required: true
+  status: blocked
+notes: >-
+  Attempt 2 begins only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound.
