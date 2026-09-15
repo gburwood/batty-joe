@@ -3,6 +3,7 @@ change: CHG-0012
 proposal: PROP-0012-02
 attempt: 2
 started_at: '2026-09-15T15:44:00+01:00'
+completed_at: '2026-09-15T16:22:00+01:00'
 actor:
   type: ai
   id: chatgpt
@@ -16,53 +17,70 @@ approach: >-
 source_revision:
   system: git
   before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
-outcome: in_progress
+  after: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+outcome: passed
 tests:
-  status: blocked
+  status: passed
   passed:
-  - Independent pre-fix full-checkout verification reproduced CHG-0001..0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM with zero BLOCKED/LOW and passed all six requested Batty Joe regression harnesses.
-  - Exact committed corrected classifier/test blobs passed the focused deterministic suite 23/23 in the local execution sandbox.
+  - python tests/run-risk-classifier-tests.py - 23/23 passed on the corrected branch
+  - python experiments/specforge-risk-classifier.py --root . --from-change 1 --to-change 11 --json - CHG-0001..0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM; zero BLOCKED; zero LOW; zero leaked bookkeeping paths
+  - python tests/run-adoption-tests.py
+  - node tests/run-v170-tests.js
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  - python -B specforge/core/tools/validate-specforge.py . - PASSED (169 canonical records)
   failed: []
-  blocked:
-  - Post-fix full CHG-0001 through CHG-0011 classifier run is pending independent/full-checkout execution.
-  - Post-fix existing Batty Joe regression harness set is pending independent/full-checkout execution.
-  - Post-fix SpecForge repository validation is pending independent/full-checkout execution.
+  blocked: []
 validation_checks:
 - name: revised_classifier_unit_tests
   required: true
   status: passed
   evidence: >-
-    Exact committed blobs experiments/specforge-risk-classifier.py (git blob 2cd533de73793d9e722d9bb569e2fd1783425b1a) and tests/run-risk-classifier-tests.py (git blob 449fd31dc79f8f151d879ce8db5548c7eba9b755) passed 23/23 focused deterministic checks. Five new checks prove legacy manifest-declared changes/, history/ and evidence/ roots are recognised as historical governance bookkeeping while an unrelated tests/ path is not excluded.
+    Independent post-fix verification by Claude executed the corrected branch and reported 23/23 focused deterministic checks passed. The suite covers new-test LOW, existing-harness MEDIUM, product/protected HIGH, unmatched-policy behaviour, bounded manifest key-level handling, unbounded manifest rejection, Git name-status parsing, fail-closed behaviour, and historical manifest-declared bookkeeping roots while proving an unrelated tests/ path is not excluded.
 - name: retrospective_second_run_chg0001_to_chg0011
   required: true
-  status: blocked
+  status: passed
   evidence: >-
-    Independent pre-fix execution reproduced the expected HIGH x9 / MEDIUM x2 verdicts but discovered that pre-migration root-level governance records leaked into material_paths because the classifier used only today's project layout. The leak was verdict-neutral for CHG-0001 through CHG-0008 because each also contained genuine HIGH material. The corrected classifier now derives historical bookkeeping roots from legacy specforge.yaml at the recorded before/after revisions; the full post-fix history-dependent rerun remains required.
+    Independent post-fix full-checkout execution produced CHG-0001 through CHG-0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM, with zero BLOCKED and zero LOW. Pre-migration governance bookkeeping paths no longer appear in material_paths; they are reported under excluded_paths with reason historical_manifest_bookkeeping. Historical roots are mechanically derived from specforge.yaml at the recorded revisions rather than from CHG ids, dates or hard-coded migration knowledge.
 - name: existing_regression_harnesses
   required: true
-  status: blocked
+  status: passed
   evidence: >-
-    All requested regressions passed in the independent pre-fix verification. A final post-fix rerun is retained as completion evidence even though the correction changes only classifier/test/governance records.
+    Independent post-fix execution passed python tests/run-adoption-tests.py, node tests/run-v170-tests.js, node tests/run-chg0004-tests.js, node tests/run-chg0005-tests.js, node tests/run-chg0009-tests.js and node tests/run-physics-v160-tests.js.
 - name: specforge_validation
   required: true
-  status: blocked
+  status: passed
   evidence: >-
-    Independent verification found the only validator failure was CHG-0012.yaml priority 'medium', which is not a valid change.schema enum. The record has been corrected to priority 'normal'; full repository validation must be rerun before completion.
+    Independent post-fix execution of python -B specforge/core/tools/validate-specforge.py . passed with 169 canonical records after CHG-0012 priority was corrected from invalid medium to normal.
+- name: non_authoritative_isolation
+  required: true
+  status: passed
+  evidence: >-
+    Independent grep across specforge/core confirmed zero references to experiments, risk-classifier or risk-policy. The classifier remains outside lifecycle, authorization and completion decision paths and only imports read-only project helpers.
+- name: scope_discipline
+  required: true
+  status: passed
+  evidence: >-
+    Independent diff inspection confirmed no Batty Joe product source, product specification, specforge/core or specforge/packs file is modified. Material implementation scope is confined to the experimental classifier/policy/test artifacts; the remaining changes are CHG-0012 governance and forensic records.
 scope_check:
   status: passed
   evidence: >-
-    The corrective work changes only experiments/specforge-risk-classifier.py, tests/run-risk-classifier-tests.py and CHG-0012 governance/history metadata. No Batty Joe product source, product specification, specforge/core or specforge/packs file is modified.
+    PR #7 remains non-authoritative and product-neutral. The corrected bookkeeping implementation reads only manifest-declared paths.changes, paths.decisions, paths.history and paths.evidence roots from historical specforge.yaml blobs and combines them with current Core bookkeeping detection. No change ids or migration dates are hard-coded.
 independent_verification_findings:
   verifier: Claude
-  pre_fix_results:
-    focused_classifier_tests: 18/18 passed
-    retrospective: CHG-0001..CHG-0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM
-    regressions: all requested harnesses passed
-    specforge_validation: failed only on invalid CHG-0012 priority enum
-  defects_found:
-  - Historical pre-migration changes/ and history/ governance paths were not excluded because current project layout was used to interpret old diffs.
-  - CHG-0012 priority used invalid enum value medium.
-  impact: >-
-    Neither defect changed the observed historical tier table. The bookkeeping leak nevertheless contaminated the reasons for HIGH classifications and was corrected before completion evidence is accepted.
+  post_fix_results:
+    branch_tip: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+    focused_classifier_tests: 23/23 passed
+    retrospective: CHG-0001..CHG-0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM; zero BLOCKED; zero LOW
+    historical_bookkeeping_leak: fixed; zero leaked bookkeeping paths remain in material_paths
+    regressions: all six requested Batty Joe regression harnesses passed
+    specforge_validation: passed with 169 canonical records
+    approval_digest: PROP-0012-02 canonical digest still matches APR-0013
+    non_authoritative_isolation: confirmed
+  pre_fix_defects_closed:
+  - Historical pre-migration governance paths are now excluded mechanically using historical manifest-declared bookkeeping roots.
+  - CHG-0012 priority now uses valid enum value normal.
 notes: >-
-  Attempt 2 began only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound. The experiment remains intentionally in_progress until the corrected branch is independently rerun end-to-end and SpecForge validation passes.
+  IMP-0012-01 remains blocked historical evidence and is not rewritten or rebound. Attempt 2 is marked passed only after independent execution of the exact corrected branch state and all required post-fix verification checks.
