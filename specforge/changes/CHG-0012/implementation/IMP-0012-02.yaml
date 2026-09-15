@@ -18,21 +18,35 @@ source_revision:
   before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
 outcome: in_progress
 tests:
-  status: pending
-  passed: []
+  status: blocked
+  passed:
+  - Local focused deterministic suite over the revised implementation logic passed 18/18 before branch verification handoff.
   failed: []
+  blocked:
+  - Exact committed branch bytes have not yet been executed in a full Git checkout with repository history.
+  - Full CHG-0001 through CHG-0011 classifier run is pending independent/full-checkout execution.
+  - Existing Batty Joe regression harness set is pending independent/full-checkout execution.
+  - SpecForge repository validation is pending independent/full-checkout execution.
 validation_checks:
 - name: revised_classifier_unit_tests
   required: true
   status: blocked
+  evidence: >-
+    The revised implementation logic passed 18/18 focused deterministic checks locally, covering new-test LOW, existing-harness MEDIUM, product/protected HIGH, unmatched HIGH, bounded manifest key-level handling, unbounded manifest rejection, Git name-status parsing, exclusion behaviour and fail-closed policy loading. Completion evidence still requires executing the committed branch copy in a real checkout.
 - name: retrospective_second_run_chg0001_to_chg0011
   required: true
   status: blocked
+  evidence: >-
+    Git compare cross-checks over the recorded historical implementation boundaries predict CHG-0001 through CHG-0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM, with no LOW result. This is preliminary structural evidence only and is not a substitute for running the committed classifier over repository history.
 - name: existing_regression_harnesses
   required: true
   status: blocked
 - name: specforge_validation
   required: true
   status: blocked
+scope_check:
+  status: passed
+  evidence: >-
+    PR #7 changed-file inspection is confined to experiments/specforge-risk-classifier.py, experiments/specforge-risk-policy.yaml, tests/run-risk-classifier-tests.py and CHG-0012 governance/history records. No Batty Joe product source, product specification, specforge/core or specforge/packs file is modified.
 notes: >-
-  Attempt 2 begins only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound.
+  Attempt 2 began only after exact approval of PROP-0012-02. IMP-0012-01 remains blocked historical evidence and is not modified or rebound. The experiment remains intentionally in_progress until a full checkout independently executes the committed classifier, regression harnesses and SpecForge validator.
