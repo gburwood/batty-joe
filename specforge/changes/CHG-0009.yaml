@@ -1,7 +1,7 @@
 id: CHG-0009
 title: Show campaign status on the pause panel
 classification: feature
-status: awaiting_approval
+status: in_progress
 priority: low
 sources:
 - type: conversation
@@ -24,9 +24,14 @@ impact_analysis:
   current: IA-0009-01
 proposal:
   current: PROP-0009-01
-approvals: []
+approvals:
+- APR-0009
 implementation:
-  attempts: []
+  attempts:
+  - IMP-0009-01
+governance:
+  lifecycle_enforcement: controlled_v1
+  enforced_from_change: CHG-0009
 requirements:
   affected: []
 release:

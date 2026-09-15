@@ -1,0 +1,58 @@
+id: IMP-0009-01
+change: CHG-0009
+proposal: PROP-0009-01
+attempt: 1
+started_at: '2026-09-15T09:33:33.3011172+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+approach: >
+  Project the live Game level, formatted score and remaining lives into the existing
+  pause panel from App.onStateChange on each transition into PAUSED. Add focused
+  regression coverage and the v1.12.0 product specification while leaving gameplay,
+  physics, controls and persistence unchanged.
+source_revision:
+  system: git
+  before: 366648e1ee31d13601e3865acccf50c3b02fc088
+completed_at: '2026-09-15T09:50:19.300+01:00'
+outcome: in_progress
+tests:
+  status: failed
+  passed:
+  - node tests/run-chg0009-tests.js (focused regression)
+  - node tests/run-chg0004-tests.js
+  - node tests/run-physics-v160-tests.js
+  - batty-joe-tests.html (108 / 108 tests passed in browser)
+  failed:
+  - node tests/run-chg0005-tests.js (pre-existing stale harness)
+  - node tests/run-v170-tests.js (pre-existing stale harness)
+  unavailable:
+  - node batty-joe-tests.js (browser-only harness)
+validation_checks:
+- name: focused_chg0009_regression
+  required: true
+  status: passed
+- name: current_gameplay_browser_regression
+  required: true
+  status: passed
+- name: chg0004_regression
+  required: true
+  status: passed
+- name: chg0005_regression
+  required: true
+  status: failed
+  evidence: Pre-existing stale harness failure; cleanup excluded by approved proposal.
+- name: current_physics_regression
+  required: true
+  status: passed
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: python -B specforge/core/tools/validate-specforge.py .
+failure:
+  reason: Required CHG-0005 legacy regression harness fails independently of CHG-0009 and is explicitly out of scope for cleanup.
+notes: Implementation attempt created before modifying product files.

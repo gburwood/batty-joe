@@ -1,0 +1,27 @@
+id: EVT-000068
+timestamp: '2026-09-15T09:50:19.300+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+event_type: test_result
+entity:
+  type: implementation_attempt
+  id: IMP-0009-01
+related:
+  change: CHG-0009
+  proposal: PROP-0009-01
+resulting_state:
+  implementation_outcome: failed
+evidence:
+  focused_chg0009: passed
+  current_gameplay_browser: passed
+  current_gameplay_tests: 108/108
+  chg0004: passed
+  physics_v160: passed
+  chg0005: failed_pre_existing_stale_harness
+  v170: failed_pre_existing_stale_harness
+  node_browser_harness: unavailable_outside_browser

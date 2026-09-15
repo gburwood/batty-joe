@@ -1,0 +1,28 @@
+application:
+  name: Batty Joe
+  type: browser_arcade_brick_breaker
+  version: 1.12.0
+  status: active_development_specification
+  source_of_truth: true
+specification_governance:
+  authority: This file is the authoritative Batty Joe product specification for version 1.12.0.
+  composition: full_inheritance_with_explicit_change
+  inherited_specification: batty-joe-dev-spec-v1.11.0.yaml
+  inheritance_rule: All product intent, behaviour, constraints, architecture and acceptance expectations from batty-joe-dev-spec-v1.11.0.yaml are incorporated by reference in full unless explicitly changed below.
+  reader_instruction: Read batty-joe-dev-spec-v1.11.0.yaml as the complete inherited product contract, then apply the explicit CHG-0009 change below.
+  change: CHG-0009
+pause_panel:
+  campaign_status:
+    displayed_when: PAUSED
+    values:
+      level: Game.level
+      score: BattyJoe.Utils.formatScore(Game.score)
+      lives: Game.lives
+      seed: Game.seed
+    refresh: Every transition into PAUSED reads the current Game instance values.
+    controls_unchanged: true
+non_regression:
+  gameplay_unchanged: true
+  physics_unchanged: true
+  scoring_lives_timing_unchanged: true
+  persistence_unchanged: true

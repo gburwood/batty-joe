@@ -277,6 +277,9 @@
     if (this.game.attract) return;
     if (next === BJ.State.PAUSED) {
       document.getElementById('pauseSeed').textContent = this.game.seed;
+      document.getElementById('pauseLevel').textContent = this.game.level;
+      document.getElementById('pauseScore').textContent = U.formatScore(this.game.score);
+      document.getElementById('pauseLives').textContent = this.game.lives;
       this.showPanel('pausePanel');
     } else if (next === BJ.State.LEVEL_COMPLETE) {
       const bonus = detail && detail.bonus ? detail.bonus : { total: 0, time: 0, lives: 0, combo: 0, continues: 0 };
