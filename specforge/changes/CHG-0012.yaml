@@ -1,0 +1,53 @@
+id: CHG-0012
+title: Experimental deterministic risk-tier classifier for retrospective SpecForge changes
+classification: tooling_infrastructure
+status: proposed
+priority: medium
+sources:
+- type: conversation
+  reference: user-request-2026-09-15-create-risk-classifier
+  received_at: '2026-09-15T14:27:00+01:00'
+request:
+  summary: Create a read-only experimental classifier that retrospectively classifies CHG-0001 through CHG-0011 from their actual material diffs using deterministic policy rules.
+  detail: >-
+    The experiment tests the architectural hypothesis that SpecForge can assign a minimum governance tier mechanically rather than allowing an implementing AI to self-classify risk. It must remain non-authoritative: it may inspect historical implementation source revisions, material diffs and a declarative policy, but it must not alter lifecycle decisions, authorization, completion gates, product behaviour or current trusted authority.
+clarification:
+  required: false
+  notes: >-
+    Scope is intentionally an experiment against existing Batty Joe history before any SpecForge Core architecture change is proposed. The classifier must fail upward on unmatched material paths and fail closed when it cannot establish a trustworthy classification.
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to:
+  - CHG-0007
+  - CHG-0008
+  - CHG-0010
+  - CHG-0011
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0012-01
+proposal:
+  current: PROP-0012-01
+approvals: []
+implementation:
+  attempts: []
+governance:
+  lifecycle_enforcement: controlled_v1
+  enforced_from_change: CHG-0009
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-15T14:27:00+01:00'
+  created_by:
+    type: ai
+    id: chatgpt
+    display_name: ChatGPT
+    ai:
+      provider: openai
+      tool: ChatGPT
+      model: gpt-5.6-sol
+  completed_at: null
