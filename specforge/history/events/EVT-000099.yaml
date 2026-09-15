@@ -1,0 +1,42 @@
+id: EVT-000099
+timestamp: '2026-09-15T15:52:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: implementation_verification_partial
+entity:
+  type: implementation_attempt
+  id: IMP-0012-02
+related:
+  change: CHG-0012
+  proposal: PROP-0012-02
+  approval: APR-0013
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: in_progress
+evidence:
+  focused_logic_tests: 18/18 passed locally
+  preliminary_retrospective:
+    CHG-0001: HIGH
+    CHG-0002: HIGH
+    CHG-0003: HIGH
+    CHG-0004: HIGH
+    CHG-0005: HIGH
+    CHG-0006: HIGH
+    CHG-0007: HIGH
+    CHG-0008: HIGH
+    CHG-0009: HIGH
+    CHG-0010: MEDIUM
+    CHG-0011: MEDIUM
+  scope_check: no product source, product specification, specforge/core or specforge/packs files changed in PR #7
+  pending:
+  - execute committed classifier and focused tests from a full Git checkout with history
+  - execute existing Batty Joe regression harness set
+  - execute SpecForge repository validation
+notes: >-
+  The retrospective table is a Git-compare structural cross-check, not completion evidence. No required blocked check is promoted to passed until the committed branch is independently executed.
