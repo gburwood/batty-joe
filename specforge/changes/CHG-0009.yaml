@@ -4,6 +4,7 @@ classification: feature
 status: implemented
 priority: low
 sources:
+- type: conversation
   reference: user-request-2026-09-15-copilot-small-change
   received_at: '2026-09-15T08:02:49Z'
 request:
@@ -24,6 +25,7 @@ impact_analysis:
 proposal:
   current: PROP-0009-01
 approvals:
+- APR-0009
 implementation:
   attempts:
   - IMP-0009-01

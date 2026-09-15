@@ -18,6 +18,7 @@ approach: >
 source_revision:
   system: git
   before: 366648e1ee31d13601e3865acccf50c3b02fc088
+  after: 41b471633a862ff4c5d94bb2b2ac7d1c425eb833
 completed_at: '2026-09-15T09:50:19.300+01:00'
 outcome: passed
 tests:
@@ -33,17 +34,23 @@ tests:
   unavailable:
   - node batty-joe-tests.js (browser-only harness)
 validation_checks:
+- name: focused_chg0009_regression
   required: true
   status: passed
+- name: current_gameplay_browser_regression
   required: true
   status: passed
+- name: chg0004_regression
   required: true
   status: passed
+- name: chg0005_regression
   required: true
   status: failed
   evidence: Pre-existing stale harness failure; cleanup excluded by approved proposal.
+- name: current_physics_regression
   required: true
   status: passed
+- name: specforge_validation
   required: true
   status: passed
   evidence: python -B specforge/core/tools/validate-specforge.py .
