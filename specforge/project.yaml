@@ -1,6 +1,6 @@
 specforge:
   project_format: 1
-  core_version: 0.1.0-alpha.8
+  core_version: 0.1.0-alpha.13
   data_model_version: 0.1.0-alpha.3
 project:
   id: PRJ-0001

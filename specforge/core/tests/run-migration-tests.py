@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import json, os, shutil, subprocess, sys, tempfile
+import json, os, shutil, subprocess, sys, tempfile, yaml
 
 CORE = Path(__file__).resolve().parents[1]
-TARGET_VERSION = "0.1.0-alpha.8"
+TARGET_VERSION = yaml.safe_load((CORE / "core.yaml").read_text(encoding="utf-8"))["core_version"]
 
 
 def run(args, cwd=None):

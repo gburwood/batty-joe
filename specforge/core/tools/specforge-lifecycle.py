@@ -3,6 +3,7 @@
 from pathlib import Path
 import argparse
 import json
+import os
 import subprocess
 import sys
 
@@ -40,6 +41,12 @@ def manifest_path(layout, key, default=None):
     if not value:
         return None
     return (layout.root / value).resolve()
+
+
+def _python_env():
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    return env
 
 
 def bootstrap(root):
@@ -80,7 +87,12 @@ def bootstrap(root):
         if not pack_tool.is_file():
             blockers.append("pack_resolver_missing")
         else:
-            result = subprocess.run([sys.executable, str(pack_tool), "--root", str(layout.root), "--json"], capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-B", str(pack_tool), "--root", str(layout.root), "--json"],
+                capture_output=True,
+                text=True,
+                env=_python_env(),
+            )
             try: pack_details = json.loads(result.stdout or "{}")
             except Exception: pack_details = {"permitted": False, "blockers": ["pack_resolver_output_invalid"]}
             details["packs"] = pack_details
@@ -92,7 +104,12 @@ def bootstrap(root):
         blockers.append("validator_missing")
     else:
         try:
-            result = subprocess.run([sys.executable, str(validator), str(layout.root)], capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-B", str(validator), str(layout.root)],
+                capture_output=True,
+                text=True,
+                env=_python_env(),
+            )
             details["repository_validation"] = {"status": "passed" if result.returncode == 0 else "failed", "output": (result.stdout + result.stderr).strip()}
             if result.returncode: blockers.append("repository_validation_failed")
         except Exception as exc:

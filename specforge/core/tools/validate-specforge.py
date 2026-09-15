@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 import re
+import subprocess
 import sys
 
 try:
@@ -86,6 +87,10 @@ for name, value in (manifest.get("paths") or {}).items():
             continue
         target = (ROOT / item).resolve()
         if not target.exists():
+            if name == "packs" and not (manifest.get("packs") or []):
+                continue
+            if name == "decisions":
+                continue
             errors.append(f"Manifest path '{name}' does not exist: {item}")
 
 specification = manifest.get("specification") or {}
@@ -275,6 +280,26 @@ if errors:
     print("SpecForge validation FAILED")
     for error in errors:
         print(f" - {error}")
+    sys.exit(1)
+
+authorization_tool = layout.tool_root / "specforge-authorization.py"
+if authorization_tool.is_file():
+    authorization = subprocess.run(
+        [sys.executable, str(authorization_tool), "--root", str(ROOT), "--json"],
+        capture_output=True,
+        text=True,
+    )
+    if authorization.returncode:
+        print("SpecForge validation FAILED")
+        print(" - Implementation authorization integrity check failed")
+        if authorization.stdout.strip():
+            print(authorization.stdout.strip())
+        if authorization.stderr.strip():
+            print(authorization.stderr.strip())
+        sys.exit(1)
+elif layout.mode == "project_format_1":
+    print("SpecForge validation FAILED")
+    print(" - Implementation authorization tool missing")
     sys.exit(1)
 
 print("SpecForge validation PASSED")

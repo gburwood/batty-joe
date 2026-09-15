@@ -1,4 +1,4 @@
-core_version: 0.1.0-alpha.8
+core_version: 0.1.0-alpha.13
 data_model_version: 0.1.0-alpha.3
 compatibility:
   project_formats:
@@ -19,9 +19,16 @@ canonical_integrity:
   strip_utf8_bom: true
   line_endings: lf
 material_revision:
-  verification_profile: immutable_material_v1
+  verification_profile: immutable_material_v2
   fallback_provider: specforge_snapshot
   snapshot_algorithm: sha256
+  trusted_baseline: required
+managed_upgrade:
+  authorization_profile: bounded_core_upgrade_v1
+distributed_testing:
+  fixture_profile: portable_governance_v2
+  host_project_history_dependency: forbidden
+  complete_suite_external_execution: required
 distribution:
   package_metadata: package.yaml
   candidate_project_state: false

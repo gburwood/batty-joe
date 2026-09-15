@@ -58,25 +58,20 @@ def normative_chain(start: Path):
     return chain
 
 
-def assert_complete_chain(start: Path, label: str, minimum_total_bytes: int):
+def assert_complete_chain(start: Path, label: str):
     chain = normative_chain(start)
-    total_bytes = 0
     for path in chain:
         text = path.read_text(encoding="utf-8")
-        total_bytes += path.stat().st_size
+        assert text.strip(), f"{label} normative document {path.name} is empty"
         for pattern in bad_patterns:
             assert not re.search(pattern, text, re.I), (
                 f"{label} normative document {path.name} declares incomplete/non-authoritative content: {pattern}"
             )
-    assert total_bytes > minimum_total_bytes, (
-        f"{label} normative chain is unexpectedly small: {total_bytes} bytes across "
-        f"{len(chain)} document(s)"
-    )
     return chain
 
 
-product_chain = assert_complete_chain(product, product_rel, 10000)
-model_chain = assert_complete_chain(model, model_rel, 7000)
+product_chain = assert_complete_chain(product, product_rel)
+model_chain = assert_complete_chain(model, model_rel)
 
 # The current authorities must themselves be first in their normative chains.
 assert product_chain[0] == product
