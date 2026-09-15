@@ -1,0 +1,12 @@
+version: 1
+trusted:
+  provider: git
+  revision: dc3e79c47bc07246f5302796ced4dd210fe3ab21
+active_operation:
+  type: core_upgrade
+  id: core-0.1.0-alpha.8-to-0.1.0-alpha.10
+  provider: git
+  before: dc3e79c47bc07246f5302796ced4dd210fe3ab21
+  from_core_version: 0.1.0-alpha.8
+  to_core_version: 0.1.0-alpha.10
+  scope: framework_core_and_manifest
