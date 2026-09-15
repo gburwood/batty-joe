@@ -1,0 +1,84 @@
+id: PROP-0012-02
+change: CHG-0012
+revision: 2
+status: awaiting_approval
+created_at: '2026-09-15T15:17:00+01:00'
+based_on_impact_analysis:
+- IA-0012-01
+previous_proposal: PROP-0012-01
+revision_reason: >-
+  The first controlled implementation attempt exposed two deterministic-policy defects before completion. Routine bounded changes to legacy specforge.yaml specification pointers can dominate a path-only classifier even though they are mechanical completion bookkeeping, while modifying an existing regression harness can alter future evidence quality and should not classify LOW merely because it is under tests/. A separately executed exploratory classifier reported CHG-0010 as MEDIUM rather than the LOW anchor required by PROP-0012-01. PROP-0012-01 itself requires a proposal revision before such policy changes continue.
+proposed_specification_version: 1.12.0
+behaviour_summary: >-
+  Continue the non-authoritative read-only CHG-0012 experiment with a second deterministic run. Preserve path-based minimum governance tiers, but add narrowly bounded semantic handling for legacy specforge.yaml specification-pointer bookkeeping and use Git change status so edits to existing regression/test harnesses classify MEDIUM. No LLM judgment is introduced and no SpecForge lifecycle, authorization, Core, product or trusted-authority behaviour changes.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+acceptance_criteria:
+  classifier_scope:
+  - experiments/specforge-risk-classifier.py remains clearly experimental/non-authoritative.
+  - experiments/specforge-risk-policy.yaml contains the complete executable policy used by the second run.
+  - tests/run-risk-classifier-tests.py covers path tiering, Git-status-sensitive test rules, bounded manifest handling and fail-closed behaviour.
+  - No product source file, product specification, specforge/core file, specforge/packs file, specforge/project.yaml or material-authority record is modified by this implementation attempt.
+  historical_input:
+  - For each CHG-0001 through CHG-0011, use the latest passed implementation attempt's recorded source_revision.before and source_revision.after only.
+  - Obtain changed paths and Git change status from the literal diff between those revisions.
+  - Governance bookkeeping paths, specforge-dist snapshots and Python bytecode/cache artifacts remain excluded consistently with current material-authority behaviour.
+  - Missing or unresolvable implementation source revisions return BLOCKED; revisions must not be inferred from prose.
+  bounded_manifest_semantics:
+  - Legacy root specforge.yaml remains a protected governance path by default.
+  - A specforge.yaml edit may be treated as bounded mechanical bookkeeping only when both revisions parse as YAML mappings and the complete semantic key-level difference is confined to specification.product_specification and/or specification.current_version.
+  - The bounded rule must be decided from parsed before/after file content retrieved from the recorded Git revisions, not from commit messages, proposal prose, filenames alone or LLM judgment.
+  - Any additional changed key, YAML parse failure, missing file content or semantic-evaluation failure keeps specforge.yaml HIGH or returns BLOCKED where trustworthy classification cannot be established; it must never silently downgrade.
+  - The bounded manifest contribution is ignored for tier elevation so that other material paths determine the change's minimum tier. If it is the only material difference, the classifier must report that fact explicitly rather than inventing a lower-risk path classification.
+  test_harness_semantics:
+  - Modification or deletion of an existing ordinary test/regression harness has a MEDIUM minimum tier.
+  - Addition of a new ordinary test file may remain LOW unless another MEDIUM/HIGH rule matches.
+  - Repository/CI infrastructure remains MEDIUM and product runtime/source, authoritative product specification and protected governance-control paths remain HIGH.
+  - Highest applicable tier still wins across the complete material diff.
+  - Unmatched material paths still classify HIGH by default.
+  failure_behaviour:
+  - Missing/malformed policy, failed Git commands, semantic-evaluation exceptions, unresolved required source revisions or equivalent classifier failures return BLOCKED rather than a tier.
+  anchor_expectations:
+  - CHG-0007 must classify HIGH.
+  - CHG-0008 must classify HIGH.
+  - CHG-0010 must classify MEDIUM because it modifies an existing regression harness.
+  - CHG-0011 must classify MEDIUM because it modifies existing test harnesses and includes repository configuration while no HIGH material rule should dominate after exclusions.
+  - No CHG-0001 through CHG-0011 result is required to classify LOW; absence of LOW results is valid experimental evidence.
+  interpretation_boundary:
+  - The experiment establishes only a conservative minimum governance tier, not a complete risk magnitude or assurance-depth score.
+  - CHG-0005 and CHG-0007 may both legitimately classify HIGH even though their size and assurance needs differ; diff-size/shape scoring is explicitly outside this proposal revision.
+  reporting:
+  - A complete second retrospective run over CHG-0001 through CHG-0011 records change id, classification, material paths, Git statuses, matched rules, bounded-manifest handling and blocker reason where applicable.
+  - Record unexpected outcomes as evidence; do not tune change-specific exceptions to force agreement.
+  non_authority:
+  - The classifier remains outside and unreferenced by SpecForge lifecycle, authorization, status, validation, completion-gate and material-authority decision paths.
+  - No current change status other than CHG-0012's own controlled lifecycle, approval, trusted baseline, requirement status or Batty Joe behaviour is changed by a classifier result.
+  verification:
+  - Run tests/run-risk-classifier-tests.py and confirm deterministic policy tests pass.
+  - Run the classifier against CHG-0001 through CHG-0011 and capture the complete second-run result in a new implementation attempt bound to this proposal revision.
+  - Run the existing full Batty Joe regression harness set and confirm no regression.
+  - Run SpecForge repository validation and confirm it passes.
+artifacts_expected:
+  modify:
+  - experiments/specforge-risk-classifier.py
+  - experiments/specforge-risk-policy.yaml
+  - tests/run-risk-classifier-tests.py
+  - specforge/changes/CHG-0012.yaml
+  add:
+  - specforge/changes/CHG-0012/implementation/IMP-0012-02.yaml
+  - forensic events under specforge/history/events/ recording revised proposal, implementation start, second retrospective classification, validation and completion as applicable
+implementation_constraints:
+- Implementation under PROP-0012-02 must not begin until this exact revision is explicitly approved and a new approval record binds its canonical digest.
+- Preserve IMP-0012-01 as blocked historical evidence; do not rewrite it as passed or rebind it to this proposal.
+- Continue on the dedicated CHG-0012 implementation branch.
+- Keep all classifier behaviour outside specforge/core and specforge/packs and non-authoritative.
+- Do not modify Batty Joe product source or product specification.
+- Do not hard-code outcomes by CHG id; anchors must emerge from general executable rules applied to actual recorded revisions and diffs.
+- Do not use narrative or LLM judgment as a classification input.
+- The legacy specforge.yaml exception must be key-level and fail conservatively; filename/path-only exemption is forbidden.
+- Do not add diff-size, file-count, subsystem-breadth or assurance-depth scoring in this revision.
+- Treat unmatched material paths as HIGH and evaluator/tooling failures as BLOCKED.
+approvals: []

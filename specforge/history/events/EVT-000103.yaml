@@ -1,0 +1,38 @@
+id: EVT-000103
+timestamp: '2026-09-15T16:29:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: change_completed
+entity:
+  type: change
+  id: CHG-0012
+related:
+  change: CHG-0012
+  proposal: PROP-0012-02
+  approval: APR-0013
+  implementation_attempt: IMP-0012-02
+  validation_event: EVT-000101
+  material_authority_event: EVT-000102
+  validated_source_revision: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+resulting_state:
+  change_status: completed
+evidence:
+  lifecycle_gate:
+    command: python -B specforge/core/tools/specforge-lifecycle.py transition CHG-0012 --to completed --root . --json
+    permitted: true
+    current: validated
+    target: completed
+    governed: true
+    project_format_mode: project_format_1
+    blockers: []
+  independent_validation: EVT-000101
+  trusted_material_baseline: dfa76a25c115d350bcc95ef43680ad1d0180bdfa
+  retrospective_result: CHG-0001..CHG-0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM; zero BLOCKED; zero LOW
+notes: >-
+  Terminal completion was recorded only after the executable controlled lifecycle gate returned permitted=true with no blockers on the validated CHG-0012 state.

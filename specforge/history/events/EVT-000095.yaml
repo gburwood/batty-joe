@@ -1,0 +1,29 @@
+id: EVT-000095
+timestamp: '2026-09-15T15:17:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: implementation_blocked
+entity:
+  type: implementation_attempt
+  id: IMP-0012-01
+related:
+  change: CHG-0012
+  proposal: PROP-0012-01
+  approval: APR-0012
+resulting_state:
+  implementation_outcome: blocked
+  change_status: awaiting_approval
+evidence:
+  reason: proposal_revision_required
+  observed_policy_mismatch: CHG-0010 classified MEDIUM by an independent exploratory classifier while PROP-0012-01 required LOW
+  required_revision:
+  - bounded semantic handling for routine legacy specforge.yaml specification pointer updates
+  - MEDIUM floor for edits to existing test/regression harnesses
+notes: >-
+  PROP-0012-01 explicitly requires a proposal revision before implementation continues when an unexpected result requires policy change. No Core, lifecycle, authorization, product or product-specification behaviour is changed by this event.

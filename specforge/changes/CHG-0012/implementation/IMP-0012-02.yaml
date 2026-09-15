@@ -1,0 +1,86 @@
+id: IMP-0012-02
+change: CHG-0012
+proposal: PROP-0012-02
+attempt: 2
+started_at: '2026-09-15T15:44:00+01:00'
+completed_at: '2026-09-15T16:22:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+approach: >-
+  Continue the non-authoritative CHG-0012 experiment under the revised approved proposal. Preserve the existing read-only classifier structure, add deterministic Git-status-sensitive treatment for existing test harness modifications/deletions, add bounded parsed-YAML semantic handling for legacy root specforge.yaml, and exclude historical governance bookkeeping using bookkeeping roots declared by the legacy manifest at the recorded source revisions. No change-specific outcome hard-coding, diff-size scoring, Core behaviour, lifecycle behaviour, product source or product specification changes are permitted.
+source_revision:
+  system: git
+  before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
+  after: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+outcome: passed
+tests:
+  status: passed
+  passed:
+  - python tests/run-risk-classifier-tests.py - 23/23 passed on the corrected branch
+  - python experiments/specforge-risk-classifier.py --root . --from-change 1 --to-change 11 --json - CHG-0001..0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM; zero BLOCKED; zero LOW; zero leaked bookkeeping paths
+  - python tests/run-adoption-tests.py
+  - node tests/run-v170-tests.js
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  - python -B specforge/core/tools/validate-specforge.py . - PASSED (169 canonical records)
+  failed: []
+  blocked: []
+validation_checks:
+- name: revised_classifier_unit_tests
+  required: true
+  status: passed
+  evidence: >-
+    Independent post-fix verification by Claude executed the corrected branch and reported 23/23 focused deterministic checks passed. The suite covers new-test LOW, existing-harness MEDIUM, product/protected HIGH, unmatched-policy behaviour, bounded manifest key-level handling, unbounded manifest rejection, Git name-status parsing, fail-closed behaviour, and historical manifest-declared bookkeeping roots while proving an unrelated tests/ path is not excluded.
+- name: retrospective_second_run_chg0001_to_chg0011
+  required: true
+  status: passed
+  evidence: >-
+    Independent post-fix full-checkout execution produced CHG-0001 through CHG-0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM, with zero BLOCKED and zero LOW. Pre-migration governance bookkeeping paths no longer appear in material_paths; they are reported under excluded_paths with reason historical_manifest_bookkeeping. Historical roots are mechanically derived from specforge.yaml at the recorded revisions rather than from CHG ids, dates or hard-coded migration knowledge.
+- name: existing_regression_harnesses
+  required: true
+  status: passed
+  evidence: >-
+    Independent post-fix execution passed python tests/run-adoption-tests.py, node tests/run-v170-tests.js, node tests/run-chg0004-tests.js, node tests/run-chg0005-tests.js, node tests/run-chg0009-tests.js and node tests/run-physics-v160-tests.js.
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: >-
+    Independent post-fix execution of python -B specforge/core/tools/validate-specforge.py . passed with 169 canonical records after CHG-0012 priority was corrected from invalid medium to normal.
+- name: non_authoritative_isolation
+  required: true
+  status: passed
+  evidence: >-
+    Independent grep across specforge/core confirmed zero references to experiments, risk-classifier or risk-policy. The classifier remains outside lifecycle, authorization and completion decision paths and only imports read-only project helpers.
+- name: scope_discipline
+  required: true
+  status: passed
+  evidence: >-
+    Independent diff inspection confirmed no Batty Joe product source, product specification, specforge/core or specforge/packs file is modified. Material implementation scope is confined to the experimental classifier/policy/test artifacts; the remaining changes are CHG-0012 governance and forensic records.
+scope_check:
+  status: passed
+  evidence: >-
+    PR #7 remains non-authoritative and product-neutral. The corrected bookkeeping implementation reads only manifest-declared paths.changes, paths.decisions, paths.history and paths.evidence roots from historical specforge.yaml blobs and combines them with current Core bookkeeping detection. No change ids or migration dates are hard-coded.
+independent_verification_findings:
+  verifier: Claude
+  post_fix_results:
+    branch_tip: c4e82eb808697ff852ad34a60abf2dec22f7c6c1
+    focused_classifier_tests: 23/23 passed
+    retrospective: CHG-0001..CHG-0009 HIGH; CHG-0010 MEDIUM; CHG-0011 MEDIUM; zero BLOCKED; zero LOW
+    historical_bookkeeping_leak: fixed; zero leaked bookkeeping paths remain in material_paths
+    regressions: all six requested Batty Joe regression harnesses passed
+    specforge_validation: passed with 169 canonical records
+    approval_digest: PROP-0012-02 canonical digest still matches APR-0013
+    non_authoritative_isolation: confirmed
+  pre_fix_defects_closed:
+  - Historical pre-migration governance paths are now excluded mechanically using historical manifest-declared bookkeeping roots.
+  - CHG-0012 priority now uses valid enum value normal.
+notes: >-
+  IMP-0012-01 remains blocked historical evidence and is not rewritten or rebound. Attempt 2 is marked passed only after independent execution of the exact corrected branch state and all required post-fix verification checks.

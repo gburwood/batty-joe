@@ -1,8 +1,8 @@
 id: CHG-0012
 title: Experimental deterministic risk-tier classifier for retrospective SpecForge changes
 classification: tooling_infrastructure
-status: approved
-priority: medium
+status: completed
+priority: normal
 sources:
 - type: conversation
   reference: user-request-2026-09-15-create-risk-classifier
@@ -14,7 +14,7 @@ request:
 clarification:
   required: false
   notes: >-
-    Scope is intentionally an experiment against existing Batty Joe history before any SpecForge Core architecture change is proposed. The classifier must fail upward on unmatched material paths and fail closed when it cannot establish a trustworthy classification.
+    Scope is intentionally an experiment against existing Batty Joe history before any SpecForge Core architecture change is proposed. The classifier must fail upward on unmatched material paths and fail closed when it cannot establish a trustworthy classification. The first approved implementation attempt was blocked after independent exploratory evidence exposed a policy mismatch requiring PROP-0012-02.
 relationships:
   depends_on: []
   conflicts_with: []
@@ -29,11 +29,14 @@ relationships:
 impact_analysis:
   current: IA-0012-01
 proposal:
-  current: PROP-0012-01
+  current: PROP-0012-02
 approvals:
 - APR-0012
+- APR-0013
 implementation:
-  attempts: []
+  attempts:
+  - IMP-0012-01
+  - IMP-0012-02
 governance:
   lifecycle_enforcement: controlled_v1
   enforced_from_change: CHG-0009
@@ -51,4 +54,4 @@ metadata:
       provider: openai
       tool: ChatGPT
       model: gpt-5.6-sol
-  completed_at: null
+  completed_at: '2026-09-15T16:29:00+01:00'

@@ -1,0 +1,39 @@
+id: EVT-000100
+timestamp: '2026-09-15T16:11:00+01:00'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: gpt-5.6-sol
+event_type: implementation_corrected
+entity:
+  type: implementation_attempt
+  id: IMP-0012-02
+related:
+  change: CHG-0012
+  proposal: PROP-0012-02
+  approval: APR-0013
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: in_progress
+evidence:
+  independent_findings:
+  - CHG-0012 priority used invalid enum value medium
+  - pre-migration root-level governance bookkeeping leaked into material_paths under the current-layout-only exclusion check
+  corrections:
+  - CHG-0012 priority corrected to normal
+  - historical bookkeeping roots are now derived from legacy specforge.yaml paths at the recorded before/after revisions and combined with the current Core bookkeeping check
+  - focused regression coverage expanded from 18 to 23 checks
+  committed_blobs:
+    classifier: 2cd533de73793d9e722d9bb569e2fd1783425b1a
+    tests: 449fd31dc79f8f151d879ce8db5548c7eba9b755
+  focused_tests: 23/23 passed on exact committed blobs
+  pending:
+  - post-fix full historical classifier run
+  - post-fix Batty Joe regression harnesses
+  - post-fix SpecForge repository validation
+notes: >-
+  The independent pre-fix verifier confirmed the expected HIGH x9 / MEDIUM x2 tier table and found the bookkeeping leak to be verdict-neutral in the existing dataset. Completion remains blocked until the corrected branch is independently rerun end-to-end.
