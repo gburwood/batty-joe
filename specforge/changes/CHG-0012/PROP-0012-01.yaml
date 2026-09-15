@@ -1,0 +1,71 @@
+id: PROP-0012-01
+change: CHG-0012
+revision: 1
+status: awaiting_approval
+created_at: '2026-09-15T14:34:00+01:00'
+based_on_impact_analysis:
+- IA-0012-01
+proposed_specification_version: 1.12.0
+behaviour_summary: >-
+  Add a non-authoritative, read-only experimental classifier that retrospectively classifies CHG-0001 through CHG-0011 from their actual material Git diffs. The classifier is deterministic and policy-driven; it does not ask an LLM to decide risk and it has no effect on SpecForge lifecycle or authorization.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+acceptance_criteria:
+  classifier_scope:
+  - experiments/specforge-risk-classifier.py exists and is clearly marked experimental/non-authoritative.
+  - experiments/specforge-risk-policy.yaml contains the complete executable classification policy used by the experiment.
+  - tests/run-risk-classifier-tests.py verifies deterministic tier selection and failure behaviour.
+  - No product source file, product specification, specforge/core file, specforge/packs file, specforge/project.yaml or material-authority record is modified by the implementation.
+  historical_input:
+  - For each requested CHG-0001 through CHG-0011, the classifier reads the change record and its latest passed implementation attempt.
+  - Where source_revision.before and source_revision.after are both present and resolvable, the classifier obtains changed paths from the literal Git diff between those revisions.
+  - Governance bookkeeping paths are excluded using the current framework definition exposed by specforge_project.is_governance_bookkeeping_path; specforge-dist snapshots and Python bytecode/cache artifacts are excluded consistently with current material-authority behaviour.
+  - If a change lacks a resolvable implementation source revision, its result is BLOCKED with an explicit reason; the classifier must not infer a revision from prose merely to obtain a result.
+  classification_policy:
+  - Tiers are LOW, MEDIUM and HIGH; BLOCKED is reserved for inability to establish a trustworthy classification.
+  - Highest matching tier wins across all material paths in the diff.
+  - Product runtime/source paths and authoritative product specification paths classify HIGH.
+  - SpecForge framework, project manifest, entry-point, policy/authority and other protected governance-control paths classify HIGH.
+  - Repository-level configuration and general development/CI infrastructure classify MEDIUM unless a HIGH rule also matches.
+  - Ordinary test and documentation paths classify LOW unless a MEDIUM or HIGH rule also matches.
+  - Any material path not matched by an explicit lower rule classifies HIGH by default; there is no permissive fall-through.
+  - Missing/malformed policy, policy-evaluation exception, failed Git command, unresolved required source revision or equivalent classifier failure returns BLOCKED, not LOW/MEDIUM/HIGH.
+  anchor_expectations:
+  - CHG-0010 must classify LOW from its actual material diff.
+  - CHG-0007 must classify HIGH from its actual material diff.
+  - CHG-0008 must classify HIGH from its actual material diff.
+  - CHG-0011 must classify MEDIUM or HIGH if its material diff includes repository configuration in addition to test changes.
+  reporting:
+  - A full retrospective run over CHG-0001 through CHG-0011 prints machine-readable output containing change id, classification, material paths, matched rules and any blocker reason.
+  - The implementation evidence records the complete retrospective result and explicitly identifies mismatches or blocked historical changes rather than tuning the policy merely to make every historical case look correct.
+  non_authority:
+  - The classifier is not imported or invoked by specforge-lifecycle.py, specforge-authorization.py, specforge-status.py, validate-specforge.py, completion_gate(), material-authority evaluation or any other current SpecForge decision path.
+  - No current change status, approval, trusted baseline, requirement status or product behaviour is changed as a consequence of a classifier result.
+  verification:
+  - Run tests/run-risk-classifier-tests.py and confirm all deterministic-policy tests pass.
+  - Run the classifier against CHG-0001 through CHG-0011 and capture the complete result in IMP-0012-01.
+  - Run the existing full Batty Joe regression harness set and confirm no regression.
+  - Run SpecForge repository validation and confirm it passes.
+artifacts_expected:
+  add:
+  - experiments/specforge-risk-classifier.py
+  - experiments/specforge-risk-policy.yaml
+  - tests/run-risk-classifier-tests.py
+  - specforge/changes/CHG-0012/implementation/IMP-0012-01.yaml
+  - forensic events under specforge/history/events/ recording implementation start, retrospective classification, validation and completion, allocated sequentially at implementation time
+  modify:
+  - specforge/changes/CHG-0012.yaml
+implementation_constraints:
+- Implementation must not begin until this exact proposal revision is explicitly approved and an approval record binds its canonical digest.
+- Work on a dedicated CHG-0012 implementation branch derived from the approved proposal state.
+- Keep the experiment outside specforge/core and specforge/packs; do not change framework-owned behaviour.
+- Do not modify any Batty Joe product source or product specification to make retrospective classifications fit expected anchors.
+- Do not manually hard-code CHG-0007, CHG-0008, CHG-0010 or CHG-0011 outcomes into the classifier; those outcomes must emerge from general policy rules applied to actual material paths.
+- Do not use narrative/LLM judgment as a classification input. Human-readable rule descriptions may accompany executable rules, but executable fields alone determine the tier.
+- Treat unmatched material paths as HIGH and evaluator/tooling failures as BLOCKED.
+- Do not silently broaden permissive rules during implementation to force historical agreement; any unexpected result should be reported as experimental evidence and, if a policy change is required, handled as a proposal revision before implementation continues.
+- Allocate forensic event IDs sequentially from repository tip at implementation time; do not pre-reserve EVT identifiers in this proposal.
+approvals: []
