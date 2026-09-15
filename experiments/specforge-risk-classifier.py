@@ -22,6 +22,7 @@ BOUNDED_LEGACY_MANIFEST_KEYS = {
     "specification.product_specification",
     "specification.current_version",
 }
+BOOKKEEPING_PATH_KEYS = ("changes", "decisions", "history", "evidence")
 
 
 class ClassifierError(RuntimeError):
@@ -193,6 +194,49 @@ def _load_yaml_text(text: str, reference: str) -> dict[str, Any]:
     return data
 
 
+def bookkeeping_roots_from_manifest_document(document: dict[str, Any]) -> list[str]:
+    paths = document.get("paths") or {}
+    if not isinstance(paths, dict):
+        return []
+    roots = []
+    for key in BOOKKEEPING_PATH_KEYS:
+        value = paths.get(key)
+        if not isinstance(value, str) or not value.strip():
+            continue
+        root = _norm(value.strip()).rstrip("/")
+        if root and root != ".":
+            roots.append(root)
+    return sorted(set(roots))
+
+
+def is_historical_bookkeeping_path(path: str, roots: list[str]) -> bool:
+    candidate = _norm(path).rstrip("/")
+    for raw_root in roots:
+        root = _norm(raw_root).rstrip("/")
+        if root and (candidate == root or candidate.startswith(root + "/")):
+            return True
+    return False
+
+
+def _historical_bookkeeping_from_git(root: Path, before: str, after: str) -> dict[str, Any]:
+    roots: set[str] = set()
+    manifests = []
+    for revision in (before, after):
+        listed = {
+            _norm(line.strip())
+            for line in _git(root, "ls-tree", "-r", "--name-only", revision, "--", "specforge.yaml").splitlines()
+            if line.strip()
+        }
+        if "specforge.yaml" not in listed:
+            continue
+        reference = f"{revision}:specforge.yaml"
+        document = _load_yaml_text(_git(root, "show", reference), reference)
+        revision_roots = bookkeeping_roots_from_manifest_document(document)
+        roots.update(revision_roots)
+        manifests.append({"revision": revision, "manifest": "specforge.yaml", "roots": revision_roots})
+    return {"roots": sorted(roots), "manifests": manifests}
+
+
 _MISSING = object()
 
 
@@ -303,6 +347,7 @@ def classify_change(root: Path, change_id: str, policy: dict[str, Any]) -> dict[
         "git_entries": [],
         "matched_rules": [],
         "bounded_manifest": [],
+        "historical_bookkeeping": {"roots": [], "manifests": []},
         "blocker": None,
     }
     try:
@@ -326,6 +371,7 @@ def classify_change(root: Path, change_id: str, policy: dict[str, Any]) -> dict[
             raise ClassifierError("source_revision_unresolved")
 
         raw_entries = _parse_name_status(_git(root, "diff", "--name-status", before, after, "--"))
+        historical_bookkeeping = _historical_bookkeeping_from_git(root, before, after)
         material_entries: list[dict[str, str]] = []
         excluded = []
         bounded_manifest = []
@@ -333,11 +379,19 @@ def classify_change(root: Path, change_id: str, policy: dict[str, Any]) -> dict[
             entry = _normalise_entry(raw)
             path, status = entry["path"], entry["status"]
             try:
-                bookkeeping = bool(is_bookkeeping(root / path, layout))
+                current_bookkeeping = bool(is_bookkeeping(root / path, layout))
             except Exception as exc:
                 raise ClassifierError(f"bookkeeping_evaluation_failed:{path}:{exc}") from exc
-            if bookkeeping or excluded_by_policy(path, policy):
-                excluded.append({"path": path, "status": status})
+            historical_bookkeeping_match = is_historical_bookkeeping_path(path, historical_bookkeeping["roots"])
+            policy_excluded = excluded_by_policy(path, policy)
+            if current_bookkeeping or historical_bookkeeping_match or policy_excluded:
+                if current_bookkeeping:
+                    reason = "current_layout_bookkeeping"
+                elif historical_bookkeeping_match:
+                    reason = "historical_manifest_bookkeeping"
+                else:
+                    reason = "policy_exclusion"
+                excluded.append({"path": path, "status": status, "reason": reason})
                 continue
             if path == "specforge.yaml":
                 manifest = _bounded_legacy_manifest_from_git(root, before, after, status)
@@ -352,6 +406,7 @@ def classify_change(root: Path, change_id: str, policy: dict[str, Any]) -> dict[
                 "source_revision": {"before": before, "after": after},
                 "excluded_paths": excluded,
                 "bounded_manifest": bounded_manifest,
+                "historical_bookkeeping": historical_bookkeeping,
                 "blocker": "bounded_manifest_only_no_risk_bearing_material",
             })
             return base
@@ -362,6 +417,7 @@ def classify_change(root: Path, change_id: str, policy: dict[str, Any]) -> dict[
         base["source_revision"] = {"before": before, "after": after}
         base["excluded_paths"] = excluded
         base["bounded_manifest"] = bounded_manifest
+        base["historical_bookkeeping"] = historical_bookkeeping
         return base
     except ClassifierError as exc:
         base["blocker"] = str(exc)
@@ -403,6 +459,7 @@ def main(argv: list[str] | None = None) -> int:
             "git_entries": [],
             "matched_rules": [],
             "bounded_manifest": [],
+            "historical_bookkeeping": {"roots": [], "manifests": []},
             "blocker": str(exc),
         } for cid in ids]
     payload = {
