@@ -23,16 +23,14 @@ completed_at: '2026-09-15T09:50:19.300+01:00'
 outcome: passed
 tests:
   status: failed
+  rerun_at: '2026-09-15T10:05:57.183+01:00'
+  rerun_commit: fc916ccd4b6c5e725263998245deef816c9c3d03
   passed:
   - node tests/run-chg0009-tests.js (focused regression)
   - node tests/run-chg0004-tests.js
   - node tests/run-physics-v160-tests.js
-  - batty-joe-tests.html (108 / 108 tests passed in browser)
   failed:
-  - node tests/run-chg0005-tests.js (pre-existing stale harness)
-  - node tests/run-v170-tests.js (pre-existing stale harness)
-  unavailable:
-  - node batty-joe-tests.js (browser-only harness)
+  - node tests/run-chg0005-tests.js (Game.prototype.onFrenzyPlayerHit is absent; expected collision handler success)
 validation_checks:
 - name: focused_chg0009_regression
   required: true
@@ -55,6 +53,6 @@ validation_checks:
   status: passed
   evidence: python -B specforge/core/tools/validate-specforge.py .
 failure:
-  reason: Required CHG-0005 legacy regression harness fails independently of CHG-0009 and is explicitly out of scope for cleanup.
-validated_at: '2026-09-15T09:50:19.300+01:00'
+  reason: Required CHG-0005 regression fails on the reviewed remote commit because Game.prototype.onFrenzyPlayerHit is absent; fixing it would modify product behavior outside the approved CHG-0009 scope.
+validated_at: '2026-09-15T10:05:57.183+01:00'
 notes: Implementation attempt created before modifying product files.

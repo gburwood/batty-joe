@@ -1,0 +1,24 @@
+id: EVT-000073
+timestamp: '2026-09-15T10:05:57.183+01:00'
+actor:
+  type: ai
+  id: github_copilot
+  display_name: GitHub Copilot
+  ai:
+    provider: microsoft
+    tool: GitHub Copilot in VS Code
+event_type: completion_blocked
+entity:
+  type: change
+  id: CHG-0009
+related:
+  change: CHG-0009
+  proposal: PROP-0009-01
+  implementation_attempt: IMP-0009-01
+resulting_state:
+  change_status: implemented
+evidence:
+  completion_gate: refused
+  blocker: required_chg0005_regression_failed
+  source_revision_after: 41b471633a862ff4c5d94bb2b2ac7d1c425eb833
+  scope_constraint: CHG-0009 does not authorize modifying batty-joe-game.js.
