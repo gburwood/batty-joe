@@ -3,6 +3,7 @@ change: CHG-0012
 proposal: PROP-0012-01
 attempt: 1
 started_at: '2026-09-15T14:36:00+01:00'
+completed_at: '2026-09-15T15:17:00+01:00'
 actor:
   type: ai
   id: chatgpt
@@ -16,40 +17,33 @@ approach: >-
 source_revision:
   system: git
   before: cc5525f60a5503acc1720a0f67d95e46fb7ddcbe
-  after: 01a24474bb38401398120de4ae08884b730f006d
-outcome: in_progress
+outcome: blocked
 tests:
-  status: pending
+  status: blocked
   passed:
-  - python3 tests/run-risk-classifier-tests.py against the exact branch blobs - 10/10 passed.
-  - python3 -m py_compile experiments/specforge-risk-classifier.py tests/run-risk-classifier-tests.py.
+  - Focused deterministic classifier policy suite passed 10/10 against byte-identical branch blobs.
   failed: []
-  unavailable:
-  - End-to-end retrospective execution against CHG-0001 through CHG-0011 requires a local Git checkout containing repository history. The current execution sandbox has no network path to clone GitHub, so this check is not claimed as run.
-  - Existing Batty Joe regression harnesses and validate-specforge.py require the full branch checkout and therefore remain unclaimed here.
+  blocked:
+  - Full historical classifier execution in the ChatGPT sandbox lacked a local Git checkout/history.
+  - Existing Batty Joe regression harness set was not executed in the ChatGPT sandbox.
+  - SpecForge repository validation was not executed in the ChatGPT sandbox.
 validation_checks:
 - name: risk_classifier_unit_tests
   required: true
   status: passed
-  evidence: >-
-    The local tested classifier, policy and focused test blobs are byte-identical to commit 01a24474bb38401398120de4ae08884b730f006d: classifier blob 7ed6bb769da88306f702cdf133237efdeebe2a6f, policy blob 0a77bbcd678bff262d474d3f5de76b51a93c277e and test blob 5b9b3e58e6f241e63937ba46972cf54081871099. Focused suite passed 10/10 after correcting hidden-file path normalization.
+  evidence: Focused policy suite passed 10/10. Verification also caught and corrected hidden-file path normalization before this attempt was blocked.
 - name: retrospective_chg0001_to_chg0011
   required: true
   status: blocked
   evidence: >-
-    Literal Git compare results were inspected through the repository provider for every recorded before/after pair. Applying the approved policy mechanically to those observed material path sets predicts CHG-0001 through CHG-0009 HIGH, CHG-0010 LOW and CHG-0011 MEDIUM. The anchor cases therefore look correct, but this is deliberately not marked passed because the committed classifier itself has not yet executed end-to-end against a full local Git history.
+    Preliminary path-based analysis predicted CHG-0001..0009 HIGH, CHG-0010 LOW and CHG-0011 MEDIUM. A separately executed exploratory classifier reported by the user produced CHG-0001..0009 HIGH, CHG-0010 MEDIUM and CHG-0011 MEDIUM and exposed two policy-design issues: routine bounded specforge.yaml specification-pointer updates can dominate classification, and edits to existing regression harnesses should not be LOW merely because they live under tests/.
 - name: existing_regression_harnesses
   required: true
   status: blocked
-  evidence: Full repository checkout unavailable in the current execution sandbox; no existing regression pass is fabricated.
 - name: specforge_validation
   required: true
   status: blocked
-  evidence: Full repository checkout unavailable in the current execution sandbox; validate-specforge.py has not been claimed as run against the implementation branch.
-- name: implementation_scope
-  required: true
-  status: passed
-  evidence: >-
-    Git compare from trusted material baseline cc5525f60a5503acc1720a0f67d95e46fb7ddcbe to implementation revision 01a24474bb38401398120de4ae08884b730f006d shows the only new material experiment files are experiments/specforge-risk-classifier.py, experiments/specforge-risk-policy.yaml and tests/run-risk-classifier-tests.py; intervening specforge/changes, specforge/history and specforge/evidence records are governance bookkeeping. No product source, product specification, installed Core, packs or project manifest is modified by CHG-0012 implementation.
+blocker: >-
+  PROP-0012-01 requires CHG-0010 to classify LOW and explicitly requires a proposal revision before implementation continues if an unexpected result requires a policy change. The next experiment run now requires deterministic semantic handling for bounded legacy specforge.yaml pointer updates and MEDIUM classification for edits to existing test/regression harnesses. Continuing under PROP-0012-01 would exceed the approved proposal.
 notes: >-
-  Implementation attempt was created before any material experiment file was added. source_revision.before is the durable trusted material baseline rather than branch HEAD. During focused verification an initial path-normalization implementation was found to use character-based lstrip("./"), which could distort a literal hidden path such as .gitignore. That implementation was not accepted as evidence. The committed revision 01a24474bb38401398120de4ae08884b730f006d removes only literal leading ./ segments, preserves .gitignore exactly and passes the focused 10/10 suite. CHG-0012 intentionally remains in_progress until an independent/full-checkout run satisfies the three blocked required checks; no completion claim is made.
+  This attempt remains useful historical evidence and is not rewritten as passed. The experimental files created during the attempt remain on the dedicated implementation branch but are not authoritative and must not be treated as completion evidence. PROP-0012-02 is required before those files may be revised for the second controlled run.
