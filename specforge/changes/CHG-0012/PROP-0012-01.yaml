@@ -1,7 +1,7 @@
 id: PROP-0012-01
 change: CHG-0012
 revision: 1
-status: approved
+status: awaiting_approval
 created_at: '2026-09-15T14:34:00+01:00'
 based_on_impact_analysis:
 - IA-0012-01
@@ -68,5 +68,4 @@ implementation_constraints:
 - Treat unmatched material paths as HIGH and evaluator/tooling failures as BLOCKED.
 - Do not silently broaden permissive rules during implementation to force historical agreement; any unexpected result should be reported as experimental evidence and, if a policy change is required, handled as a proposal revision before implementation continues.
 - Allocate forensic event IDs sequentially from repository tip at implementation time; do not pre-reserve EVT identifiers in this proposal.
-approvals:
-- APR-0012
+approvals: []
