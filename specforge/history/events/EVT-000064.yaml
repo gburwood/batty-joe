@@ -1,0 +1,22 @@
+id: EVT-000064
+timestamp: '2026-09-15T08:02:49Z'
+actor:
+  type: ai
+  id: codex
+  display_name: Codex
+  ai:
+    provider: openai
+    tool: ChatGPT Work
+    model: GPT-5
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0009
+related:
+  change: CHG-0009
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  source_revision: 352bbe070f0b3640b05cddc60684efcb9d3ed329
+  working_branch: copilot/chg-0009-pause-status
+  user_request: Create a Batty Joe branch and define a small change for Copilot in VS Code.

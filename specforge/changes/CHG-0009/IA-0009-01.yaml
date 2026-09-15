@@ -1,0 +1,40 @@
+id: IA-0009-01
+change: CHG-0009
+revision: 1
+created_at: '2026-09-15T08:02:49Z'
+affected:
+  requirements: []
+  components:
+  - pause_panel
+  - application_state_projection
+  - ui_regression_tests
+  - product_specification
+  artifacts:
+  - batty-joe.html
+  - batty-joe.js
+  - tests/run-chg0009-tests.js
+  - batty-joe-dev-spec-v1.12.0.yaml
+  tests:
+    required:
+    - Pausing displays the current level, formatted score and remaining lives.
+    - The displayed values refresh from current game state on every transition into PAUSED.
+    - Resuming, restarting, settings navigation and quitting from the pause panel remain unchanged.
+    - Existing current gameplay and physics regression suites continue to pass.
+compatibility:
+  breaking: false
+  notes: Adds read-only status text to an existing overlay. It changes no controls, saved data, gameplay timing or game-state transitions.
+migration:
+  required: false
+  notes: No persisted data or configuration changes.
+risks:
+- id: RISK-0009-01
+  description: The pause panel could show stale or inconsistently formatted values if it duplicates game state or score formatting.
+  severity: low
+  mitigation: Read level, score and lives directly from the Game instance on every PAUSED transition and reuse BattyJoe.Utils.formatScore.
+- id: RISK-0009-02
+  description: A broad edit to pause handling could accidentally affect gameplay state transitions.
+  severity: low
+  mitigation: Limit runtime changes to projecting existing state into three pause-panel DOM elements; do not modify Game.pause, Game.resume or input handling.
+open_changes:
+  overlaps_with: []
+summary: This is a contained presentation feature. The application already receives every transition into PAUSED in App.onStateChange and already projects the campaign seed there. Extending that projection with level, score and lives requires no game-engine or persistence change.

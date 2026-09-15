@@ -1,0 +1,43 @@
+id: CHG-0009
+title: Show campaign status on the pause panel
+classification: feature
+status: awaiting_approval
+priority: low
+sources:
+- type: conversation
+  reference: user-request-2026-09-15-copilot-small-change
+  received_at: '2026-09-15T08:02:49Z'
+request:
+  summary: Prepare a small, governed Batty Joe change for GitHub Copilot in VS Code to implement on a dedicated branch.
+  detail: Add a compact campaign-status line to the existing pause panel so a player can see the current level, formatted score and remaining lives while gameplay is paused.
+clarification:
+  required: false
+  notes: The change is intentionally narrow and visible. It exercises Copilot's ability to trace existing state and formatting helpers, update the UI and add a regression test without altering gameplay.
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to: []
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0009-01
+proposal:
+  current: PROP-0009-01
+approvals: []
+implementation:
+  attempts: []
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-15T08:02:49Z'
+  created_by:
+    type: ai
+    id: codex
+    display_name: Codex
+    ai:
+      provider: openai
+      tool: ChatGPT Work
+      model: GPT-5
