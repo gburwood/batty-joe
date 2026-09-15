@@ -7,6 +7,7 @@ import yaml
 from specforge_project import discover_layout
 from specforge_distribution import discover_distribution
 from specforge_upgrade_authority import establish_upgrade_authority
+from specforge_authority import authority_path
 
 STAGING_ROOTS=("specforge-dist/",)
 
@@ -71,6 +72,14 @@ def write_evidence(layout,p):
     return str(path.relative_to(layout.root)).replace("\\","/")
 
 
+def restore_file(path, existed, content):
+    if existed:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    elif path.exists():
+        path.unlink()
+
+
 def apply(root,distribution_path=None):
     p=plan(root,distribution_path)
     if not p.get("permitted") or p.get("already_current"): return p
@@ -80,25 +89,37 @@ def apply(root,distribution_path=None):
     target=layout.core_root
     if target.resolve()==distribution.core_root.resolve():
         p["permitted"]=False; p["blockers"]=["candidate_distribution_is_installed_core"]; return p
+    authority_file=authority_path(layout)
+    authority_existed=authority_file.is_file()
+    authority_before=authority_file.read_bytes() if authority_existed else None
+    manifest_before=layout.manifest_path.read_bytes()
+    upgrade_evidence=evidence_path(layout,p["current_core_version"],p["target_core_version"])
+    evidence_existed=upgrade_evidence.is_file()
+    evidence_before=upgrade_evidence.read_bytes() if evidence_existed else None
     try:
         p["authority"]=establish_upgrade_authority(layout,p["current_core_version"],p["target_core_version"])
     except Exception as exc:
         p["permitted"]=False; p["blockers"]=[f"upgrade_authority_failed:{exc}"]; return p
-    with tempfile.TemporaryDirectory(dir=str(layout.root)) as tmp:
-        backup=Path(tmp)/"core-backup"; shutil.copytree(target,backup)
-        manifest_before=layout.manifest_path.read_bytes()
-        try:
-            shutil.rmtree(target)
-            shutil.copytree(distribution.core_root,target,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
-            manifest=layout.manifest
-            manifest.setdefault("specforge",{})["core_version"]=p["target_core_version"]
-            layout.manifest_path.write_text(yaml.safe_dump(manifest,sort_keys=False,allow_unicode=True),encoding="utf-8",newline="\n")
-            p["evidence"]=write_evidence(layout,p)
-        except Exception:
-            if target.exists(): shutil.rmtree(target)
-            shutil.copytree(backup,target)
-            layout.manifest_path.write_bytes(manifest_before)
-            raise
+    try:
+        with tempfile.TemporaryDirectory(prefix="specforge-upgrade-") as tmp:
+            backup=Path(tmp)/"core-backup"
+            shutil.copytree(target,backup)
+            try:
+                shutil.rmtree(target)
+                shutil.copytree(distribution.core_root,target,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
+                manifest=layout.manifest
+                manifest.setdefault("specforge",{})["core_version"]=p["target_core_version"]
+                layout.manifest_path.write_text(yaml.safe_dump(manifest,sort_keys=False,allow_unicode=True),encoding="utf-8",newline="\n")
+                p["evidence"]=write_evidence(layout,p)
+            except Exception:
+                if target.exists(): shutil.rmtree(target)
+                shutil.copytree(backup,target)
+                layout.manifest_path.write_bytes(manifest_before)
+                restore_file(upgrade_evidence,evidence_existed,evidence_before)
+                raise
+    except Exception:
+        restore_file(authority_file,authority_existed,authority_before)
+        raise
     p["applied"]=True
     return p
 

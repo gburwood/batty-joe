@@ -1,6 +1,6 @@
 package:
   type: specforge_core
-  version: 0.1.0-alpha.10
+  version: 0.1.0-alpha.13
 compatibility:
   project_formats:
   - 1

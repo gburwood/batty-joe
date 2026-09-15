@@ -323,7 +323,12 @@ def _git_material_differences(layout: ProjectLayout, after: str) -> list[str]:
         differences.update(line.strip() for line in untracked.stdout.splitlines() if line.strip())
     material = []
     for rel in sorted(differences):
-        if is_governance_bookkeeping_path(layout.root / rel, layout):
+        path = layout.root / rel
+        if is_governance_bookkeeping_path(path, layout):
+            continue
+        if is_distribution_path(path, layout.root):
+            continue
+        if is_transient_material_path(path, layout):
             continue
         material.append(rel.replace("\\", "/"))
     return material
