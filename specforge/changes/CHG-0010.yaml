@@ -1,7 +1,7 @@
 id: CHG-0010
 title: Make CHG-0005 regression harness line-ending portable
 classification: defect
-status: in_progress
+status: validated
 priority: low
 sources:
 - type: conversation
