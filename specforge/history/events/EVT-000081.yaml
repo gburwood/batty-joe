@@ -1,0 +1,20 @@
+id: EVT-000081
+timestamp: '2026-09-15T12:00:00+01:00'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: proposal_approved
+entity:
+  type: proposal
+  id: PROP-0010-01
+related:
+  change: CHG-0010
+  approval: APR-0010
+resulting_state:
+  proposal_status: approved
+  change_status: approved
+evidence:
+  proposal_revision: 1
+  proposal_digest_algorithm: sha256
+  proposal_digest: 73924f28ce5572ffcdfa764b5eadc80987b17b75a8ba3ad030c5108934f9871e
