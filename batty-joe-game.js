@@ -229,6 +229,15 @@
     return this.levelData ? BJ.Levels.countRequired(this.levelData.bricks) : 0;
   };
 
+  Game.prototype.onlyRegeneratingBricksRemain = function () {
+    if (!this.levelData) return false;
+    const remaining = this.levelData.bricks.filter(function (b) {
+      if (b.type === 'indestructible') return false;
+      return b.alive || (b.type === 'regenerating' && b.regenMode === 'respawn');
+    });
+    return remaining.length > 0 && remaining.every(function (b) { return b.type === 'regenerating'; });
+  };
+
   Game.prototype.isPlayableState = function () {
     return this.state === BJ.State.PLAYING || this.state === BJ.State.BOSS || this.state === BJ.State.ATTRACT || this.isFrenzyState();
   };
@@ -421,6 +430,7 @@
         if (Number.isFinite(ball.holdRemaining) && ball.holdRemaining <= 0) self.releaseBall(ball);
         return;
       }
+      if (!ball.paddleSpeedBoost) P.normalizeVelocity(ball, targetSpeed);
       P.decayPaddleSpeedBoost(ball, dt, targetSpeed, C.physics.paddleVelocityTransfer);
       const spinTurn = P.applySpin(ball, dt, C.spin);
       self.applyFinalAssaultMagnetism(ball, dt, spinTurn);
@@ -455,7 +465,7 @@
         P.resolveBallRect(ball, self.levelData.boss, previous);
         self.damageBoss(4);
       } else {
-        self.handleBallBrickCollisions(ball, previous);
+        self.handleBallBrickCollisions(ball, previous, targetSpeed);
       }
     });
 
@@ -473,7 +483,7 @@
     P.releaseFromPaddle(ball, this.paddle, speed, C.balls.releaseMaxAngleDegrees);
   };
 
-  Game.prototype.handleBallBrickCollisions = function (ball, previous) {
+  Game.prototype.handleBallBrickCollisions = function (ball, previous, targetSpeed) {
     const bricks = this.levelData.bricks;
     for (let i = 0; i < bricks.length; i += 1) {
       const brick = bricks[i];
@@ -484,6 +494,7 @@
       if (!penetrating) {
         P.resolveBallRect(ball, brick, previous, { characterise: true, kind: 'brick', signature: 'brick-' + brick.id });
         P.retainSpin(ball, C.spin.brickRetention);
+        P.applyBrickReboundZip(ball, targetSpeed, C.physics.brickReboundZip);
       }
       if (damaged) this.audio.play(brick.alive ? 'brick_hit' : 'brick_break');
       break;
@@ -586,6 +597,7 @@
     const self = this;
     const laneMin = C.level.marginX;
     const laneMax = C.playfield.width - C.level.marginX;
+    const regenerationLocked = this.onlyRegeneratingBricksRemain();
     this.levelData.bricks.forEach(function (brick) {
       if (brick.type === 'moving' && brick.alive) {
         const oldX = brick.x;
@@ -605,7 +617,7 @@
         }
       }
 
-      if (brick.type === 'regenerating') {
+      if (brick.type === 'regenerating' && !regenerationLocked) {
         if (brick.alive && brick.regenMode === 'heal' && brick.hits < brick.maxHits && self.levelElapsed - brick.lastHitAt >= 4) {
           brick.hits = Math.min(brick.maxHits, brick.hits + 1);
           brick.lastHitAt = self.levelElapsed;
@@ -1761,8 +1773,9 @@
 
   Game.prototype.updateFrenzyRegeneration = function () {
     const self = this;
+    const regenerationLocked = this.onlyRegeneratingBricksRemain();
     this.levelData.bricks.forEach(function (brick) {
-      if (brick.type !== 'regenerating') return;
+      if (brick.type !== 'regenerating' || regenerationLocked) return;
       if (self.frenzyMode === 'fps' && brick.frenzyMeta && brick.frenzyMeta.attack && brick.frenzyMeta.attack.phase !== 'telegraph') return;
       if (brick.alive && brick.regenMode === 'heal' && brick.hits < brick.maxHits && self.levelElapsed - brick.lastHitAt >= 4) { brick.hits += 1; brick.lastHitAt = self.levelElapsed; }
       if (!brick.alive && brick.regenMode === 'respawn' && brick.frenzyOriginal && brick.destroyedAt != null && self.levelElapsed - brick.destroyedAt >= 6) { brick.alive = true; brick.hits = brick.maxHits; brick.destroyedAt = null; }
@@ -1877,6 +1890,7 @@
     this.frenzyGame = null;
     this.setState(this.getBasePlayState(), { frenzyReason: reason });
     this.autosave('frenzy_end');
+    this.checkLevelComplete();
   };
 
   Game.prototype.countFrenzyInvaders = function () { return this.levelData ? this.levelData.bricks.filter(function (b) { return b.alive; }).length : 0; };

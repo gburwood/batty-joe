@@ -7,9 +7,9 @@ project:
   name: Batty Joe
 specification:
   root: ./
-  product_specification: ./batty-joe-dev-spec-v1.12.0.yaml
+  product_specification: ./batty-joe-dev-spec-v1.13.0.yaml
   canonical_data_model: ./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.5.md
-  current_version: 1.12.0
+  current_version: 1.13.0
 paths:
   core: ./specforge/core
   packs: ./specforge/packs

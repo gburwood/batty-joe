@@ -150,10 +150,18 @@
       const topPen = Math.abs((ball.y + ball.r) - rect.y);
       const bottomPen = Math.abs((rect.y + rect.h) - (ball.y - ball.r));
       const min = Math.min(leftPen, rightPen, topPen, bottomPen);
-      if (min === leftPen || min === rightPen) {
-        ball.vx *= -1; side = min === leftPen ? 'left' : 'right'; nx = side === 'left' ? -1 : 1;
+      if (min === leftPen) {
+        ball.x = rect.x - ball.r - 0.01;
+        ball.vx = -Math.abs(ball.vx); side = 'left'; nx = -1;
+      } else if (min === rightPen) {
+        ball.x = rect.x + rect.w + ball.r + 0.01;
+        ball.vx = Math.abs(ball.vx); side = 'right'; nx = 1;
+      } else if (min === topPen) {
+        ball.y = rect.y - ball.r - 0.01;
+        ball.vy = -Math.abs(ball.vy); side = 'top'; ny = -1;
       } else {
-        ball.vy *= -1; side = min === topPen ? 'top' : 'bottom'; ny = side === 'top' ? -1 : 1;
+        ball.y = rect.y + rect.h + ball.r + 0.01;
+        ball.vy = Math.abs(ball.vy); side = 'bottom'; ny = 1;
       }
     }
 
@@ -233,6 +241,19 @@
     ball.paddleSpeedBoost = Math.max(0, next / target - 1);
     normalizeVelocity(ball, next);
     return next;
+  }
+
+  function applyBrickReboundZip(ball, targetSpeed, config) {
+    if (!ball) return 0;
+    config = config || (BJ.Config && BJ.Config.physics && BJ.Config.physics.brickReboundZip);
+    const incomingSpeed = Math.max(1, length(ball.vx, ball.vy));
+    if (!config || !config.enabled) return incomingSpeed;
+    const target = Math.max(1, Number(targetSpeed) || incomingSpeed);
+    const multiplier = Math.max(1, Number(config.exitSpeedMultiplier) || 1);
+    const zipSpeed = target * multiplier;
+    const exitSpeed = Math.max(incomingSpeed, zipSpeed);
+    normalizeVelocity(ball, exitSpeed);
+    return exitSpeed;
   }
 
   function integrateBall(ball, dt, width, height) {
@@ -318,6 +339,7 @@
     releaseFromPaddle,
     bounceFromPaddle,
     decayPaddleSpeedBoost,
+    applyBrickReboundZip,
     integrateBall,
     applySpin,
     retainSpin,

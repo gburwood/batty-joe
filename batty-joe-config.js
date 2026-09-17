@@ -42,6 +42,10 @@
         decayHalfLifeSeconds: 0.65,
         centreContactFactor: 0.55,
         edgeContactFactor: 1.0
+      },
+      brickReboundZip: {
+        enabled: true,
+        exitSpeedMultiplier: 1.15
       }
     },
     spin: {

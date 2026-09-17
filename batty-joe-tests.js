@@ -384,6 +384,72 @@
     equal(game.state, BJ.State.LEVEL_COMPLETE);
   });
 
+  test('frenzy timeout completes the level when every required brick was already destroyed', function () {
+    const game = makeGame({ level: 8 });
+    enterFrenzy(game, 'invaders');
+    game.levelData.bricks.forEach(function (b) { if (b.type !== 'indestructible') b.alive = false; });
+    exitFrenzy(game, 'timeout');
+    equal(game.state, BJ.State.LEVEL_COMPLETE, 'Frenzy timeout must complete the level via the normal completion mechanism once only indestructibles remain');
+  });
+
+  test('frenzy timeout does not complete the level when a required brick survived', function () {
+    const game = makeGame({ level: 8 });
+    enterFrenzy(game, 'invaders');
+    exitFrenzy(game, 'timeout');
+    assert(game.state !== BJ.State.LEVEL_COMPLETE, 'Frenzy timeout must not complete the level while a required brick still survives');
+  });
+
+  test('regenerating brick stops healing once it is the only destructible brick left', function () {
+    const game = makeGame({ level: 4 });
+    const target = game.levelData.bricks.find(function (b) { return b.alive && b.type !== 'indestructible'; });
+    assert(target, 'Level should contain a destructible brick to convert');
+    target.type = 'regenerating'; target.regenMode = 'heal'; target.maxHits = 3; target.hits = 1; target.alive = true;
+    game.levelData.bricks.forEach(function (b) { if (b !== target && b.type !== 'indestructible') b.alive = false; });
+    assert(game.onlyRegeneratingBricksRemain(), 'Setup should trigger the completion lock');
+    target.lastHitAt = game.levelElapsed;
+    game.levelElapsed += 10;
+    game.updateBricks(0.016);
+    equal(target.hits, 1, 'A regenerating brick must not heal once it is the only remaining destructible brick');
+  });
+
+  test('regenerating brick stops respawning once it is the only destructible brick left', function () {
+    const game = makeGame({ level: 4 });
+    const target = game.levelData.bricks.find(function (b) { return b.alive && b.type !== 'indestructible'; });
+    assert(target, 'Level should contain a destructible brick to convert');
+    target.type = 'regenerating'; target.regenMode = 'respawn'; target.maxHits = 2;
+    target.alive = false; target.destroyedAt = game.levelElapsed;
+    game.levelData.bricks.forEach(function (b) { if (b !== target && b.type !== 'indestructible') b.alive = false; });
+    assert(game.onlyRegeneratingBricksRemain(), 'A destroyed respawn-mode regenerating brick must still count as remaining, so the lock engages');
+    game.levelElapsed += 10;
+    game.updateBricks(0.016);
+    equal(target.alive, false, 'A regenerating brick must not respawn once it is the only remaining destructible brick');
+  });
+
+  test('regenerating brick lock applies equivalently during frenzy regeneration', function () {
+    const game = makeGame({ level: 4 });
+    const target = game.levelData.bricks.find(function (b) { return b.alive && b.type !== 'indestructible'; });
+    assert(target, 'Level should contain a destructible brick to convert');
+    target.type = 'regenerating'; target.regenMode = 'heal'; target.maxHits = 3; target.hits = 1;
+    target.frenzyOriginal = { x: target.x, y: target.y, w: target.w, h: target.h, maxHits: target.maxHits };
+    game.levelData.bricks.forEach(function (b) { if (b !== target && b.type !== 'indestructible') b.alive = false; });
+    target.lastHitAt = game.levelElapsed;
+    game.levelElapsed += 10;
+    game.updateFrenzyRegeneration();
+    equal(target.hits, 1, 'A regenerating brick must not heal via frenzy regeneration once it is the only remaining destructible brick');
+  });
+
+  test('regenerating brick keeps healing while a normal destructible brick still survives', function () {
+    const game = makeGame({ level: 4 });
+    const bricks = game.levelData.bricks.filter(function (b) { return b.alive && b.type !== 'indestructible'; });
+    assert(bricks.length >= 2, 'Level should contain at least two destructible bricks');
+    const regen = bricks[0];
+    regen.type = 'regenerating'; regen.regenMode = 'heal'; regen.maxHits = 3; regen.hits = 1; regen.lastHitAt = game.levelElapsed;
+    assert(!game.onlyRegeneratingBricksRemain(), 'A surviving normal brick must keep the completion lock inactive');
+    game.levelElapsed += 10;
+    game.updateBricks(0.016);
+    equal(regen.hits, 2, 'A regenerating brick must keep healing normally while another destructible brick survives');
+  });
+
   test('continue restarts current level and resets score', function () {
     const game = makeGame({ level: 6 });
     const original = layoutSignature(game.levelInitial);
@@ -516,6 +582,150 @@
       BJ.Physics.bounceFromPaddle(ball, { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed }, target);
       approx(BJ.Physics.length(ball.vx, ball.vy), target, 0.001);
     } finally { cfg.enabled = old; }
+  });
+
+  test('brick rebound zip raises a below-floor ball to the configured exit speed', function () {
+    const target = 400, cfg = BJ.Config.physics.brickReboundZip;
+    const ball = { vx: 0, vy: -target, spin: 0 };
+    const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+    approx(exit, target * cfg.exitSpeedMultiplier, 0.001, 'Zip exit speed should equal targetSpeed * exitSpeedMultiplier');
+    approx(BJ.Physics.length(ball.vx, ball.vy), target * cfg.exitSpeedMultiplier, 0.001, 'Ball velocity magnitude should match the returned exit speed');
+  });
+
+  test('brick rebound zip never slows a ball already faster than the zip floor', function () {
+    const target = 400, cfg = BJ.Config.physics.brickReboundZip;
+    const zipSpeed = target * cfg.exitSpeedMultiplier;
+    [zipSpeed - 40, zipSpeed - 1, zipSpeed, zipSpeed + 1, target * 1.25].forEach(function (incoming) {
+      const ball = { vx: 0, vy: -incoming, spin: 0 };
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      approx(exit, Math.max(incoming, zipSpeed), 0.001, 'Exit speed must equal max(incoming, zipSpeed) for incoming=' + incoming);
+    });
+  });
+
+  test('brick rebound zip does not reduce a ball carrying paddle-derived excess speed', function () {
+    const target = 400, cfg = BJ.Config.physics.brickReboundZip;
+    const incoming = target * 1.25;
+    assert(incoming > target * cfg.exitSpeedMultiplier, 'Sanity: this incoming speed must be above the configured zip floor');
+    const ball = { vx: 0, vy: -incoming, spin: 0 };
+    const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+    approx(exit, incoming, 0.001, 'A ball already above the zip floor must exit the bounce at its unchanged incoming speed');
+  });
+
+  test('brick rebound zip cannot ratchet across repeated bounces', function () {
+    const target = 350, cfg = BJ.Config.physics.brickReboundZip;
+    const zipSpeed = target * cfg.exitSpeedMultiplier;
+    for (let i = 0; i < 6; i += 1) {
+      const ball = { vx: 0, vy: -target, spin: 0 };
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      approx(exit, zipSpeed, 0.001, 'Every bounce starting from target-consistent incoming speed must exit at exactly the zip floor, never higher');
+    }
+  });
+
+  test('disabled brick rebound zip produces no speed change', function () {
+    const cfg = BJ.Config.physics.brickReboundZip, old = cfg.enabled;
+    cfg.enabled = false;
+    try {
+      const target = 400, ball = { vx: 0, vy: -target, spin: 0 };
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      approx(exit, target, 0.001, 'Disabled zip must leave incoming speed unchanged');
+    } finally { cfg.enabled = old; }
+  });
+
+  test('paddle contact after a brick-zip bounce behaves identically to an unmodified ball', function () {
+    const target = 400;
+    const paddle = { x: 100, y: 100, w: 100, h: 18, vx: BJ.Config.paddle.maxSpeed };
+    const zippedBall = { x: 150, y: 100, r: 8, vx: 0, vy: target * BJ.Config.physics.brickReboundZip.exitSpeedMultiplier, spin: 0, paddleSpeedBoost: 0 };
+    const plainBall = { x: 150, y: 100, r: 8, vx: 0, vy: target, spin: 0, paddleSpeedBoost: 0 };
+    const zippedResult = BJ.Physics.bounceFromPaddle(zippedBall, paddle, target);
+    const plainResult = BJ.Physics.bounceFromPaddle(plainBall, paddle, target);
+    approx(zippedResult.boostPercent, plainResult.boostPercent, 0.0001, 'boostPercent must be identical regardless of prior zip state');
+    approx(BJ.Physics.length(zippedBall.vx, zippedBall.vy), BJ.Physics.length(plainBall.vx, plainBall.vy), 0.01, 'Resulting speed must be identical regardless of prior zip state');
+  });
+
+  test('brick bounce zip exceeds target speed then returns to normal on the very next frame', function () {
+    const game = makeGame({ level: 3 });
+    const brick = game.levelData.bricks.find(function (b) { return b.alive && b.type !== 'indestructible'; });
+    assert(brick, 'Level should have a destructible brick');
+    const targetSpeed = game.getTargetBallSpeed() * game.getBallSpeedEffect() * game.getFinalAssaultSpeedMultiplier();
+    const ball = game.balls[0];
+    ball.held = false; ball.launched = true; ball.holdRemaining = 0; ball.paddleSpeedBoost = 0; ball.spin = 0;
+    ball.x = brick.x + brick.w / 2;
+    ball.y = brick.y + brick.h + ball.r + 2;
+    ball.vx = 0; ball.vy = -targetSpeed;
+    game.update(0.016);
+    const boosted = BJ.Physics.length(ball.vx, ball.vy);
+    assert(boosted > targetSpeed + 0.5, 'Brick bounce should leave the ball faster than target speed immediately');
+    approx(boosted, targetSpeed * BJ.Config.physics.brickReboundZip.exitSpeedMultiplier, 1, 'Exit speed should equal the configured zip floor');
+    equal(ball.paddleSpeedBoost, 0, 'Zip must never set paddleSpeedBoost');
+    // Move the boosted ball into the dead zone between the brick field (never extends past
+    // level.top + rowsMax*(brickHeight+gap) = 88 + 9*34 = 394) and the paddle (y 670), so the
+    // very next frame cannot re-collide with anything - isolating the next-frame guard's effect
+    // from further collision geometry. Velocity (the boosted state under test) is left untouched.
+    ball.x = BJ.Config.playfield.width / 2;
+    ball.y = 500;
+    game.updateBalls(0.016);
+    const settled = BJ.Physics.length(ball.vx, ball.vy);
+    const newTargetSpeed = game.getTargetBallSpeed() * game.getBallSpeedEffect() * game.getFinalAssaultSpeedMultiplier();
+    approx(settled, newTargetSpeed, 2, 'Speed should return to target one frame after the bounce, not decay gradually');
+  });
+
+  test('resolveBallRect positively separates an ambiguously-overlapping ball from the rectangle', function () {
+    const rect = { x: 100, y: 100, w: 40, h: 20 };
+    const ball = { x: 108, y: 106, r: 8, vx: -50, vy: -50 };
+    const previous = { x: 108, y: 106 };
+    assert(BJ.Physics.circleRect(ball, rect), 'Test setup should start overlapping');
+    const side = BJ.Physics.resolveBallRect(ball, rect, previous);
+    assert(!BJ.Physics.circleRect(ball, rect), 'Ball must be positively separated from the rectangle after resolution');
+    equal(side, 'top', 'Minimum-penetration axis should be identified correctly for this setup');
+    assert(ball.y <= rect.y - ball.r, 'Ball must sit outside the top boundary by at least the separation epsilon');
+    assert(ball.vy < 0, 'Outgoing velocity must point away from the resolved face');
+  });
+
+  test('resolveBallRect fallback branch separates a ball ambiguous on a different axis', function () {
+    const rect = { x: 300, y: 300, w: 40, h: 20 };
+    const ball = { x: 336, y: 310, r: 8, vx: 30, vy: 5 };
+    const previous = { x: 336, y: 310 };
+    assert(BJ.Physics.circleRect(ball, rect), 'Test setup should start overlapping');
+    const side = BJ.Physics.resolveBallRect(ball, rect, previous);
+    assert(!BJ.Physics.circleRect(ball, rect), 'Ball must be positively separated from the rectangle after resolution');
+    equal(side, 'right', 'Minimum-penetration axis should be identified correctly for this setup');
+    assert(ball.x >= rect.x + rect.w + ball.r, 'Ball must sit outside the right boundary by at least the separation epsilon');
+    assert(ball.vx > 0, 'Outgoing velocity must point away from the resolved face');
+  });
+
+  test('repeated resolveBallRect calls against an embedded ball converge without oscillating', function () {
+    const rect = { x: 200, y: 200, w: 40, h: 20 };
+    const ball = { x: 205, y: 203, r: 8, vx: -30, vy: -30 };
+    let separated = false;
+    for (let i = 0; i < 5; i += 1) {
+      if (BJ.Physics.circleRect(ball, rect)) {
+        BJ.Physics.resolveBallRect(ball, rect, { x: ball.x, y: ball.y });
+      } else { separated = true; break; }
+    }
+    assert(separated, 'Ball must separate from the rectangle within a small, bounded number of resolution calls');
+    assert(!BJ.Physics.circleRect(ball, rect), 'Ball must remain separated, not oscillate back into overlap');
+  });
+
+  test('a ball touching an indestructible brick separates within update() rather than sticking', function () {
+    const game = makeGame({ level: 1 });
+    let indestructible = game.levelData.bricks.find(function (b) { return b.type === 'indestructible' && b.alive; });
+    if (!indestructible) {
+      indestructible = game.levelData.bricks.find(function (b) { return b.alive; });
+      indestructible.type = 'indestructible'; indestructible.hits = 999; indestructible.maxHits = 999;
+    }
+    const ball = game.balls[0];
+    ball.held = false; ball.launched = true; ball.holdRemaining = 0; ball.paddleSpeedBoost = 0; ball.spin = 0;
+    ball.x = indestructible.x + indestructible.w / 2;
+    ball.y = indestructible.y + indestructible.h / 2;
+    ball.vx = 40; ball.vy = 40;
+    function distanceFromBrick() {
+      const closestX = BJ.Utils.clamp(ball.x, indestructible.x, indestructible.x + indestructible.w);
+      const closestY = BJ.Utils.clamp(ball.y, indestructible.y, indestructible.y + indestructible.h);
+      return Math.sqrt(Math.pow(ball.x - closestX, 2) + Math.pow(ball.y - closestY, 2));
+    }
+    const startDistance = distanceFromBrick();
+    for (let i = 0; i < 10; i += 1) game.update(0.016);
+    assert(distanceFromBrick() > startDistance + ball.r, 'Ball must move clearly away from the indestructible brick within a handful of frames, not remain pinned at/near zero distance');
   });
 
   test('spin curves flight, decays, and preserves speed', function () {
