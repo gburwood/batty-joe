@@ -1,7 +1,7 @@
 id: CHG-0013
 title: Configurable brick-rebound speed boost, regenerating-brick completion lock, frenzy-timeout auto-completion, and indestructible-brick collision-sticking fix
 classification: defect
-status: in_progress
+status: validated
 priority: normal
 sources:
 - type: conversation

@@ -1,0 +1,42 @@
+id: EVT-000117
+timestamp: '2026-09-17T10:59:00Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  implementation_attempt: IMP-0013-01
+  source_revision: 34e8107badbe6084091393ff746fccf130591ba3
+resulting_state:
+  change_status: validated
+  implementation_outcome: passed
+evidence:
+  command: python3 specforge/core/tools/validate-specforge.py .
+  result: SpecForge validation PASSED
+  canonical_records_discovered: 194
+  test_suite: batty-joe-tests.js via batty-joe-tests.html (Chromium headless) - 125/125 passed (108 pre-existing
+    plus 17 new). Node harnesses run-v170-tests.js, run-chg0004-tests.js, run-chg0005-tests.js,
+    run-chg0009-tests.js, run-physics-v160-tests.js all passed. run-adoption-tests.py passed.
+    run-risk-classifier-tests.py passed 23/23.
+  authorization: 'specforge-authorization.py check --json reports authorized:true, authorized_by referencing
+    IMP-0013-01/APR-0014, material_differences containing exactly the six files PROP-0013-03 declared:
+    batty-joe-config.js, batty-joe-dev-spec-v1.13.0.yaml, batty-joe-game.js, batty-joe-physics.js,
+    batty-joe-tests.js, specforge/project.yaml.'
+  scope: git diff --stat 35e97cf..34e8107 confined to exactly those six files plus the IMP-0013-01/CHG-0013
+    governance updates recorded in a separate commit (cbd291c). No unrelated repository cleanup is included.
+  known_pre_existing_issue: batty-joe-tests.js has a pre-existing structural defect, unrelated to and unchanged
+    by this work - several test() calls near the end of the file sit outside the module's closing IIFE and
+    throw "Uncaught ReferenceError - test is not defined" when the page loads, so they never register with the
+    suite. Confirmed identical (same three orphaned tests, same error) on the pre-CHG-0013 baseline
+    (35e97cf, 108/108 registered tests passing) and on this implementation (34e8107, 125/125 registered tests
+    passing) - CHG-0013 neither introduces nor fixes it. Left untouched per "do not perform unrelated repository
+    cleanup".

@@ -30,4 +30,77 @@ approach: >-
 source_revision:
   system: git
   before: 5fec1961f03045503a979818a1911d76ff4d2c24
-outcome: in_progress
+  after: 34e8107badbe6084091393ff746fccf130591ba3
+completed_at: '2026-09-17T10:59:00Z'
+outcome: passed
+tests:
+  status: passed
+  passed:
+  - 'batty-joe-tests.js via batty-joe-tests.html (Chromium/Playwright, headless): 125/125 tests passed (108
+    pre-existing + 17 new for this change; 0 failures)'
+  - node tests/run-v170-tests.js
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  - python3 tests/run-adoption-tests.py
+  - python3 tests/run-risk-classifier-tests.py (23/23)
+  failed: []
+validation_checks:
+- name: brick_rebound_zip
+  required: true
+  status: passed
+  evidence: 'New tests prove: a below-floor bounce exits at exactly targetSpeed*exitSpeedMultiplier; an
+    incoming speed already above the zip floor (including a simulated 1.25x paddle-derived case, against the
+    1.15x default) exits completely unreduced; the formula matches Math.max(incoming, zipSpeed) across a swept
+    range; six consecutive bounces from target-consistent incoming speed each exit at exactly the zip floor,
+    never higher (no ratchet); disabling the config produces no speed change; a paddle contact immediately
+    after a zip bounce produces identical boostPercent/resulting speed to an unmodified ball; a full-game bounce
+    exceeds target speed immediately then returns to target-consistent speed one frame later with
+    ball.paddleSpeedBoost remaining 0 throughout.'
+- name: regenerating_brick_completion_lock
+  required: true
+  status: passed
+  evidence: New tests prove heal suppression and respawn suppression once a converted brick is the sole
+    remaining destructible brick (including a destroyed respawn-mode brick still counting as remaining),
+    equivalently via updateBricks and updateFrenzyRegeneration, and prove regeneration continues normally while
+    any other destructible brick survives.
+- name: frenzy_timeout_completion
+  required: true
+  status: passed
+  evidence: New tests prove frenzy timeout completes the level via the normal mechanism once only
+    indestructibles remain, and does not complete it while a required brick survived. The pre-existing "frenzy
+    restores exact held-ball and paddle snapshot" and "frenzy full clear completes level" tests both still pass
+    unmodified.
+- name: resolve_ball_rect_depenetration
+  required: true
+  status: passed
+  evidence: New tests prove an ambiguously-overlapping ball is positively separated (not merely
+    velocity-flipped) on two different resolved axes, that repeated resolution against a still-embedded ball
+    converges within one call rather than oscillating, and that a ball placed touching an indestructible brick
+    visibly separates within Game.prototype.update() rather than sticking.
+- name: no_regression
+  required: true
+  status: passed
+  evidence: Full batty-joe-tests.js suite (125/125), tests/run-v170-tests.js, tests/run-chg0004-tests.js,
+    tests/run-chg0005-tests.js, tests/run-chg0009-tests.js, tests/run-physics-v160-tests.js,
+    tests/run-adoption-tests.py and tests/run-risk-classifier-tests.py all pass. bounceFromPaddle and
+    decayPaddleSpeedBoost function bodies are byte-for-byte unmodified (git diff confined to the added guard
+    line and the new applyBrickReboundZip function). The four single-axis branches of resolveBallRect() and
+    BJ.Levels.countRequired() are unmodified.
+- name: specforge_validation
+  required: true
+  status: passed
+  evidence: python3 specforge/core/tools/validate-specforge.py . passed (194 canonical records).
+- name: authorization_and_material_scope
+  required: true
+  status: passed
+  evidence: 'python3 specforge/core/tools/specforge-authorization.py check --json reports authorized:true,
+    authorized_by referencing IMP-0013-01/APR-0014, and material_differences containing exactly the six files
+    declared_scope/artifacts_expected named in PROP-0013-03: batty-joe-config.js, batty-joe-dev-spec-v1.13.0.yaml,
+    batty-joe-game.js, batty-joe-physics.js, batty-joe-tests.js, specforge/project.yaml. No other file differs
+    from the trusted material baseline.'
+notes: Implementation attempt created before modifying any file. Product code, spec and tests committed in
+  34e8107 on claude/chg-0013-gameplay-batch (branched from experiment/specforge-alpha16-wild at 35e97cf). Per
+  instruction, CHG-0013 is left at status validated, not completed - the trusted material baseline is not
+  advanced and no merge is performed, pending independent implementation review.
