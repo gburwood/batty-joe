@@ -1,0 +1,45 @@
+id: EVT-000118
+timestamp: '2026-09-17T11:14:57Z'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: review_finding_reported
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  reviewed_implementation: IMP-0013-01
+  reviewed_source_revision: 34e8107badbe6084091393ff746fccf130591ba3
+resulting_state:
+  change_status: validated
+evidence:
+  reviewing_party_note: This event records the review finding as relayed to this session by Gary Burwood, the
+    product owner. The instruction that reported it did not identify which party conducted the review; per the
+    correction already on record at EVT-000114, this event does not assume or assert a specific reviewing
+    party's identity without being told one, and does not attribute the underlying technical finding to Gary
+    Burwood as its author merely because he is the one who relayed it.
+  finding_1_no_observable_movement: >-
+    Game.prototype.updateBalls integrates ball movement (P.integrateBall) before that same frame's collision
+    detection and resolution (Game.prototype.handleBallBrickCollisions) runs. BJ.Physics.applyBrickReboundZip,
+    called from inside handleBallBrickCollisions, only ever set the ball's stored velocity (ball.vx/ball.vy) to
+    the boosted exit speed - it never advanced the ball's position. On the very next simulation frame, the
+    already-approved next-frame guard (`if (!ball.paddleSpeedBoost) P.normalizeVelocity(ball, targetSpeed);`)
+    runs before that frame's own integrateBall call and resets the stored velocity back to target before it is
+    ever used to move the ball. Consequence: the zip-boosted velocity value existed only transiently in stored
+    state between the end of one frame and the very start of the next, and was never actually used to advance
+    the ball's position - the ball's real, observable trajectory never reflected the "more energetic" rebound,
+    even though a test inspecting ball.vx/ball.vy immediately after the collision (as IMP-0013-01's tests did)
+    would see the boosted value and report success. Required fix: revise the design so the sharper/faster
+    rebound produces observable ball displacement, without reintroducing the persistent/decaying boost state
+    already rejected in IA-0013-02/PROP-0013-02. A new acceptance test must measure actual ball displacement,
+    not only stored velocity.
+  finding_2_spec_contradiction: batty-joe-dev-spec-v1.13.0.yaml's non_regression block set both
+    gameplay_unchanged and physics_unchanged to true, directly contradicting CHG-0013's own explicit
+    gameplay changes (brick-rebound zip, regenerating-brick completion lock, frenzy-timeout completion) and
+    physics changes (brick-rebound zip, resolveBallRect depenetration fix) documented elsewhere in the same
+    file. Required fix - correct these fields to false and state what actually changed.
+  disposition: Do not merge or complete CHG-0013. Follow the installed SpecForge lifecycle to revise the
+    proposal, approval and implementation evidence as required, preserving prior records and using actual
+    timestamps, then stop again for independent review before merge or completion.
