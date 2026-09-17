@@ -1,0 +1,38 @@
+id: EVT-000129
+timestamp: '2026-09-17T11:42:50Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: validation_passed
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  implementation_attempt: IMP-0013-03
+  approval: APR-0015
+  source_revision: a1d17a69e3413d8b46bfc41805c8030601361af4
+resulting_state:
+  change_status: validated
+  implementation_outcome: passed
+evidence:
+  command: python3 specforge/core/tools/validate-specforge.py .
+  result: SpecForge validation PASSED
+  canonical_records_discovered: 213
+  authorization: 'specforge-authorization.py check --json reports authorized:true, authorized_by referencing
+    IMP-0013-03/APR-0015 (before corrected to the trusted baseline 5fec1961f03045503a979818a1911d76ff4d2c24,
+    the point this attempt''s material diff has always actually been measured against), and
+    material_differences containing exactly the six files PROP-0013-05 declares: batty-joe-config.js,
+    batty-joe-dev-spec-v1.13.0.yaml, batty-joe-game.js, batty-joe-physics.js, batty-joe-tests.js,
+    specforge/project.yaml.'
+  test_suite: batty-joe-tests.js via batty-joe-tests.html (Chromium headless) - 128/128 passed. All existing
+    node/python regression harnesses pass (unchanged from IMP-0013-03's original evidence).
+  note: IMP-0013-01 and IMP-0013-02 remain preserved unmodified as historical evidence (passed and blocked
+    respectively, for their own attempts' own reasons). IMP-0013-03 is updated from blocked to passed here
+    because the one thing blocking it - a missing approval on PROP-0013-05 - is now resolved by APR-0015; its
+    test/validation content is unchanged from when it was first recorded.

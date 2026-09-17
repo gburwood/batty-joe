@@ -1,0 +1,28 @@
+id: APR-0015
+change: CHG-0013
+proposal: PROP-0013-05
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-17T11:41:34Z'
+scope:
+  proposal_revision: 5
+  proposed_specification_version: 1.13.0
+  approved_behaviour: >-
+    Exactly PROP-0013-05 as committed at a1d17a6 (revision 5, superseding PROP-0013-04, which superseded
+    PROP-0013-03, PROP-0013-02 and PROP-0013-01). Item 1's brick-rebound zip now applies a supplemental position
+    update scaled to only bonusSpeed = exitSpeed - incomingSpeed (zero whenever the ball is already at or above
+    the configured floor), never a complete extra movement step at the full exit speed - stateless, no ball
+    field, no decay curve, no ratcheting, paddle-system independence preserved. Items 2-3 unchanged from
+    PROP-0013-01. Item 4's resolveBallRect() fix and the corrected v1.13.0 non_regression specification
+    (gameplay_unchanged/physics_unchanged: false with itemised change lists) unchanged from PROP-0013-04. No
+    revision to the proposal's content is made or requested by this approval.
+mechanism:
+  type: conversation
+  reference: User explicitly approved PROP-0013-05 exactly as committed, and directed the session to continue,
+    following the same mechanically-bound-digest approval mechanism used for APR-0014.
+evidence:
+  proposal_digest_algorithm: sha256
+  proposal_digest: 558017cf04c68a62e9516640a52ec07ee6446060ec8767593ed5d1ba53f3b307
