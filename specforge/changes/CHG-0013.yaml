@@ -1,0 +1,81 @@
+id: CHG-0013
+title: Configurable brick-rebound speed boost, regenerating-brick completion lock, frenzy-timeout auto-completion, and indestructible-brick collision-sticking fix
+classification: defect
+status: awaiting_approval
+priority: normal
+sources:
+- type: conversation
+  reference: user-request-2026-09-17-gameplay-batch-rebound-regen-frenzy-collision
+  received_at: '2026-09-17T09:00:00+01:00'
+request:
+  summary: Four batched product-owner gameplay requirements - a configurable short-lived ball rebound speed
+    boost, a regenerating-brick completion lock, frenzy-timeout auto-completion when only indestructibles
+    survive, and a fix for the ball sticking on indestructible bricks.
+  detail: >-
+    The product owner supplied four gameplay requirements for a single governed change:
+
+
+    1. Verbatim user-defined requirement: "The ball needs more zip off the bounce." To be interpreted for
+    proposal purposes as a short-lived, configurable rebound speed boost during ordinary gameplay (not a
+    permanent increase to the base difficulty speed curve), decaying toward the normal target speed and never
+    accumulating without bound. Paddle-specific boost behaviour and frenzy-specific physics are to stay
+    independent of this change unless analysis proves otherwise.
+
+
+    2. Regenerating bricks must not regenerate (heal or respawn) when the only remaining destructible bricks
+    are regenerating bricks, in both ordinary play and frenzy. "Remaining" excludes indestructible bricks.
+
+
+    3. When frenzy time expires, if frenzy has destroyed every required brick and only indestructible bricks
+    remain, the ordinary level view/state must be restored and the level then completed through the normal
+    level-completion mechanism, without inventing a separate frenzy completion rule and while preserving normal
+    frenzy snapshot restoration semantics.
+
+
+    4. Investigate and fix the reported case where the ball can appear to stick or slide along the surface of an
+    indestructible brick for several seconds or indefinitely. Suspected cause: resolveBallRect() depenetrates
+    correctly when the previous ball position identifies a single collision face, but its ambiguous-approach
+    overlap/fallback branch reverses velocity without moving the ball out of the rectangle. The fix must be a
+    general correction to resolveBallRect()'s rectangular collision handling, not a special case for
+    indestructible bricks.
+clarification:
+  required: false
+  notes: >-
+    All four items were investigated directly against the current implementation (batty-joe-physics.js,
+    batty-joe-game.js, batty-joe-config.js) before drafting the proposal; see IA-0013-01 for the concrete
+    findings backing each interpretation, including confirmation of the reported resolveBallRect() diagnosis.
+relationships:
+  depends_on: []
+  conflicts_with: []
+  related_to:
+  - CHG-0002
+  - CHG-0003
+  - CHG-0005
+  - CHG-0009
+  supersedes: []
+  parent: null
+  children: []
+impact_analysis:
+  current: IA-0013-01
+proposal:
+  current: PROP-0013-01
+approvals: []
+implementation:
+  attempts: []
+governance:
+  lifecycle_enforcement: controlled_v1
+  enforced_from_change: CHG-0009
+requirements:
+  affected: []
+release:
+  completed_in: null
+metadata:
+  created_at: '2026-09-17T09:00:00+01:00'
+  created_by:
+    type: ai
+    id: claude
+    display_name: Claude Code
+    ai:
+      provider: anthropic
+      tool: Claude Code
+      model: claude-sonnet-5

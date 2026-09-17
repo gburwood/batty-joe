@@ -1,0 +1,29 @@
+id: EVT-000105
+timestamp: '2026-09-17T09:20:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0013-01
+related:
+  change: CHG-0013
+resulting_state:
+  change_status: analysed
+evidence:
+  reproduction: Read batty-joe-physics.js, batty-joe-game.js and batty-joe-config.js in full. Confirmed no
+    existing brick-bounce speed effect exists (only the paddle-hit-only paddleVelocityTransfer boost from
+    CHG-0002). Confirmed updateBricks (batty-joe-game.js:608-618) and updateFrenzyRegeneration
+    (batty-joe-game.js:1762-1770) heal/respawn regenerating bricks unconditionally with no check on remaining
+    brick composition. Confirmed finishFrenzyRestore (batty-joe-game.js:1840-1880) never calls
+    checkLevelComplete/completeLevel, while checkLevelComplete is otherwise only reachable from damageBrick's
+    destroyed branch. Confirmed and reproduced the reported resolveBallRect() diagnosis - its ambiguous-approach
+    "else" fallback branch (batty-joe-physics.js:147-158) flips velocity without ever assigning ball.x/ball.y,
+    unlike the four single-axis branches immediately above it and unlike resolveBallSegment's equivalent branch,
+    which does correct position.

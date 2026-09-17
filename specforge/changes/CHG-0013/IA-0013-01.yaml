@@ -1,0 +1,203 @@
+id: IA-0013-01
+change: CHG-0013
+revision: 1
+created_at: '2026-09-17T09:20:00+01:00'
+affected:
+  requirements: []
+  components:
+  - ball_brick_rebound_physics
+  - paddle_velocity_transfer_physics
+  - regenerating_brick_lifecycle
+  - frenzy_regeneration
+  - frenzy_timeout_exit
+  - level_completion
+  - rectangular_collision_resolution
+  artifacts:
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-config.js
+  - batty-joe-tests.js
+  - batty-joe-dev-spec-v1.13.0.yaml (new, future implementation only)
+  - specforge/project.yaml (specification rebind, future implementation only)
+  tests:
+    required:
+    - A new physics-level test proves a brick bounce raises ball speed above target by a bounded, configured
+      amount, and that the boost decays back toward target over time.
+    - A new physics-level test proves repeated consecutive brick hits cannot push the rebound boost, or the
+      resulting ball speed, beyond its configured maximum, ever.
+    - A new game-level test proves a regenerating (heal-mode) brick does not heal, and a regenerating
+      (respawn-mode) brick does not respawn, once it is the only type of destructible brick left in ordinary
+      play.
+    - The same suppression is proven equivalently inside frenzy regeneration (updateFrenzyRegeneration), not
+      just ordinary play (updateBricks).
+    - A new game-level test proves that when a frenzy times out with every required (non-indestructible) brick
+      already destroyed by the frenzy minigame, the level completes via the normal completion mechanism
+      (state becomes LEVEL_COMPLETE) immediately after frenzy snapshot restoration.
+    - A new game-level test proves the level does NOT complete on frenzy timeout when at least one ordinary
+      required brick survived the frenzy.
+    - A new physics-level test proves resolveBallRect(), given a ball already overlapping a rectangle in a way
+      the previous position cannot single out a face (the existing "ambiguous approach" fallback branch),
+      leaves the ball with zero overlap against that rectangle afterward (no longer colliding).
+    - A new game-level (or physics-level) test proves that repeatedly re-resolving an embedded ball against the
+      same indestructible brick converges to separation within a small, bounded number of resolution calls,
+      rather than oscillating indefinitely or leaving the ball still overlapping.
+    - The full existing suite in batty-joe-tests.js remains green, in particular - "frenzy restores exact
+      held-ball and paddle snapshot" (line 121), "moving paddle temporarily boosts ball speed" / "faster paddle
+      produces greater temporary speed boost" / "edge paddle contact boosts more than centre contact" /
+      "stationary paddle creates no motion-derived speed boost" / "temporary paddle speed boost decays toward
+      current target speed" / "disabled paddle velocity transfer restores no-boost behaviour" (lines 468-520),
+      and "frenzy full clear completes level" (line 379).
+compatibility:
+  breaking: false
+  notes: All four items are additive or corrective within existing systems. No existing public Game/Physics
+    method signature is removed; two new BJ.Physics functions are added (analogous in shape to the existing
+    bounceFromPaddle/decayPaddleSpeedBoost pair) and one existing function (finishFrenzyRestore) gains one
+    trailing call to an existing method (checkLevelComplete) it does not currently make.
+migration:
+  required: false
+  notes: No persisted save-data shape changes. Ball objects already carry a paddleSpeedBoost scratch field
+    that is not persisted across sessions (it is re-initialised in createStartingBall/releaseBall); a new
+    reboundSpeedBoost scratch field follows the identical, non-persisted pattern.
+risks:
+- id: RISK-0013-01
+  description: A rebound speed boost that stacks with the existing paddle-hit speed boost (CHG-0002) could let
+    the ball reach speeds well above either mechanism's own configured cap if the two are simply added together,
+    contradicting the "must not accumulate without bound" requirement.
+  severity: high
+  mitigation: The proposal keeps the two boosts as separate, independently bounded, independently decaying
+    fractions (ball.paddleSpeedBoost, unchanged, and a new ball.reboundSpeedBoost, each hard-capped at its own
+    configured maxBoostPercent at the point of increment via Math.min). The ball's realised speed on any frame
+    is the greater of the two boosted targets, never their sum, so the provable upper bound is
+    target * (1 + max(paddleVelocityTransfer.maxBoostPercent, reboundSpeedBoost.maxBoostPercent)) regardless of
+    how many brick or paddle hits occur. Decay for the new mechanism only ever raises speed toward its own
+    decaying ceiling, never lowers it, so it cannot fight or reset an in-progress paddle-boost decay.
+- id: RISK-0013-02
+  description: Confusing "the ball needs more zip off the bounce" with the base difficulty speed curve
+    (getTargetBallSpeed/acceleratedSpeed) would produce a permanent per-level speed increase rather than the
+    requested short-lived effect, and would be much harder to keep independent of paddle/frenzy physics.
+  severity: medium
+  mitigation: getTargetBallSpeed and P.acceleratedSpeed are left untouched. The new effect is implemented purely
+    as a transient, decaying, per-ball scratch fraction applied on top of the existing target speed, exactly
+    parallel in structure to the already-shipped and already-tested paddle boost, and is only ever triggered by
+    non-penetrating brick collisions in ordinary play (handleBallBrickCollisions). Pinball-frenzy restitution
+    (getPinballRestitution/scaleVelocity) and all other frenzy sub-game physics are untouched, so frenzy-specific
+    physics remain independent without requiring any change there.
+- id: RISK-0013-03
+  description: The regenerating-brick suppression rule, if computed incorrectly, could either (a) never trigger
+    (leaving the original softlock/race-against-respawn problem in place) or (b) over-trigger and freeze healing
+    for a regenerating brick while other, permanently-destructible bricks are still alive, which would be an
+    unrequested nerf.
+  severity: medium
+  mitigation: The proposed predicate only treats a brick as "still remaining" if it is alive, or it is a
+    respawn-mode regenerating brick currently mid-respawn-delay (the only case where a destroyed brick can still
+    come back); every other destroyed brick type is permanently gone and does not count as remaining. Suppression
+    only activates when that remaining set is non-empty and consists entirely of regenerating-type bricks, so any
+    surviving normal/multi_hit/explosive/moving/invisible/powerup brick keeps regeneration fully active.
+- id: RISK-0013-04
+  description: countRequired() (batty-joe-levels.js) already excludes indestructible bricks from level-completion
+    counting; a naive completion check on frenzy-timeout that reuses a different predicate could diverge from it
+    (e.g. by counting differently-typed dead bricks) and either complete the level early or never complete it.
+  severity: medium
+  mitigation: The proposal adds no new completion predicate. It calls the existing, already-load-bearing
+    Game.prototype.checkLevelComplete(), which itself calls the existing BJ.Levels.countRequired(), from the one
+    place (finishFrenzyRestore, after ordinary state is restored and state is no longer a frenzy state) where a
+    frenzy-cleared level currently has no path to completion. This satisfies "do not invent a separate frenzy
+    completion rule" by construction, and inherits countRequired()'s existing indestructible-exclusion semantics
+    for free.
+- id: RISK-0013-05
+  description: A generalised depenetration fix to resolveBallRect()'s fallback branch could alter established,
+    already-tested rebound directions/positions for the single-axis (wasLeft/wasRight/wasAbove/wasBelow) cases
+    that are not actually broken.
+  severity: low
+  mitigation: The proposal only rewrites the ambiguous "else" fallback branch (the one entered when none of
+    wasLeft/wasRight/wasAbove/wasBelow is true against the supplied previous position). The four single-axis
+    branches, which already correctly depenetrate today, are left byte-for-byte unchanged. The fallback branch is
+    rewritten to use the same "snap position to the resolved boundary plus a fixed separation epsilon, force
+    velocity away from that face" pattern already used by the single-axis branches immediately above it in the
+    same function, so the two code paths become visually and behaviourally consistent rather than divergent.
+- id: RISK-0013-06
+  description: Applying the rebound speed boost to *every* non-penetrating brick contact (including
+    multi_hit/explosive/regenerating bricks and rapid multi-brick sequences) rather than only to "ordinary"
+    single normal-brick hits could make the boost trigger far more often than a designer intends, defeating its
+    "short-lived" character by keeping it perpetually refreshed during dense brick fields.
+  severity: low
+  mitigation: This is flagged for explicit product-owner sign-off in PROP-0013-01 rather than silently resolved -
+    the proposal's default is "boost applies on any non-penetrating brick bounce, regardless of brick type",
+    matching the literal words "off the bounce" and keeping the mechanism simple and uniform; the configured
+    decayHalfLifeSeconds and maxBoostPercent are the intended levers for tuning how persistent/aggressive it
+    feels in dense brick fields, rather than gating eligibility by brick type.
+open_changes:
+  overlaps_with: []
+summary: >-
+  Investigated all four items directly against the current source rather than the one-line descriptions.
+
+
+  (1) Rebound speed boost: batty-joe-physics.js already contains a paddle-hit-only speed boost
+  (physics.paddleVelocityTransfer, added by CHG-0002): bounceFromPaddle() computes a bounded boostPercent from
+  paddle motion and contact position, and decayPaddleSpeedBoost() exponentially decays it back toward
+  getTargetBallSpeed() each frame in Game.prototype.updateBalls (batty-joe-game.js:417-428). Brick bounces
+  (Game.prototype.handleBallBrickCollisions, batty-joe-game.js:476-489, via
+  BJ.Physics.resolveBallRect/applyReboundCharacter) currently only change the ball's *direction* (imperfect
+  rebound angle, spin deflection); applyReboundCharacter always ends with
+  normalizeVelocity(ball, speed) using the ball's incoming speed, so a brick bounce today produces zero net
+  speed change. There is no existing mechanism at all for "more zip off the bounce" on brick contact. Pinball
+  Frenzy uses an entirely separate restitution system (getPinballRestitution/P.scaleVelocity,
+  batty-joe-game.js:1422 onward) that never touches paddleSpeedBoost or targetSpeed, and Grid Runner/other
+  frenzy modes do not run handleBallBrickCollisions at all, so a boost scoped to
+  handleBallBrickCollisions naturally stays out of every frenzy sub-game without requiring any frenzy-side
+  change - confirming the "independent unless analysis proves otherwise" premise holds for both paddle and
+  frenzy physics.
+
+
+  (2) Regenerating-brick lock: BJ.Levels.countRequired (batty-joe-levels.js:162) already excludes indestructible
+  bricks by design. Ordinary regeneration lives in Game.prototype.updateBricks (batty-joe-game.js:608-618):
+  heal-mode bricks heal unconditionally every 4 elapsed seconds while below maxHits, and respawn-mode bricks
+  respawn unconditionally 6 elapsed seconds after destruction, with no check on what else remains alive. The
+  parallel frenzy path, Game.prototype.updateFrenzyRegeneration (batty-joe-game.js:1762-1770), has the identical
+  unconditional heal/respawn logic, confirming the rule needs to apply in both places independently. Because
+  respawn-mode bricks never stop coming back, a level whose last non-indestructible bricks are all regenerating
+  can force the player into an unwinnable race against the respawn/heal timers to clear them all
+  "simultaneously"; freezing regeneration once they are the only destructible bricks left turns them into
+  normal one-way-destructible bricks for the remainder of the level, giving the player a guaranteed path to
+  completion without changing anything about levels that still have other brick types in play.
+
+
+  (3) Frenzy-timeout completion: Game.prototype.updateFrenzyState (batty-joe-game.js:1057-1066) decrements
+  frenzyRemaining and calls beginFrenzyExit('timeout') at zero; beginFrenzyExit sets up the transition-out lerp.
+  When that transition completes, updateFrenzyState (batty-joe-game.js:1052) calls
+  Game.prototype.finishFrenzyRestore(reason), which fully restores the pre-frenzy ball/paddle/powerup/RNG
+  snapshot (batty-joe-game.js:1840-1880) for any exit reason other than 'clear', sets state back to
+  getBasePlayState(), and returns - it never calls checkLevelComplete() or completeLevel(). Separately, every
+  frenzy sub-game's own "cleared everything" path (e.g. updateInvadersFrenzy line 1071,
+  updateGridRunnerFrenzy line 1747) already calls finishFrenzyClear() + completeLevel(true) directly, which is
+  why 'reason' is deliberately excluded from the restore branch (finishFrenzyRestore only restores the ordinary
+  snapshot when reason !== 'clear', since a 'clear' exit has already torn down frenzy state via
+  finishFrenzyClear before reaching this function). This confirms the gap is specifically the *timeout* (and
+  other early-exit) path: if frenzy happens to have destroyed every required brick before time runs out but the
+  player is then simply timed out rather than triggering that sub-game's own "clear" condition, ordinary state is
+  restored with zero required bricks left on the level, and nothing ever calls checkLevelComplete() again,
+  because checkLevelComplete() is otherwise only invoked from Game.prototype.damageBrick's destroyed branch
+  (batty-joe-game.js:522) - which will never fire again once no bricks remain to damage. The existing
+  Game.prototype.checkLevelComplete() (batty-joe-game.js:2169-2173) already refuses to act while isFrenzyState()
+  is true and already reuses countRequired()'s indestructible-exclusion; calling it once, after state restoration,
+  at the end of finishFrenzyRestore is a one-line reuse of the existing mechanism, not a new rule, and is a
+  no-op (as today) whenever any ordinary required brick survived.
+
+
+  (4) resolveBallRect() sticking bug - diagnosis confirmed: BJ.Physics.resolveBallRect (batty-joe-physics.js:
+  127-164) branches on the ball's *previous* position (wasLeft/wasRight/wasAbove/wasBelow) to decide which face
+  was hit; each of those four branches both snaps the ball's position outside the rectangle *and* forces velocity
+  away from that face. When none of those four conditions holds - i.e. the previous position was already
+  overlapping the rectangle on more than one axis, which happens whenever a fast-moving or already-embedded ball
+  approaches a corner, or is left overlapping by an earlier unresolved collision - the function falls into its
+  final "else" branch (lines 147-158), which computes the axis of minimum penetration correctly but only ever
+  does `ball.vx *= -1` or `ball.vy *= -1`: it never assigns ball.x or ball.y. The ball is left exactly where it
+  was, still fully overlapping the rectangle. On the next physics tick, circleRect() is still true (nothing moved
+  it out), previous is derived from the ball's now-still-embedded position, so wasLeft/wasRight/wasAbove/wasBelow
+  are still all false against an unmoved rect, and the function re-enters the same "else" branch - which may flip
+  the same velocity component back again if the ball has not moved enough between frames, or perpetually
+  reflect a component that never carries the ball back out because position is never corrected. This is a general
+  defect in resolveBallRect() itself, not brick-type-specific: it reproduces identically against the boss rect
+  (Game.prototype.updateBalls, batty-joe-game.js:454-455, calls the same resolveBallRect for boss collisions) and
+  against any ordinary brick. It manifests most visibly on indestructible bricks simply because they are the one
+  brick type a ball can keep re-colliding with indefinitely without ever being removed from the level by damage.

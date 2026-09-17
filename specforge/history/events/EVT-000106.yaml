@@ -1,0 +1,31 @@
+id: EVT-000106
+timestamp: '2026-09-17T09:40:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0013-01
+related:
+  change: CHG-0013
+  impact_analysis: IA-0013-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.13.0
+evidence:
+  scope: A configurable, independently-bounded rebound speed boost on non-penetrating brick bounces
+    (batty-joe-config.js, batty-joe-physics.js, batty-joe-game.js); a shared regenerating-brick completion-lock
+    predicate reused by both ordinary and frenzy regeneration; one added trailing call to the existing
+    checkLevelComplete() inside finishFrenzyRestore; and a general fix confined to resolveBallRect()'s
+    ambiguous-approach fallback branch. No product code is modified by this proposal-preparation session itself;
+    artifacts_expected in PROP-0013-01 declares what an approved implementation attempt would touch, including
+    a new batty-joe-dev-spec-v1.13.0.yaml and the specforge/project.yaml specification rebind. Deterministic
+    governance-tier enforcement (CHG-0012) is explicitly not activated; this change uses the currently effective
+    controlled_v1 lifecycle profile only.

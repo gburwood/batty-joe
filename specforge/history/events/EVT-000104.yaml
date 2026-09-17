@@ -1,0 +1,24 @@
+id: EVT-000104
+timestamp: '2026-09-17T09:00:00+01:00'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: change_created
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  prior_change: CHG-0012
+resulting_state:
+  change_status: proposed
+evidence:
+  reason: Product-owner batch of four gameplay requirements - configurable brick-rebound speed boost, a
+    regenerating-brick completion lock, frenzy-timeout auto-completion when only indestructibles survive, and a
+    fix for the ball sticking on indestructible bricks - taken on ahead of CHG-0013's own proposal per SPECFORGE.md
+    bootstrap and CHG-0012's non-authoritative experimental status.
