@@ -1,0 +1,41 @@
+id: EVT-000114
+timestamp: '2026-09-17T10:41:18Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: forensic_record_correction
+entity:
+  type: forensic_event
+  id: EVT-000111
+related:
+  change: CHG-0013
+  corrected_record: EVT-000111
+corrects: EVT-000111
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  finding: >-
+    EVT-000111's actor attribution is incorrect. It records the PROP-0013-02 review finding (the
+    Math.max(incomingSpeed, zipSpeed) analysis and the 1.25x-paddle-boost-versus-1.15x-zip-multiplier finding)
+    under actor.type: human, actor.id: gary_burwood. That technical finding did not originate from Gary
+    Burwood. It originated from an independent review conducted by ChatGPT (OpenAI, model GPT-5.6 Sol) - the
+    same reviewing party already on record as CHG-0012's metadata.created_by (specforge/changes/CHG-0012.yaml).
+    Gary Burwood is the product owner who received that review and relayed/accepted its findings into this
+    session as the instruction that produced IA-0013-03/PROP-0013-03; he was not the technical author of the
+    Math.max floor analysis or the paddle-versus-zip-multiplier comparison it is based on.
+  correction: >-
+    EVT-000111 is preserved exactly as originally written - its actor field, timestamp and evidence text are not
+    rewritten, per forensic-traceability.md ("do not silently rewrite history; corrections create a new
+    revision, superseding record, or corrective event") and the same principle already applied by EVT-000107. No
+    replacement timestamp is invented for EVT-000111; its original timestamp stands, uncorrected, alongside this
+    note. The correct attribution for the underlying technical finding is: originating actor - ai, provider
+    openai, tool ChatGPT, model gpt-5.6-sol (technical author of the review); relaying/accepting actor - human,
+    gary_burwood (product owner who received the review and directed this session to act on it).
+  no_other_change: PROP-0013-03 itself is unchanged by this correction - its content, revision number and
+    status (awaiting_approval) stand exactly as pushed in commit 05b117d. CHG-0013 remains awaiting_approval. No
+    new impact-analysis or proposal revision is created by this event, and no product code is modified.
