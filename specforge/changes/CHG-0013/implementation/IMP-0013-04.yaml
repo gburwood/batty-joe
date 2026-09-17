@@ -30,6 +30,23 @@ source_revision:
   after: a1d17a69e3413d8b46bfc41805c8030601361af4
 completed_at: '2026-09-17T11:50:36Z'
 outcome: passed
+integration:
+  profile: immutable_material_v3
+  provider: git
+  target_ref: experiment/specforge-alpha16-wild
+  target_before: 35e97cf8254820434d58e481d2814d1ca3851653
+  integrated_revision: a1d17a69e3413d8b46bfc41805c8030601361af4
+  implementation_material:
+    provider: specforge_snapshot
+    revision: sha256:e5726cec1cc6e00edf8d601fdb9b474ddf049b03492e86feeae237504e776202
+    file_count: 117
+  integrated_material:
+    provider: specforge_snapshot
+    revision: sha256:e5726cec1cc6e00edf8d601fdb9b474ddf049b03492e86feeae237504e776202
+    file_count: 117
+  verification:
+    status: passed
+    method: target_first_parent_transition_plus_canonical_material_equivalence
 tests:
   status: passed
   passed:

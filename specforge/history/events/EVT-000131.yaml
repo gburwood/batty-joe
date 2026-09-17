@@ -1,0 +1,46 @@
+id: EVT-000131
+timestamp: '2026-09-17T12:05:09Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: material_authority_advanced
+entity:
+  type: material_authority
+  id: project-material-authority
+related:
+  change: CHG-0013
+  implementation_attempt: IMP-0013-04
+  target_branch: experiment/specforge-alpha16-wild
+resulting_state:
+  change_status: validated
+  trusted_material_revision: 3d5640c46fe973123e7232db2a558ac4ff83213b
+evidence:
+  previous_trusted_material_revision: 5fec1961f03045503a979818a1911d76ff4d2c24
+  implementation_source_revision_after: a1d17a69e3413d8b46bfc41805c8030601361af4
+  merge: claude/chg-0013-gameplay-batch fast-forward merged into experiment/specforge-alpha16-wild
+    (35e97cf..3d5640c), confirmed a clean fast-forward with no target-branch drift since the branch point.
+  integration_evidence: Built and verified via specforge-integration.py build/verify against IMP-0013-04 -
+    target_ref experiment/specforge-alpha16-wild, target_before 35e97cf8254820434d58e481d2814d1ca3851653,
+    integrated_revision a1d17a69e3413d8b46bfc41805c8030601361af4, implementation_material and
+    integrated_material both sha256:e5726cec1cc6e00edf8d601fdb9b474ddf049b03492e86feeae237504e776202
+    (117 files). specforge-integration.py verify --attempt IMP-0013-04 reports valid:true.
+  command: python3 specforge/core/tools/specforge-authorization.py accept --json
+  result: 'accepted:true'
+  post_source_revision_changes_before_authority_advance:
+  - specforge/changes/CHG-0013/implementation/IMP-0013-04.yaml (integration evidence block added)
+  - specforge/decisions/.gitkeep (project-owned bootstrap path, declared in project.yaml's own manifest but
+    never previously created; recreated here as a genuine completion prerequisite, not unrelated cleanup)
+  material_difference_assessment: governance bookkeeping only (specforge/decisions is excluded from material
+    scope by governance_bookkeeping_roots)
+notes: >-
+  The terminal completed transition was attempted and is blocked solely by bootstrap:missing_path:packs -
+  specforge/packs is declared framework-owned in project.yaml's own ownership block and is excluded from the
+  governance-bookkeeping exclusion list, so creating it is outside a project-level session's authority without
+  a separately authorized core-material change; it predates CHG-0013 and is not something this change can or
+  should resolve as a side effect. specforge-lifecycle.py transition CHG-0013 --to completed --json is left
+  reporting exactly that one blocker, not worked around.
