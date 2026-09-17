@@ -1,0 +1,42 @@
+id: EVT-000132
+timestamp: '2026-09-17T12:35:17Z'
+actor:
+  type: ai
+  id: chatgpt
+  display_name: ChatGPT
+  ai:
+    provider: openai
+    tool: ChatGPT
+    model: GPT-5.6 Sol
+event_type: correction
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  corrected_event: EVT-000131
+  correction_commit: 131f28342e8ec2fe299017968cbdab6ab4af1b35
+  target_branch: experiment/specforge-alpha16-wild
+resulting_state:
+  change_status: validated
+  completion_status: blocked
+  completion_blocker: bootstrap:missing_path:packs
+evidence:
+  finding: >-
+    The specforge/decisions/.gitkeep placeholder created during the CHG-0013 completion attempt was unrelated
+    to the approved gameplay change and repeated the earlier out-of-scope bootstrap-path repair identified
+    during this change. The empty decisions placeholder is therefore removed rather than retained merely to
+    satisfy bootstrap readiness.
+  correction: >-
+    Commit 131f28342e8ec2fe299017968cbdab6ab4af1b35 removes only specforge/decisions/.gitkeep from
+    experiment/specforge-alpha16-wild. EVT-000131 is preserved unchanged as the historical record of the prior
+    completion attempt; this event appends the correction instead of rewriting that history.
+  completion_gate: >-
+    CHG-0013 remains merged and validated. Formal completion remains blocked by the pre-existing
+    bootstrap:missing_path:packs condition. No specforge/packs placeholder is created to bypass that gate.
+  scope: >-
+    No product source, product specification, implementation-attempt content, approval record, material-authority
+    record, SpecForge Core file, pack content, or project manifest is changed by this correction.
+notes: >-
+  The missing empty packs path is retained as dogfood evidence for the separate bootstrap/completion-path issue.
+  No Core change is attempted as part of CHG-0013.
