@@ -243,7 +243,7 @@
     return next;
   }
 
-  function applyBrickReboundZip(ball, targetSpeed, config) {
+  function applyBrickReboundZip(ball, targetSpeed, dt, config) {
     if (!ball) return 0;
     config = config || (BJ.Config && BJ.Config.physics && BJ.Config.physics.brickReboundZip);
     const incomingSpeed = Math.max(1, length(ball.vx, ball.vy));
@@ -253,6 +253,16 @@
     const zipSpeed = target * multiplier;
     const exitSpeed = Math.max(incomingSpeed, zipSpeed);
     normalizeVelocity(ball, exitSpeed);
+    // Movement for the current simulation step already happened (integrateBall runs before
+    // collision resolution), and the next frame's paddle-boost guard resets stored velocity to
+    // target before the following integrateBall call. Without this, the zipped velocity is set
+    // and then discarded without ever being used to move the ball. Applying one supplemental
+    // step here, at the already-resolved exit velocity, makes the sharper rebound an immediate,
+    // observable displacement rather than a transient stored value - still a single fixed,
+    // stateless nudge computed fresh from the current exit velocity, not an accumulating boost.
+    const step = Math.max(0, Number(dt) || 0);
+    ball.x += ball.vx * step;
+    ball.y += ball.vy * step;
     return exitSpeed;
   }
 

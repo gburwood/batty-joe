@@ -1,0 +1,104 @@
+id: IMP-0013-02
+change: CHG-0013
+proposal: PROP-0013-04
+attempt: 2
+started_at: '2026-09-17T11:20:09Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: >-
+  Fix the defect independent review found in IMP-0013-01 (attempt 1, source revision 34e8107, recorded passed
+  but observed to never actually move the ball) directly on the same implementation branch
+  claude/chg-0013-gameplay-batch. BJ.Physics.applyBrickReboundZip gains a dt parameter and, after resolving
+  exitSpeed exactly as before (Math.max(incomingSpeed, targetSpeed*exitSpeedMultiplier) unchanged), performs one
+  supplemental position update at that exit velocity (ball.x += ball.vx*dt; ball.y += ball.vy*dt) so the effect
+  is genuinely observable within the same frame the bounce occurs. Game.prototype.handleBallBrickCollisions
+  gains a dt parameter threaded from Game.prototype.updateBalls, which already has it in scope. Two new
+  acceptance tests added: a physics-level test proving the displacement equals exitSpeed*dt directly, and a
+  game-level A/B test proving a zip-enabled bounce leaves the ball measurably farther from the brick than an
+  otherwise-identical zip-disabled bounce. batty-joe-dev-spec-v1.13.0.yaml's non_regression block corrected from
+  gameplay_unchanged/physics_unchanged: true (contradicting the file's own documented changes) to false, with
+  itemised gameplay_changes/physics_changes lists. No change to updateBalls's existing step ordering, to
+  BJ.Physics.bounceFromPaddle/decayPaddleSpeedBoost's bodies, or to any file outside PROP-0013-04's declared
+  scope.
+source_revision:
+  system: git
+  before: 34e8107badbe6084091393ff746fccf130591ba3
+outcome: blocked
+blocker: >-
+  This attempt's own checks (below) all passed, but PROP-0013-04 (the proposal this attempt implements) has not
+  yet received a human approval bound to its exact digest. Per source-of-truth.md rules 6, 8 and 9, an AI
+  assertion that a human approved a proposal is not itself approval evidence, and in Controlled mode a
+  materially changed proposal does not become authoritative without one. Consequently
+  specforge-authorization.py's material-authority check correctly reports unauthorized_material_changes for the
+  working-tree diff this attempt produces (batty-joe-physics.js, batty-joe-game.js, batty-joe-tests.js,
+  batty-joe-dev-spec-v1.13.0.yaml), because CHG-0013 is not currently in an in_progress/implemented/validated
+  state with a valid exact approval on PROP-0013-04 - and it must not be placed into one of those states by this
+  session without that approval. This attempt is recorded blocked, not passed, for exactly that reason; it is
+  not rewritten as passed, and its own test/validation evidence below remains accurate for what it verifies.
+  Resolving this requires either an explicit human approval of PROP-0013-04 (after which a follow-up attempt or
+  a revision to this one can be re-authorized and the change advanced normally), or explicit direction that this
+  correction should instead be treated as continuing under the already-approved PROP-0013-03/APR-0014 (in which
+  case PROP-0013-04/IA-0013-04 would need to be withdrawn rather than left as the current revision).
+tests:
+  status: passed
+  passed:
+  - 'batty-joe-tests.js via batty-joe-tests.html (Chromium/Playwright, headless): 127/127 tests passed (125
+    from IMP-0013-01 plus 2 new displacement tests for this attempt; 0 failures)'
+  - node tests/run-v170-tests.js
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  - python3 tests/run-adoption-tests.py
+  - python3 tests/run-risk-classifier-tests.py (23/23)
+  failed: []
+validation_checks:
+- name: brick_rebound_zip_observable_displacement
+  required: true
+  status: passed
+  evidence: 'New tests prove: BJ.Physics.applyBrickReboundZip displaces the ball by exactly exitSpeed*dt
+    immediately upon return (not only stored velocity), and that this exceeds plain target-speed movement in
+    the same tick; a game-level A/B comparison (zip enabled vs disabled, otherwise identical bounce) shows the
+    zip-enabled case leaves the ball measurably farther from the brick, isolating the effect as genuine
+    displacement rather than a stored-velocity-only artefact.'
+- name: brick_rebound_zip_unchanged_properties
+  required: true
+  status: passed
+  evidence: All zip-floor formula, no-ratchet, non-reduction-of-a-faster-ball, disabled-config and
+    paddle-independence tests from IMP-0013-01 pass unmodified against the revised (dt-aware)
+    applyBrickReboundZip signature. The existing "brick bounce zip exceeds target speed then returns to normal
+    on the very next frame" test still passes, proving the fix does not reintroduce a lingering stored-velocity
+    boost.
+- name: specification_accuracy
+  required: true
+  status: passed
+  evidence: batty-joe-dev-spec-v1.13.0.yaml's non_regression block now sets gameplay_unchanged and
+    physics_unchanged to false with itemised change lists; the file parses as valid YAML and no longer
+    contradicts its own physics/bricks/frenzy/physics_collision sections.
+- name: no_regression
+  required: true
+  status: passed
+  evidence: Full batty-joe-tests.js suite (127/127), tests/run-v170-tests.js, tests/run-chg0004-tests.js,
+    tests/run-chg0005-tests.js, tests/run-chg0009-tests.js, tests/run-physics-v160-tests.js,
+    tests/run-adoption-tests.py and tests/run-risk-classifier-tests.py all pass. bounceFromPaddle and
+    decayPaddleSpeedBoost function bodies remain byte-for-byte unmodified. Game.prototype.updateBalls's existing
+    step ordering is unmodified; only handleBallBrickCollisions and applyBrickReboundZip gained a dt parameter.
+- name: specforge_repository_validation
+  required: true
+  status: failed
+  evidence: 'python3 specforge/core/tools/validate-specforge.py . reports "Implementation authorization
+    integrity check failed" with blockers unauthorized_material_changes / unauthorized_material_path for
+    exactly the six files this attempt touches. This is the direct, correct consequence of the blocker above
+    (no approval yet bound to PROP-0013-04) and is expected to clear once that approval exists; it is recorded
+    failed here rather than worked around, so the record is not misleading about current authorization state.'
+notes: This attempt directly continues claude/chg-0013-gameplay-batch from IMP-0013-01 (34e8107) rather than a
+  fresh branch, since the same branch is already awaiting independent review and not yet merged. IMP-0013-01 is
+  preserved unmodified as historical evidence; its "passed" verdict was accurate for the checks it performed
+  (stored velocity) and is superseded, not overwritten, by this attempt's broader verification (actual
+  displacement).

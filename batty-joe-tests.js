@@ -587,7 +587,7 @@
   test('brick rebound zip raises a below-floor ball to the configured exit speed', function () {
     const target = 400, cfg = BJ.Config.physics.brickReboundZip;
     const ball = { vx: 0, vy: -target, spin: 0 };
-    const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+    const exit = BJ.Physics.applyBrickReboundZip(ball, target, 0, cfg);
     approx(exit, target * cfg.exitSpeedMultiplier, 0.001, 'Zip exit speed should equal targetSpeed * exitSpeedMultiplier');
     approx(BJ.Physics.length(ball.vx, ball.vy), target * cfg.exitSpeedMultiplier, 0.001, 'Ball velocity magnitude should match the returned exit speed');
   });
@@ -597,7 +597,7 @@
     const zipSpeed = target * cfg.exitSpeedMultiplier;
     [zipSpeed - 40, zipSpeed - 1, zipSpeed, zipSpeed + 1, target * 1.25].forEach(function (incoming) {
       const ball = { vx: 0, vy: -incoming, spin: 0 };
-      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, 0, cfg);
       approx(exit, Math.max(incoming, zipSpeed), 0.001, 'Exit speed must equal max(incoming, zipSpeed) for incoming=' + incoming);
     });
   });
@@ -607,7 +607,7 @@
     const incoming = target * 1.25;
     assert(incoming > target * cfg.exitSpeedMultiplier, 'Sanity: this incoming speed must be above the configured zip floor');
     const ball = { vx: 0, vy: -incoming, spin: 0 };
-    const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+    const exit = BJ.Physics.applyBrickReboundZip(ball, target, 0, cfg);
     approx(exit, incoming, 0.001, 'A ball already above the zip floor must exit the bounce at its unchanged incoming speed');
   });
 
@@ -616,7 +616,7 @@
     const zipSpeed = target * cfg.exitSpeedMultiplier;
     for (let i = 0; i < 6; i += 1) {
       const ball = { vx: 0, vy: -target, spin: 0 };
-      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, 0, cfg);
       approx(exit, zipSpeed, 0.001, 'Every bounce starting from target-consistent incoming speed must exit at exactly the zip floor, never higher');
     }
   });
@@ -626,9 +626,40 @@
     cfg.enabled = false;
     try {
       const target = 400, ball = { vx: 0, vy: -target, spin: 0 };
-      const exit = BJ.Physics.applyBrickReboundZip(ball, target, cfg);
+      const exit = BJ.Physics.applyBrickReboundZip(ball, target, 0, cfg);
       approx(exit, target, 0.001, 'Disabled zip must leave incoming speed unchanged');
     } finally { cfg.enabled = old; }
+  });
+
+  test('brick rebound zip moves the ball immediately, not just its stored velocity', function () {
+    const target = 400, dt = 0.016, cfg = BJ.Config.physics.brickReboundZip;
+    const ball = { x: 100, y: 100, vx: 0, vy: -target, spin: 0 };
+    const beforeX = ball.x, beforeY = ball.y;
+    const exit = BJ.Physics.applyBrickReboundZip(ball, target, dt, cfg);
+    const movedDistance = BJ.Physics.length(ball.x - beforeX, ball.y - beforeY);
+    approx(movedDistance, exit * dt, 0.001, 'Zip must displace the ball by exitSpeed * dt immediately, not merely set a velocity that a later frame resets before it is ever used for movement');
+    assert(movedDistance > target * dt + 0.001, 'Zip-boosted displacement must exceed what plain target-speed movement would cover in the same tick');
+  });
+
+  test('brick bounce zip produces greater ball displacement than an equivalent non-zipped bounce', function () {
+    function bounceAndMeasure(zipEnabled) {
+      const game = makeGame({ level: 3 });
+      const brick = game.levelData.bricks.find(function (b) { return b.alive && b.type !== 'indestructible'; });
+      assert(brick, 'Level should have a destructible brick');
+      const targetSpeed = game.getTargetBallSpeed() * game.getBallSpeedEffect() * game.getFinalAssaultSpeedMultiplier();
+      const ball = game.balls[0];
+      ball.held = false; ball.launched = true; ball.holdRemaining = 0; ball.paddleSpeedBoost = 0; ball.spin = 0;
+      ball.x = brick.x + brick.w / 2;
+      ball.y = brick.y + brick.h + ball.r + 2;
+      ball.vx = 0; ball.vy = -targetSpeed;
+      const cfg = BJ.Config.physics.brickReboundZip, old = cfg.enabled;
+      cfg.enabled = zipEnabled;
+      try { game.update(0.016); } finally { cfg.enabled = old; }
+      return ball.y;
+    }
+    const zippedY = bounceAndMeasure(true);
+    const plainY = bounceAndMeasure(false);
+    assert(zippedY > plainY + 0.01, 'A zip-boosted bounce must leave the ball measurably farther from the brick (moving away, downward) than an equivalent non-zipped bounce, proving the effect actually displaces the ball rather than only changing a stored velocity that is reset before it is ever used for movement');
   });
 
   test('paddle contact after a brick-zip bounce behaves identically to an unmodified ball', function () {

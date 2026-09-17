@@ -1,0 +1,25 @@
+id: EVT-000121
+timestamp: '2026-09-17T11:20:47Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: implementation_started
+entity:
+  type: implementation_attempt
+  id: IMP-0013-02
+related:
+  change: CHG-0013
+  proposal: PROP-0013-04
+resulting_state:
+  implementation_outcome: in_progress
+  change_status: awaiting_approval
+evidence:
+  source_revision_before: 34e8107badbe6084091393ff746fccf130591ba3
+  working_branch: claude/chg-0013-gameplay-batch
+  reason: Corrective fix for the observable-displacement defect and specification contradiction independent
+    review found in IMP-0013-01, continuing directly on the same branch.

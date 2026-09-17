@@ -23,6 +23,14 @@ physics:
       legitimate paddle-derived excess speed) is never slowed down by a brick bounce.
     formula: 'zipSpeed = targetSpeed * physics.brickReboundZip.exitSpeedMultiplier; exitSpeed =
       max(incomingSpeed, zipSpeed)'
+    observable_displacement: The zip must produce a genuinely faster, sharper-looking rebound in actual ball
+      movement, not merely a higher stored velocity value that is set and then discarded before it is ever used
+      to move the ball. Because ball movement for a simulation step happens before that step's collision
+      resolution, and the ball's speed is otherwise realigned to the ordinary target speed at the start of the
+      very next step, the resolved exit velocity is also used to advance the ball's position immediately, by
+      one simulation step's worth of travel at that exit speed, as part of the same collision response. This
+      remains a single fixed, stateless displacement computed fresh from the current exit velocity every time,
+      not an accumulating or persisted effect.
     configuration:
       path: physics.brickReboundZip
       enabled: true
@@ -72,8 +80,20 @@ physics_collision:
     scope: A general correction to rectangular ball-collision handling. There is no brick-type-specific or
       boss-specific branching; the fix applies identically to every caller of the shared resolution routine.
 non_regression:
-  gameplay_unchanged: true
-  physics_unchanged: true
+  gameplay_unchanged: false
+  gameplay_changes:
+  - Brick-rebound zip on ordinary-play, non-penetrating brick bounces (physics.brickReboundZip) - see
+    physics.brick_rebound_zip above.
+  - Regenerating-brick completion lock - heal and respawn are suppressed once every remaining destructible
+    brick is regenerating-type - see bricks.regenerating.completion_lock above.
+  - Frenzy-timeout level completion via the existing normal completion mechanism when frenzy has destroyed
+    every required brick and only indestructibles remain - see frenzy.timeout_completion above.
+  physics_unchanged: false
+  physics_changes:
+  - Brick-rebound zip (see physics.brick_rebound_zip above).
+  - resolveBallRect()'s ambiguous-approach fallback now positively depenetrates the ball to the resolved
+    boundary instead of only reversing velocity in place - see physics_collision.resolve_ball_rect_depenetration
+    above.
   scoring_lives_timing_unchanged: true
   persistence_unchanged: true
   paddle_velocity_transfer_unchanged: true

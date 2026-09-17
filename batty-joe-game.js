@@ -465,7 +465,7 @@
         P.resolveBallRect(ball, self.levelData.boss, previous);
         self.damageBoss(4);
       } else {
-        self.handleBallBrickCollisions(ball, previous, targetSpeed);
+        self.handleBallBrickCollisions(ball, previous, targetSpeed, dt);
       }
     });
 
@@ -483,7 +483,7 @@
     P.releaseFromPaddle(ball, this.paddle, speed, C.balls.releaseMaxAngleDegrees);
   };
 
-  Game.prototype.handleBallBrickCollisions = function (ball, previous, targetSpeed) {
+  Game.prototype.handleBallBrickCollisions = function (ball, previous, targetSpeed, dt) {
     const bricks = this.levelData.bricks;
     for (let i = 0; i < bricks.length; i += 1) {
       const brick = bricks[i];
@@ -494,7 +494,7 @@
       if (!penetrating) {
         P.resolveBallRect(ball, brick, previous, { characterise: true, kind: 'brick', signature: 'brick-' + brick.id });
         P.retainSpin(ball, C.spin.brickRetention);
-        P.applyBrickReboundZip(ball, targetSpeed, C.physics.brickReboundZip);
+        P.applyBrickReboundZip(ball, targetSpeed, dt, C.physics.brickReboundZip);
       }
       if (damaged) this.audio.play(brick.alive ? 'brick_hit' : 'brick_break');
       break;
