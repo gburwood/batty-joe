@@ -1,0 +1,29 @@
+id: EVT-000113
+timestamp: '2026-09-17T10:34:18Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0013-03
+related:
+  change: CHG-0013
+  impact_analysis: IA-0013-03
+  supersedes: PROP-0013-02
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.13.0
+evidence:
+  scope: BJ.Physics.applyBrickReboundZip corrected to exitSpeed = Math.max(incomingSpeed, targetSpeed *
+    exitSpeedMultiplier), a minimum-energetic-rebound floor rather than an unconditional replacement, so a ball
+    already faster than the zip floor is never slowed by a brick bounce; a new acceptance test exercises this
+    above-the-floor case directly. physics.brickReboundZip.exitSpeedMultiplier is bound to an explicit initial
+    value of 1.15. Items 2-4 unchanged from PROP-0013-01/PROP-0013-02. No product code is modified by this
+    proposal-preparation session.

@@ -1,0 +1,115 @@
+id: IA-0013-03
+change: CHG-0013
+revision: 3
+supersedes: IA-0013-02
+created_at: '2026-09-17T10:32:17Z'
+affected:
+  requirements: []
+  components:
+  - ball_brick_rebound_physics
+  - paddle_velocity_transfer_physics
+  - regenerating_brick_lifecycle
+  - frenzy_regeneration
+  - frenzy_timeout_exit
+  - level_completion
+  - rectangular_collision_resolution
+  artifacts:
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-config.js
+  - batty-joe-tests.js
+  - batty-joe-dev-spec-v1.13.0.yaml (new, future implementation only)
+  - specforge/project.yaml (specification rebind, future implementation only)
+  tests:
+    required:
+    - Unchanged from IA-0013-02 for items 2-4 (regenerating-brick lock, frenzy-timeout completion,
+      resolveBallRect depenetration).
+    - Unchanged from IA-0013-02 - a single non-penetrating brick bounce measurably exceeds target speed by the
+      configured exitSpeedMultiplier when incoming speed is at or below the zip floor; one frame later, with no
+      paddle boost active, speed has returned to standard target-consistent magnitude; a rapid sequence of
+      consecutive brick bounces never exceeds the zip floor; the existing paddle-boost test block passes
+      unmodified.
+    - New for this revision - a test proves that a ball entering a brick collision already faster than the zip
+      floor (e.g. carrying legitimate paddle-derived residual speed above targetSpeed * exitSpeedMultiplier) is
+      not slowed by the bounce - its exit speed equals its incoming speed, unchanged, not reduced to the zip
+      floor.
+    - New for this revision - a test proves BJ.Physics.applyBrickReboundZip's return value is exactly
+      Math.max(incomingSpeed, targetSpeed * config.exitSpeedMultiplier) across a range of incoming speeds both
+      above and below the zip floor, confirming the floor semantics directly rather than only through
+      game-level observation.
+compatibility:
+  breaking: false
+  notes: Unchanged from IA-0013-02. Still no new ball field; still a stateless function; still one guard line in
+    updateBalls, unchanged from IA-0013-02/PROP-0013-02.
+migration:
+  required: false
+  notes: Unchanged from IA-0013-02.
+zip_floor_correction:
+  reviewer_finding: >-
+    Independent review of PROP-0013-02 found that its formula, exitSpeed = targetSpeed * exitSpeedMultiplier
+    applied unconditionally, ignores the ball's incoming speed entirely. Concretely: the existing paddle
+    velocity-transfer system (physics.paddleVelocityTransfer.maxBoostPercent, currently configured at 0.25) can
+    legitimately put a ball at up to roughly 1.25x target speed. If exitSpeedMultiplier is configured below that
+    ceiling - the proposed default of 1.15x is - a ball carrying that legitimate paddle-derived excess into a
+    brick bounce would have its speed forcibly *reduced* to 1.15x target by PROP-0013-02's unconditional
+    replacement formula, contradicting IA-0013-02/PROP-0013-02's own stated intent ("existing legitimate
+    paddle-derived excess speed is preserved, not reduced") and never verified by any acceptance test in either
+    revision. This is a genuine correctness gap, not a restatement of the redesign IA-0013-02 already made:
+    IA-0013-02's own no-ratchet and paddle-independence tests only exercised incoming speeds at or below the zip
+    floor (a ball freshly reset to target by the updateBalls guard, or an untouched ball), so the
+    above-the-floor case was never exercised and the defect was not caught.
+  fix: >-
+    BJ.Physics.applyBrickReboundZip is revised to compute the zip floor and then take the maximum of that floor
+    and the ball's own incoming speed (its speed immediately after resolveBallRect has resolved direction, which
+    already preserves incoming magnitude unchanged):
+      zipSpeed = targetSpeed * config.exitSpeedMultiplier
+      exitSpeed = Math.max(incomingSpeed, zipSpeed)
+    normalizeVelocity(ball, exitSpeed) is then applied to the already-resolved outgoing direction, exactly as
+    before. This is a minimum-energetic-rebound semantics, not a forced replacement speed.
+  property_preservation: >-
+    Every property IA-0013-02/PROP-0013-02 established survives this correction, by construction:
+    - Stateless: exitSpeed is computed purely from the ball's current vx/vy, the targetSpeed parameter and
+      config; nothing is stored on the ball.
+    - No cumulative state, no decay curve: unchanged - the function still has no memory between calls.
+    - No ratchet across repeated collisions: Math.max(incomingSpeed, zipSpeed) is idempotent, not multiplicative
+      - applying it twice to the same speed s yields max(s, zipSpeed) both times, never a growing value.
+      Because at most one brick collision is resolved per ball per frame (handleBallBrickCollisions breaks out
+      of its loop after the first hit) and the updateBalls guard runs before any brick collision can occur on
+      the next frame, a ball with no active paddle boost always enters every brick bounce at target-consistent
+      incoming speed, so its exit speed is always exactly zipSpeed - identical to IA-0013-02's guarantee, now
+      additionally proven not to depend on incoming speed being at-or-below target in the first place.
+    - Legitimate paddle-derived excess is preserved, not reduced: this is precisely what Math.max achieves that
+      the prior unconditional formula did not - an incoming speed already above the zip floor passes through
+      applyBrickReboundZip completely unchanged.
+    - The next-frame guard remains solely responsible for removing zip-only excess when no paddle boost is
+      active: unchanged from IA-0013-02/PROP-0013-02, and still correct under the corrected formula. When a
+      brick bounce's exit speed came purely from the zip floor (ball.paddleSpeedBoost falsy throughout), the
+      guard snaps it back to target one frame later exactly as before. When a bounce's exit speed reflects
+      preserved paddle-derived excess (ball.paddleSpeedBoost still non-zero), the guard does not fire (its
+      condition is unchanged), and the existing, unmodified decayPaddleSpeedBoost continues managing that
+      excess from wherever the ball's actual speed now is - including a case where the zip floor exceeded a
+      nearly-fully-decayed paddle residual, which is a narrow, expected consequence of "preserve the greater of
+      the two, always" rather than a new interaction requiring special-case logic.
+default_binding:
+  finding: PROP-0013-02 left physics.brickReboundZip.exitSpeedMultiplier as a placeholder ("<configured, e.g.
+    1.15>") rather than a bound value, which is not implementable or approvable as stated.
+  fix: The initial approved default is bound explicitly to 1.15 in PROP-0013-03's declared config. It remains an
+    ordinary configuration value, changeable for gameplay tuning exactly like every other entry in
+    BJ.Config.physics and BJ.Config.collision.
+unchanged_from_ia_0013_02:
+  regenerating_brick_lock: Confirmed by the product owner, unchanged from IA-0013-01/IA-0013-02.
+  frenzy_timeout_completion: Unchanged from IA-0013-01/IA-0013-02.
+  resolve_ball_rect_depenetration: Unchanged from IA-0013-01/IA-0013-02.
+open_changes:
+  overlaps_with: []
+summary: >-
+  This revision corrects one physics defect and one non-exactness in PROP-0013-02's zip design, found by
+  independent review; nothing else changes. BJ.Physics.applyBrickReboundZip now computes exitSpeed as
+  Math.max(incomingSpeed, targetSpeed * exitSpeedMultiplier) instead of unconditionally replacing the ball's
+  speed with targetSpeed * exitSpeedMultiplier, so a ball already moving faster than the zip floor (most
+  plausibly while carrying legitimate, still-decaying paddle-derived excess speed) is never slowed down by a
+  brick bounce. Every stateless/no-ratchet/no-decay/paddle-independence property IA-0013-02 established is
+  preserved under the corrected formula, and a new acceptance test exercises the previously-untested
+  above-the-floor case directly. Separately, exitSpeedMultiplier is bound to an explicit initial value, 1.15,
+  rather than left as an illustrative placeholder. Items 2-4 (regenerating-brick lock, frenzy-timeout completion,
+  resolveBallRect depenetration) are unaffected and unchanged from IA-0013-01/IA-0013-02.

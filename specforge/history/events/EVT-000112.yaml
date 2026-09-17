@@ -1,0 +1,26 @@
+id: EVT-000112
+timestamp: '2026-09-17T10:34:12Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0013-03
+related:
+  change: CHG-0013
+  supersedes: IA-0013-02
+resulting_state:
+  change_status: analysed
+evidence:
+  reproduction: Confirmed the reviewer's finding by re-reading BJ.Config.physics.paddleVelocityTransfer
+    (maxBoostPercent 0.25) against the proposed exitSpeedMultiplier (1.15) - a ball legitimately at up to 1.25x
+    target from a paddle hit would have been forced down to 1.15x by PROP-0013-02's unconditional replacement
+    formula. Verified the corrected Math.max(incomingSpeed, zipSpeed) formula is idempotent (not multiplicative)
+    across repeated applications, so the no-ratchet guarantee established in IA-0013-02 survives unchanged, and
+    that the existing updateBalls guard line remains correct without modification under the corrected formula.

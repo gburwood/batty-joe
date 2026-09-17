@@ -56,9 +56,9 @@ relationships:
   parent: null
   children: []
 impact_analysis:
-  current: IA-0013-02
+  current: IA-0013-03
 proposal:
-  current: PROP-0013-02
+  current: PROP-0013-03
 approvals: []
 implementation:
   attempts: []

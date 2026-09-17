@@ -1,0 +1,28 @@
+id: EVT-000111
+timestamp: '2026-09-17T10:34:03Z'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: review_finding_reported
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  reviewed_proposal: PROP-0013-02
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  finding_1_zip_floor: >-
+    Independent review of PROP-0013-02 found that its formula, exitSpeed = targetSpeed * exitSpeedMultiplier
+    applied unconditionally regardless of incoming speed, can reduce a ball's speed when it reaches a brick
+    while still carrying a legitimate paddle-derived boost (the paddle system can produce up to roughly 1.25x
+    target; the proposed zip multiplier is 1.15x). Required fix: applyBrickReboundZip must compute
+    exitSpeed = Math.max(incomingSpeed, targetSpeed * exitSpeedMultiplier) - a minimum energetic rebound, not a
+    forced replacement speed - while retaining every PROP-0013-02 property (stateless, no new ball field, no
+    cumulative state, no decay curve, no ratcheting across repeated bounces, preserved legitimate paddle excess,
+    and the existing next-frame guard remaining solely responsible for removing zip-only excess).
+  finding_2_unbound_default: PROP-0013-02 left physics.brickReboundZip.exitSpeedMultiplier as a placeholder
+    ("<configured, e.g. 1.15>") rather than a bound value. Required fix - bind the initial approved default
+    explicitly to 1.15, configurable for later tuning.
