@@ -631,14 +631,26 @@
     } finally { cfg.enabled = old; }
   });
 
-  test('brick rebound zip moves the ball immediately, not just its stored velocity', function () {
+  test('brick rebound zip displaces the ball only by the boost it actually applies, not a full extra step', function () {
     const target = 400, dt = 0.016, cfg = BJ.Config.physics.brickReboundZip;
     const ball = { x: 100, y: 100, vx: 0, vy: -target, spin: 0 };
     const beforeX = ball.x, beforeY = ball.y;
     const exit = BJ.Physics.applyBrickReboundZip(ball, target, dt, cfg);
     const movedDistance = BJ.Physics.length(ball.x - beforeX, ball.y - beforeY);
-    approx(movedDistance, exit * dt, 0.001, 'Zip must displace the ball by exitSpeed * dt immediately, not merely set a velocity that a later frame resets before it is ever used for movement');
-    assert(movedDistance > target * dt + 0.001, 'Zip-boosted displacement must exceed what plain target-speed movement would cover in the same tick');
+    const bonusSpeed = exit - target;
+    approx(movedDistance, bonusSpeed * dt, 0.001, 'Zip must displace the ball only by the boosted portion of speed (exitSpeed - incomingSpeed) * dt, immediately, not merely set a velocity that a later frame resets before it is ever used for movement');
+    assert(movedDistance > 0, 'A below-floor bounce must still produce some immediate, observable displacement');
+    assert(movedDistance < target * dt, 'The zip-attributable displacement must be smaller than an entire ordinary movement step at target speed - it augments the existing collision response, it does not replay or double it');
+  });
+
+  test('brick rebound zip adds no extra displacement when the ball is already at or above the floor', function () {
+    const target = 400, dt = 0.016, cfg = BJ.Config.physics.brickReboundZip;
+    const incoming = target * 1.25;
+    const ball = { x: 200, y: 200, vx: 0, vy: -incoming, spin: 0 };
+    const beforeX = ball.x, beforeY = ball.y;
+    BJ.Physics.applyBrickReboundZip(ball, target, dt, cfg);
+    approx(ball.x, beforeX, 0.0001, 'No extra x displacement when the zip floor adds nothing above incoming speed');
+    approx(ball.y, beforeY, 0.0001, 'No extra y displacement when the zip floor adds nothing above incoming speed - an already-faster ball must not be double-moved');
   });
 
   test('brick bounce zip produces greater ball displacement than an equivalent non-zipped bounce', function () {

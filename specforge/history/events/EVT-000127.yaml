@@ -1,0 +1,32 @@
+id: EVT-000127
+timestamp: '2026-09-17T11:32:26Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: implementation_blocked
+entity:
+  type: implementation_attempt
+  id: IMP-0013-03
+related:
+  change: CHG-0013
+  proposal: PROP-0013-05
+resulting_state:
+  implementation_outcome: blocked
+  change_status: awaiting_approval
+evidence:
+  reason: proposal_approval_required
+  observed: >-
+    All of IMP-0013-03's own checks passed (full batty-joe-tests.js suite 128/128, every existing node/python
+    regression harness, and the revised/new displacement-proportionality tests), but PROP-0013-05 has not yet
+    received a human approval bound to its exact digest. specforge-authorization.py check / validate-specforge.py
+    correctly report unauthorized_material_changes for this attempt's working-tree diff as a direct consequence.
+  required_action: A human must explicitly approve PROP-0013-05 (mechanically bound to its exact canonical
+    digest, as APR-0014 was for PROP-0013-03) before this attempt's material changes can be treated as
+    authorized.
+notes: No Core, lifecycle, authorization, product or product-specification behaviour is changed by this event.
+  IMP-0013-01 and IMP-0013-02 are preserved unmodified as historical evidence and are not rewritten.

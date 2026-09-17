@@ -252,17 +252,24 @@
     const multiplier = Math.max(1, Number(config.exitSpeedMultiplier) || 1);
     const zipSpeed = target * multiplier;
     const exitSpeed = Math.max(incomingSpeed, zipSpeed);
+    const bonusSpeed = exitSpeed - incomingSpeed;
     normalizeVelocity(ball, exitSpeed);
     // Movement for the current simulation step already happened (integrateBall runs before
     // collision resolution), and the next frame's paddle-boost guard resets stored velocity to
     // target before the following integrateBall call. Without this, the zipped velocity is set
-    // and then discarded without ever being used to move the ball. Applying one supplemental
-    // step here, at the already-resolved exit velocity, makes the sharper rebound an immediate,
-    // observable displacement rather than a transient stored value - still a single fixed,
-    // stateless nudge computed fresh from the current exit velocity, not an accumulating boost.
-    const step = Math.max(0, Number(dt) || 0);
-    ball.x += ball.vx * step;
-    ball.y += ball.vy * step;
+    // and then discarded without ever being used to move the ball. Rather than replaying an
+    // entire extra movement step at the full exit speed (which would double-advance the ball
+    // through a step collision detection never sees), only the incremental distance the zip
+    // itself is responsible for is applied here: the ball's already-resolved outgoing direction,
+    // scaled by just the boosted portion of speed (bonusSpeed, zero whenever the ball was already
+    // at or above the zip floor) over the current dt. A single fixed, stateless nudge computed
+    // fresh from the current exit velocity, never an accumulating boost.
+    if (bonusSpeed > 0) {
+      const step = Math.max(0, Number(dt) || 0);
+      const unitX = ball.vx / exitSpeed, unitY = ball.vy / exitSpeed;
+      ball.x += unitX * bonusSpeed * step;
+      ball.y += unitY * bonusSpeed * step;
+    }
     return exitSpeed;
   }
 

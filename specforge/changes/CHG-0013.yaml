@@ -65,6 +65,7 @@ implementation:
   attempts:
   - IMP-0013-01
   - IMP-0013-02
+  - IMP-0013-03
 governance:
   lifecycle_enforcement: controlled_v1
   enforced_from_change: CHG-0009

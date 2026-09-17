@@ -27,10 +27,14 @@ physics:
       movement, not merely a higher stored velocity value that is set and then discarded before it is ever used
       to move the ball. Because ball movement for a simulation step happens before that step's collision
       resolution, and the ball's speed is otherwise realigned to the ordinary target speed at the start of the
-      very next step, the resolved exit velocity is also used to advance the ball's position immediately, by
-      one simulation step's worth of travel at that exit speed, as part of the same collision response. This
-      remains a single fixed, stateless displacement computed fresh from the current exit velocity every time,
-      not an accumulating or persisted effect.
+      very next step, the collision response also advances the ball's position immediately by the boosted
+      portion of the exit speed alone - (exitSpeed - incomingSpeed) * dt, in the already-resolved outgoing
+      direction - rather than by a complete extra movement step at the full exit speed. This keeps the effect
+      proportionate to the boost actually applied (zero additional displacement whenever the ball was already
+      at or above the zip floor, since there is no boosted portion to move by) and avoids double-advancing the
+      ball through distance that ordinary collision detection never sees. This remains a single fixed, stateless
+      displacement computed fresh from the current exit velocity every time, not an accumulating or persisted
+      effect.
     configuration:
       path: physics.brickReboundZip
       enabled: true
