@@ -1,0 +1,143 @@
+id: PROP-0013-05
+change: CHG-0013
+revision: 5
+supersedes: PROP-0013-04
+status: awaiting_approval
+created_at: '2026-09-17T11:30:16Z'
+based_on_impact_analysis:
+- IA-0013-05
+proposed_specification_version: 1.13.0
+behaviour_summary: >-
+  Four independent, additive/corrective gameplay changes, none of which alters the base difficulty speed curve,
+  frenzy sub-game physics, or existing paddle-boost behaviour. Item 1 carries one further correction relative to
+  PROP-0013-04, confirmed necessary by independent review; items 2-3 and the substance of item 4 are unchanged
+  from PROP-0013-01/PROP-0013-02/PROP-0013-03/PROP-0013-04, and item 4's specification-accuracy fix from
+  PROP-0013-04 is preserved unchanged.
+
+
+  (1) Brick-rebound "zip" (corrected relative to PROP-0013-04) - still stateless, still a one-shot, deterministic
+  collision-response effect; no ball field, no accumulated boost percentage, no maximum-boost state, no decay
+  half-life, no per-frame decay, no arbitration logic against paddleSpeedBoost. The exit-speed formula is
+  unchanged: zipSpeed = targetSpeed * config.exitSpeedMultiplier; exitSpeed = Math.max(incomingSpeed, zipSpeed).
+  Independent review confirmed PROP-0013-04's own fix for the observable-displacement defect was itself
+  defective: it applied a complete extra movement step at the FULL exit speed
+  (ball.x += ball.vx*dt; ball.y += ball.vy*dt) on top of the movement the frame's own integrateBall call had
+  already performed - a second, unshielded movement step with no further collision detection, disproportionate
+  to the boost actually applied. This was visible even in the degenerate no-boost case: a ball already at or
+  above the zip floor (exitSpeed === incomingSpeed) still received a full extra exitSpeed*dt of movement, despite
+  the zip contributing no boost whatsoever. BJ.Physics.applyBrickReboundZip(ball, targetSpeed, dt, config) is
+  unchanged in signature but now computes bonusSpeed = exitSpeed - incomingSpeed (always >= 0) and applies the
+  supplemental position update - using the already-normalised outgoing unit direction, scaled by bonusSpeed
+  rather than the full exitSpeed - only when bonusSpeed > 0. An already-at-or-above-floor ball now receives zero
+  supplemental displacement: the bounce resolves exactly as an ordinary, non-zipped bounce would, with no
+  "extra step" of any kind. A below-floor ball receives displacement proportional only to the boost the zip
+  itself contributes: (exitSpeed - incomingSpeed) * dt, strictly smaller than a full ordinary movement step at
+  target speed. This remains fully stateless (nothing stored on the ball), cannot ratchet (bonusSpeed is
+  recomputed fresh, bounded exactly as before, on every call), and does not touch the next-frame guard,
+  decayPaddleSpeedBoost, or bounceFromPaddle. Config (physics.brickReboundZip = { enabled: true,
+  exitSpeedMultiplier: 1.15 }) is unchanged. Game.prototype.handleBallBrickCollisions's signature is unchanged
+  from PROP-0013-04.
+
+
+  (2) Regenerating-brick completion lock - unchanged from PROP-0013-01/PROP-0013-02/PROP-0013-03/PROP-0013-04.
+
+
+  (3) Frenzy-timeout auto-completion - unchanged from PROP-0013-01/PROP-0013-02/PROP-0013-03/PROP-0013-04.
+
+
+  (4) resolveBallRect() depenetration fix and the batty-joe-dev-spec-v1.13.0.yaml non_regression correction -
+  both unchanged from PROP-0013-04. The non_regression block's gameplay_unchanged: false / physics_unchanged:
+  false with itemised change lists, as corrected in PROP-0013-04, is preserved exactly as-is; only the
+  physics.brick_rebound_zip.observable_displacement prose is updated to describe the corrected,
+  bonus-only mechanism accurately.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+resolved_review_findings: >-
+  Independent review of IMP-0013-02 (PROP-0013-04) confirmed a fresh proposal/approval is the correct governance
+  path (not coverage under the existing APR-0014/PROP-0013-03), and found PROP-0013-04's own displacement fix
+  defective - it double-advanced the ball with a complete second movement step at the full exit speed, unshielded
+  by collision detection, disproportionate to (and in the no-boost case entirely unjustified by) the zip's actual
+  effect. Fixed in this revision by scaling the supplemental position update to only the boosted portion of
+  speed (bonusSpeed = exitSpeed - incomingSpeed), applied only when that portion is positive. The corrected
+  v1.13.0 non_regression specification from PROP-0013-04 is preserved unchanged, per instruction.
+declared_scope:
+- operation: modify
+  path: batty-joe-physics.js
+- operation: modify
+  path: batty-joe-tests.js
+- operation: modify
+  path: batty-joe-dev-spec-v1.13.0.yaml
+acceptance_criteria:
+  brick_rebound_zip_proportionate_displacement:
+  - A physics-level test proves the ball's immediate displacement from a single applyBrickReboundZip call equals
+    exactly (exitSpeed - incomingSpeed) * dt, is strictly greater than zero for a below-floor bounce, and is
+    strictly smaller than target * dt (an ordinary full movement step) - proving the effect augments the
+    existing collision response rather than replaying or doubling it.
+  - A physics-level test proves a ball already at or above the zip floor (exitSpeed === incomingSpeed) receives
+    exactly zero supplemental x/y displacement - the degenerate no-boost case adds no extra movement step at
+    all.
+  - The existing game-level A/B displacement test (zip enabled vs disabled, otherwise identical bounce) continues
+    to hold - the zip-enabled case still leaves the ball measurably farther from the brick, now by the
+    corrected, proportionate margin.
+  brick_rebound_zip_unchanged_properties:
+  - All acceptance criteria already established in PROP-0013-03/PROP-0013-04 for the zip floor formula,
+    no-ratchet behaviour, non-reduction of an already-faster ball, disabled-config behaviour, paddle-system
+    independence, and the next-frame return-to-normal behaviour continue to hold and are re-verified.
+  specification_accuracy:
+  - batty-joe-dev-spec-v1.13.0.yaml's non_regression block continues to state gameplay_unchanged: false and
+    physics_unchanged: false with itemised change lists, unchanged from PROP-0013-04.
+  - The physics.brick_rebound_zip.observable_displacement prose accurately describes the corrected, bonus-only
+    displacement mechanism (no claim of a full extra movement step remains anywhere in the file).
+  regenerating_brick_completion_lock:
+  - Unchanged from PROP-0013-03/PROP-0013-04; all existing acceptance criteria continue to hold and are
+    re-verified.
+  frenzy_timeout_completion:
+  - Unchanged from PROP-0013-03/PROP-0013-04; all existing acceptance criteria continue to hold and are
+    re-verified, along with the pre-existing frenzy snapshot/full-clear tests.
+  resolve_ball_rect_depenetration:
+  - Unchanged from PROP-0013-03/PROP-0013-04; all existing acceptance criteria continue to hold and are
+    re-verified.
+  non_regression:
+  - No change to Game.prototype.getTargetBallSpeed, BJ.Physics.acceleratedSpeed, BJ.Physics.bounceFromPaddle's
+    own boost computation, or BJ.Physics.decayPaddleSpeedBoost's own body (function untouched).
+  - No new field is added to the ball object by this change.
+  - No change to any frenzy sub-game's own physics, to the four single-axis branches of resolveBallRect(), or
+    to BJ.Levels.countRequired().
+  - No change to BJ.Physics.applyBrickReboundZip's or Game.prototype.handleBallBrickCollisions's signatures
+    (unchanged from PROP-0013-04); only the internal displacement computation changes.
+  - No change to the ordering of Game.prototype.updateBalls's existing steps.
+  - The full existing batty-joe-tests.js suite passes unmodified, run in full.
+  verification:
+  - Run the full batty-joe-tests.js suite (via batty-joe-tests.html) and confirm every existing test still
+    passes alongside all new/revised tests listed above.
+  - SpecForge repository validation (validate-specforge.py) passes once a valid approval authorizes the material
+    state.
+artifacts_expected:
+  modify:
+  - batty-joe-physics.js
+  - batty-joe-tests.js
+  - batty-joe-dev-spec-v1.13.0.yaml
+  add:
+  - specforge/changes/CHG-0013/implementation/IMP-0013-03.yaml
+  - forensic events under specforge/history/events/ recording implementation start, validation and completion
+    for this revision, allocated sequentially at implementation time, using actual machine time
+implementation_constraints:
+- Implementation must not begin until this exact proposal revision is explicitly approved by a human and an
+  approval record binds its digest, per source-of-truth.md rules 6/8/9. An AI assertion that a human approved a
+  proposal is not itself approval evidence.
+- BJ.Physics.bounceFromPaddle and BJ.Physics.decayPaddleSpeedBoost's function bodies must not be modified.
+- No field named reboundSpeedBoost, or any other new persistent scratch field, may be added to the ball object.
+  The zip effect, including its supplemental displacement, must be fully stateless.
+- The supplemental position update must be scaled to bonusSpeed = exitSpeed - incomingSpeed only, never the full
+  exitSpeed, and must be skipped entirely (zero displacement) whenever bonusSpeed is not positive.
+- Game.prototype.updateBalls's existing step ordering must not be reordered or restructured; the fix is
+  confined to BJ.Physics.applyBrickReboundZip's internal displacement computation only.
+- batty-joe-dev-spec-v1.13.0.yaml's non_regression block, as corrected in PROP-0013-04, must not be reverted or
+  reworded to claim gameplay_unchanged/physics_unchanged are true again.
+- Implementation-time forensic records must use actual machine time, not invented or staged timestamps.
+- Implementation scope is strictly this correction; no unrelated repository or bootstrap tidy-up may be bundled
+  into this change.
+approvals: []

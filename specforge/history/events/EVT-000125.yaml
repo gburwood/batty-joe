@@ -1,0 +1,32 @@
+id: EVT-000125
+timestamp: '2026-09-17T11:31:16Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0013-05
+related:
+  change: CHG-0013
+  impact_analysis: IA-0013-05
+  supersedes: PROP-0013-04
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.13.0
+evidence:
+  scope: BJ.Physics.applyBrickReboundZip's supplemental position update is rescaled to bonusSpeed = exitSpeed -
+    incomingSpeed (applied only when positive) instead of the full exitSpeed, so the zip adds only the movement
+    genuinely attributable to its own boost - never a complete second movement step, and never any extra
+    movement at all when the ball was already at or above the floor. Two acceptance tests revised/added to prove
+    the proportionate displacement and the zero-displacement degenerate case. batty-joe-dev-spec-v1.13.0.yaml's
+    corrected non_regression block from PROP-0013-04 is preserved unchanged; only the
+    observable_displacement prose is updated to describe the corrected mechanism. Items 2-3 and the rest of item
+    4 are unchanged from PROP-0013-01..04. This proposal revision requires a fresh human approval bound to its
+    own exact digest before any implementation under it is authorized - not created or asserted here.

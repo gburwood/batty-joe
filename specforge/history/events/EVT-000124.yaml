@@ -1,0 +1,27 @@
+id: EVT-000124
+timestamp: '2026-09-17T11:31:08Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0013-05
+related:
+  change: CHG-0013
+  supersedes: IA-0013-04
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  reproduction: Re-read the IMP-0013-02 applyBrickReboundZip implementation and confirmed the supplemental step
+    used the full exit velocity (ball.x += ball.vx*dt), applied unconditionally on top of the frame's already-
+    completed integrateBall movement, with no scaling to the boost actually applied and no further collision
+    detection. Confirmed the degenerate no-boost case (ball already at or above the zip floor) still received a
+    full extra movement step under the prior implementation. Designed the fix confined to
+    applyBrickReboundZip's internal displacement computation - scale by bonusSpeed = exitSpeed - incomingSpeed,
+    applied only when positive, using the already-normalised outgoing unit direction.
