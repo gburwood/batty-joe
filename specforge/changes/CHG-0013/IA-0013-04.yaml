@@ -1,0 +1,129 @@
+id: IA-0013-04
+change: CHG-0013
+revision: 4
+supersedes: IA-0013-03
+created_at: '2026-09-17T11:16:32Z'
+affected:
+  requirements: []
+  components:
+  - ball_brick_rebound_physics
+  - paddle_velocity_transfer_physics
+  - regenerating_brick_lifecycle
+  - frenzy_regeneration
+  - frenzy_timeout_exit
+  - level_completion
+  - rectangular_collision_resolution
+  - product_specification_non_regression_accuracy
+  artifacts:
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-tests.js
+  - batty-joe-dev-spec-v1.13.0.yaml
+  - specforge/project.yaml
+  tests:
+    required:
+    - Unchanged from IA-0013-03 for items 2-4 (regenerating-brick lock, frenzy-timeout completion,
+      resolveBallRect depenetration) and for the already-verified zip-floor/no-ratchet/paddle-independence
+      properties.
+    - New for this revision - a physics-level test proves BJ.Physics.applyBrickReboundZip moves the ball's
+      position immediately by exitSpeed * dt, not merely its stored velocity, and that this displacement
+      exceeds what plain target-speed movement would cover in the same simulation step.
+    - New for this revision - a game-level A/B test proves an otherwise-identical brick bounce leaves the ball
+      measurably farther from the brick with the zip enabled than with it disabled, isolating the effect as an
+      actual, observable displacement difference rather than a difference only visible in a stored-velocity
+      snapshot.
+    - batty-joe-dev-spec-v1.13.0.yaml's non_regression block must state gameplay_unchanged: false and
+      physics_unchanged: false, with the actual changes enumerated, consistent with the rest of the same file.
+compatibility:
+  breaking: false
+  notes: The fix changes BJ.Physics.applyBrickReboundZip's signature (adds a dt parameter) and
+    Game.prototype.handleBallBrickCollisions's signature (adds a dt parameter, threaded from the caller's
+    already-in-scope dt). Neither function is public API consumed outside this codebase; both are new as of
+    this change's own IMP-0013-01 attempt, so this is not a break of any previously-released surface.
+migration:
+  required: false
+  notes: Unchanged from IA-0013-03. No new ball field is added by this correction either.
+observable_displacement_fix:
+  defect_confirmed: >-
+    Confirmed by re-reading Game.prototype.updateBalls (batty-joe-game.js): P.integrateBall(ball, dt, ...), which
+    advances ball.x/ball.y by ball.vx/ball.vy * dt, runs before that same frame's collision detection and
+    resolution (self.handleBallBrickCollisions(...), which calls BJ.Physics.applyBrickReboundZip). Consequence:
+    the velocity a bounce resolves to is never the velocity used to move the ball during the frame in which the
+    bounce happens - it only becomes the ball's *starting* velocity for the next frame's integrateBall call. But
+    the already-approved guard line, `if (!ball.paddleSpeedBoost) P.normalizeVelocity(ball, targetSpeed);`, runs
+    at the very start of every frame's ball processing, strictly before that frame's own integrateBall call, and
+    unconditionally resets the ball to target-consistent speed whenever ball.paddleSpeedBoost is falsy - which it
+    always is after a zip-only bounce (the zip does not, and per PROP-0013-02/PROP-0013-03 must not, set
+    paddleSpeedBoost). The zip-boosted velocity is therefore set at the end of one frame and unwound before it
+    can ever influence any integrateBall call. The prior implementation's own tests (IMP-0013-01) verified
+    ball.vx/ball.vy immediately after the collision resolves - which correctly shows the boosted value, since
+    that check runs before the next frame's guard - so they passed without ever exercising an actual position
+    change.
+  chosen_fix: >-
+    BJ.Physics.applyBrickReboundZip gains a dt parameter (threaded from Game.prototype.updateBalls, which already
+    has dt in scope, through Game.prototype.handleBallBrickCollisions, which already receives targetSpeed the
+    same way). After resolving exitSpeed exactly as before (Math.max(incomingSpeed, targetSpeed *
+    exitSpeedMultiplier); no change to that formula), the function performs one supplemental position update at
+    that exit velocity - ball.x += ball.vx * dt; ball.y += ball.vy * dt - as part of the same, single,
+    synchronous collision response. This makes the sharper rebound immediately, physically observable in the
+    ball's position within the very same frame the bounce occurs, rather than only visible in a velocity value
+    that is discarded a moment later.
+  rejected_alternative: >-
+    Reordering Game.prototype.updateBalls so collision resolution runs before integrateBall (or otherwise
+    restructuring the shared per-frame physics loop) was considered and rejected as disproportionate to the
+    defect: every other collision type in the codebase (walls, paddle, boss, and the four single-axis branches of
+    resolveBallRect) already depends on the current move-then-resolve ordering and the "previous position"
+    technique it provides for identifying which face was hit; changing that ordering globally to fix one
+    collision-response effect would risk regressions across unrelated, already-approved and already-tested
+    physics (imperfect rebound, spin, wall retention, the CHG-0013 item 4 depenetration fix itself), which is
+    outside CHG-0013's approved scope to touch. The supplemental-position-update fix is confined entirely to the
+    new applyBrickReboundZip function and does not alter update ordering for any other ball, brick, wall, paddle
+    or boss interaction.
+  property_preservation: >-
+    Every property already established in IA-0013-02/IA-0013-03/PROP-0013-03 continues to hold: the supplemental
+    displacement is computed fresh, every call, from the current (already Math.max-floored, already
+    non-ratcheting) exit velocity and the current frame's dt - nothing is stored on the ball, nothing decays, and
+    repeated consecutive bounces still cannot compound, because each bounce's exit velocity is still bounded
+    exactly as before and the one-time position nudge derived from it is likewise bounded and non-cumulative (it
+    is added to position once, per bounce, never re-applied or carried forward). The next-frame guard is
+    unchanged and remains solely responsible for returning stored velocity to target after a zip-only bounce;
+    this fix does not touch, weaken or duplicate that mechanism.
+  risk_bonus_step_overlap: >-
+    A supplemental position step of exitSpeed * dt (typically single-digit-to-low-double-digit pixels at this
+    game's speeds and frame budget) is applied without re-running collision detection against other bricks, the
+    boss, or playfield walls for that bonus step specifically. In principle this could, in a sufficiently dense
+    brick field, move the ball slightly into a neighbouring brick or past a wall before the next frame's ordinary
+    checks catch up. This is judged low-severity and consistent with existing, already-accepted imprecision
+    elsewhere in the same physics model (e.g. the fixed 0.01px separation epsilon, and the imperfect-rebound/spin
+    systems' own small angular nudges), and is not solved with additional collision re-checks here, to keep the
+    fix the smallest deterministic change that resolves the reported defect; any dense-field edge case is left as
+    an ordinary tuning/feel concern rather than a correctness defect requiring further scope.
+spec_non_regression_fix: >-
+  Confirmed the reported contradiction directly: batty-joe-dev-spec-v1.13.0.yaml's non_regression block set
+  gameplay_unchanged: true and physics_unchanged: true, while the same file's physics.brick_rebound_zip,
+  bricks.regenerating.completion_lock, frenzy.timeout_completion and physics_collision.resolve_ball_rect_depenetration
+  sections all describe explicit gameplay and physics changes. The fix sets both fields to false and adds
+  itemised gameplay_changes/physics_changes lists cross-referencing the sections above, while leaving the other,
+  genuinely-still-true invariants (scoring_lives_timing_unchanged, persistence_unchanged,
+  paddle_velocity_transfer_unchanged, frenzy_subgame_physics_unchanged) as they were.
+unchanged_from_ia_0013_03:
+  zip_floor_formula: The exitSpeed = Math.max(incomingSpeed, targetSpeed * exitSpeedMultiplier) formula, the
+    1.15 default, and the next-frame guard's own logic are unchanged by this revision. Only the consequence of
+    resolving that formula (whether it results in observable movement) is corrected.
+  regenerating_brick_lock: Unchanged.
+  frenzy_timeout_completion: Unchanged.
+  resolve_ball_rect_depenetration: Unchanged.
+open_changes:
+  overlaps_with: []
+summary: >-
+  Independent review of the CHG-0013 implementation (IMP-0013-01, source revision 34e8107) found that
+  BJ.Physics.applyBrickReboundZip's boosted exit velocity was set and then discarded by the already-approved
+  next-frame guard before ever being used to move the ball, so the "sharper, faster rebound" was never actually
+  observable in gameplay - only in a stored-velocity value the prior tests happened to check at exactly the
+  moment it was still present. This revision adds one supplemental, synchronous position update inside
+  applyBrickReboundZip itself (ball.x += ball.vx*dt; ball.y += ball.vy*dt, using the already-resolved exit
+  velocity and the current frame's dt), so the effect is genuinely observable within the same frame the bounce
+  occurs, while preserving every previously-established property (stateless, no new ball field, no decay curve,
+  no ratcheting, paddle-system independence, the next-frame guard's role). Separately, batty-joe-dev-spec-v1.13.0.yaml's
+  non_regression block is corrected from a direct contradiction of CHG-0013's own documented changes to an
+  accurate statement of what changed and what remains unchanged. Items 2-4 are unaffected.

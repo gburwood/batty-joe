@@ -1,0 +1,30 @@
+id: EVT-000119
+timestamp: '2026-09-17T11:18:10Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0013-04
+related:
+  change: CHG-0013
+  supersedes: IA-0013-03
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  reproduction: Re-read Game.prototype.updateBalls in full and confirmed P.integrateBall (movement) runs before
+    that frame's Game.prototype.handleBallBrickCollisions (collision resolution, including
+    applyBrickReboundZip), and that the already-approved next-frame guard resets stored velocity to target
+    before the following frame's integrateBall call. Confirmed the prior implementation's own tests only
+    inspected ball.vx/ball.vy immediately after the collision, which is why they passed without exercising an
+    actual position change. Designed a fix confined to applyBrickReboundZip (one supplemental, dt-scaled
+    position update at the already-resolved exit velocity) that requires no change to updateBalls's existing
+    step ordering and preserves every previously-established stateless/no-ratchet/no-decay property. Confirmed
+    the reported batty-joe-dev-spec-v1.13.0.yaml non_regression contradiction directly against the same file's
+    other sections.

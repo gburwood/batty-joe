@@ -1,0 +1,32 @@
+id: EVT-000120
+timestamp: '2026-09-17T11:18:18Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0013-04
+related:
+  change: CHG-0013
+  impact_analysis: IA-0013-04
+  supersedes: PROP-0013-03
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.13.0
+evidence:
+  scope: BJ.Physics.applyBrickReboundZip gains a dt parameter and now performs one supplemental, stateless
+    position update at the already-resolved exit velocity, so the zip produces genuinely observable ball
+    displacement rather than only a stored-velocity value the next frame's guard discards before it is ever
+    used for movement. New acceptance tests measure actual displacement. batty-joe-dev-spec-v1.13.0.yaml's
+    non_regression block is corrected from a direct contradiction of CHG-0013's own documented changes to an
+    accurate, itemised statement. Items 2-3 and item 4's code-level mechanism are unchanged from
+    PROP-0013-01/PROP-0013-02/PROP-0013-03. This proposal revision requires a fresh human approval, bound to its
+    own exact digest, before any implementation attempt under it may be treated as authorized - per
+    source-of-truth.md rules 6/8/9, this session does not create or assert one on its own.
