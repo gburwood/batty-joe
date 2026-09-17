@@ -1,0 +1,31 @@
+id: APR-0014
+change: CHG-0013
+proposal: PROP-0013-03
+decision: approved
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+timestamp: '2026-09-17T10:44:18Z'
+scope:
+  proposal_revision: 3
+  proposed_specification_version: 1.13.0
+  approved_behaviour: >-
+    Exactly PROP-0013-03 as committed at a2243a2 (revision 3, superseding PROP-0013-02, which superseded
+    PROP-0013-01). Four items: (1) a stateless brick-rebound zip -
+    exitSpeed = Math.max(incomingSpeed, targetSpeed * physics.brickReboundZip.exitSpeedMultiplier), with
+    exitSpeedMultiplier bound to 1.15, no new ball field, no decay curve, no ratcheting, and the existing
+    next-frame updateBalls guard line unchanged; (2) a shared regenerating-brick completion-lock predicate
+    suppressing heal/respawn in both ordinary play and frenzy once every remaining non-indestructible brick is
+    regenerating-type; (3) one trailing call to the existing checkLevelComplete() at the end of
+    finishFrenzyRestore, no new completion rule; (4) a general depenetration fix confined to
+    resolveBallRect()'s ambiguous-approach fallback branch, with no brick-type-specific branching. No revision
+    to the proposal's content is made or requested by this approval.
+mechanism:
+  type: conversation
+  reference: User explicitly approved PROP-0013-03 exactly as committed, and directed that the approval be
+    recorded through the installed SpecForge lifecycle, mechanically bound to PROP-0013-03's exact canonical
+    digest.
+evidence:
+  proposal_digest_algorithm: sha256
+  proposal_digest: 5dd2cfe4692240e51808b437d795b896ab9ea15070879b8c390b055808b18d4d
