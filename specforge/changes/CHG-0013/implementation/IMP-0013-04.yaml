@@ -1,0 +1,86 @@
+id: IMP-0013-04
+change: CHG-0013
+proposal: PROP-0013-05
+attempt: 4
+started_at: '2026-09-17T11:50:36Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: >-
+  Not a reimplementation. IMP-0013-03 (attempt 3) was correctly recorded blocked - its own checks all passed,
+  but PROP-0013-05 had not yet received a human approval bound to its exact digest. IMP-0013-03.yaml is
+  preserved exactly as originally committed at a1d17a6 (outcome: blocked, no after/completed_at/
+  blocker_resolved fields), per the correction requested at EVT-000130: an implementation attempt record must
+  continue to represent what was true when that attempt occurred, and must not be edited after the fact even
+  with an explanatory note attached, once it has stated a definitive outcome. Gary Burwood has since approved
+  PROP-0013-05 (APR-0015, mechanically bound to its exact canonical digest, verified via
+  specforge-lifecycle.py transition CHG-0013 --to approved). This attempt, IMP-0013-04, records that the same
+  material state IMP-0013-03 already produced and verified (source revision a1d17a6, unchanged - no product
+  file, test, or specification file is touched by this attempt) is now authorized under a valid approval. No
+  code is written, no test is added or changed, and no file outside governance records is touched by this
+  attempt.
+source_revision:
+  system: git
+  before: 5fec1961f03045503a979818a1911d76ff4d2c24
+  after: a1d17a69e3413d8b46bfc41805c8030601361af4
+completed_at: '2026-09-17T11:50:36Z'
+outcome: passed
+tests:
+  status: passed
+  passed:
+  - Identical to IMP-0013-03's own evidence, reproduced here rather than re-run, since no material file has
+    changed since a1d17a6 - batty-joe-tests.js via batty-joe-tests.html (Chromium/Playwright, headless) 128/128
+    tests passed.
+  - node tests/run-v170-tests.js
+  - node tests/run-chg0004-tests.js
+  - node tests/run-chg0005-tests.js
+  - node tests/run-chg0009-tests.js
+  - node tests/run-physics-v160-tests.js
+  - python3 tests/run-adoption-tests.py
+  - python3 tests/run-risk-classifier-tests.py (23/23)
+  failed: []
+validation_checks:
+- name: brick_rebound_zip_proportionate_displacement
+  required: true
+  status: passed
+  evidence: Unchanged from IMP-0013-03 - the below-floor displacement equals exactly
+    (exitSpeed - incomingSpeed) * dt, is positive, and is smaller than a full target-speed movement step; a
+    ball already at or above the zip floor receives exactly zero supplemental x/y displacement; the game-level
+    A/B test (zip on vs off) shows the zip-enabled case measurably farther, by the corrected, proportionate
+    margin.
+- name: brick_rebound_zip_unchanged_properties
+  required: true
+  status: passed
+  evidence: Unchanged from IMP-0013-03 - all zip-floor formula, no-ratchet, non-reduction-of-a-faster-ball,
+    disabled-config, paddle-independence and next-frame-return-to-normal tests pass.
+- name: specification_accuracy
+  required: true
+  status: passed
+  evidence: Unchanged from IMP-0013-03 - batty-joe-dev-spec-v1.13.0.yaml's non_regression block and
+    observable_displacement prose are accurate; file parses as valid YAML.
+- name: no_regression
+  required: true
+  status: passed
+  evidence: Unchanged from IMP-0013-03 - full batty-joe-tests.js suite (128/128) and every existing node/python
+    regression harness pass; bounceFromPaddle and decayPaddleSpeedBoost function bodies remain byte-for-byte
+    unmodified.
+- name: specforge_repository_validation
+  required: true
+  status: passed
+  evidence: 'python3 specforge/core/tools/validate-specforge.py . passes now that APR-0015 authorizes this
+    material state. specforge-authorization.py check --json reports authorized:true, authorized_by referencing
+    this attempt (IMP-0013-04) and APR-0015, before corrected to the trusted material baseline
+    (5fec1961f03045503a979818a1911d76ff4d2c24), and material_differences containing exactly the six files
+    PROP-0013-05''s scope touches. This is the first attempt record to state this check as passed - IMP-0013-03
+    itself is left recording it failed, as it genuinely was at the time that attempt ran.'
+notes: >-
+  IMP-0013-01 and IMP-0013-02 remain preserved unmodified as historical evidence, as before. IMP-0013-03 is now
+  also preserved unmodified (restored to its original blocked content after being incorrectly edited in commit
+  5b3fc8a, per EVT-000130). EVT-000129 ("validation_passed", timestamped 2026-09-17T11:42:50Z), which reported
+  IMP-0013-03's outcome as passed based on that incorrect edit, is left unedited as its own forensic record of
+  what this session reported at that time; it is superseded by EVT-000130 and this attempt, not rewritten.

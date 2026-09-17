@@ -28,22 +28,15 @@ approach: >-
   change to Game.prototype.updateBalls's step ordering or to any file outside PROP-0013-05's declared scope.
 source_revision:
   system: git
-  before: 5fec1961f03045503a979818a1911d76ff4d2c24
-  after: a1d17a69e3413d8b46bfc41805c8030601361af4
-completed_at: '2026-09-17T11:42:23Z'
-outcome: passed
+  before: a5b364faf7198c5087fee1130ede7bce2852fe49
+outcome: blocked
 blocker: >-
-  As with IMP-0013-02: this attempt's own checks (below) all passed, but PROP-0013-05 had not yet received a
-  human approval bound to its exact digest. Per source-of-truth.md rules 6, 8 and 9, this attempt was recorded
-  blocked, not passed, while that approval was outstanding - specforge-authorization.py / validate-specforge.py
-  correctly reported unauthorized_material_changes for this attempt's working-tree diff as a direct, expected
-  consequence, not a defect to work around.
-blocker_resolved: Gary Burwood explicitly approved PROP-0013-05 (APR-0015, mechanically bound to its exact
-  canonical digest, verified via specforge-lifecycle.py transition CHG-0013 --to approved). This attempt's
-  source_revision.before is corrected here from the tip of the prior in-progress commit to the trusted material
-  baseline (5fec1961f03045503a979818a1911d76ff4d2c24) it was always actually measured against - this attempt was
-  never re-implemented, only unblocked - and outcome is updated from blocked to passed now that a valid
-  approval exists. Its test/validation evidence below was accurate throughout and is unchanged.
+  As with IMP-0013-02: this attempt's own checks (below) all passed, but PROP-0013-05 has not yet received a
+  human approval bound to its exact digest. Per source-of-truth.md rules 6, 8 and 9, this attempt is recorded
+  blocked, not passed, and CHG-0013 is not advanced into an in_progress/implemented/validated state without
+  that approval - specforge-authorization.py / validate-specforge.py correctly report
+  unauthorized_material_changes for this attempt's working-tree diff as a direct, expected consequence, not a
+  defect to be worked around.
 tests:
   status: passed
   passed:
@@ -87,14 +80,11 @@ validation_checks:
     handleBallBrickCollisions's signatures are unchanged from IMP-0013-02.
 - name: specforge_repository_validation
   required: true
-  status: passed
-  evidence: 'python3 specforge/core/tools/validate-specforge.py . passed (213 canonical records), now that
-    APR-0015 authorizes this material state. specforge-authorization.py check --json reports authorized:true,
-    authorized_by referencing IMP-0013-03/APR-0015, and material_differences containing exactly the six files
-    PROP-0013-05''s scope touches: batty-joe-config.js, batty-joe-dev-spec-v1.13.0.yaml, batty-joe-game.js,
-    batty-joe-physics.js, batty-joe-tests.js, specforge/project.yaml. This check was recorded failed earlier in
-    this same attempt (before APR-0015 existed) and is updated here to reflect the now-authorized state, per
-    blocker_resolved above - not silently changed without explanation.'
+  status: failed
+  evidence: 'python3 specforge/core/tools/validate-specforge.py . reports "Implementation authorization
+    integrity check failed" with unauthorized_material_changes for exactly the files this attempt touches -
+    the direct, correct consequence of the blocker above (no approval yet bound to PROP-0013-05), recorded
+    failed rather than worked around.'
 notes: IMP-0013-02 is preserved unmodified as historical evidence; its "blocked" verdict was accurate for its
   own defect (the full-step double movement) and is superseded, not overwritten, by this attempt's corrected,
   proportionate displacement.

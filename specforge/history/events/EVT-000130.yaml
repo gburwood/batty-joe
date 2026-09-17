@@ -1,0 +1,38 @@
+id: EVT-000130
+timestamp: '2026-09-17T11:50:36Z'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: review_finding_reported
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  reviewed_record: IMP-0013-03
+  reviewed_commit: 5b3fc8a
+resulting_state:
+  change_status: validated
+evidence:
+  reviewing_party_note: As with EVT-000118/EVT-000123, this event records a finding relayed by Gary Burwood as
+    product owner; the reviewing party's identity is not asserted here, consistent with the correction already
+    on record at EVT-000114.
+  finding: >-
+    Commit 5b3fc8a retroactively rewrote IMP-0013-03.yaml after APR-0015 was recorded: it changed
+    outcome from blocked to passed, changed source_revision.before, and added after/completed_at/
+    blocker_resolved fields to an already-committed record that had definitively stated outcome: blocked. This
+    was a genuine rewrite of a settled historical fact, not an addition to a still-open record - unlike the
+    CHG-0011/IMP-0011-01 precedent this session had followed earlier in the day, where fields were added to a
+    record that had never yet stated an outcome at all. IMP-0013-03 must continue to represent what was true
+    when that attempt occurred - it was blocked because PROP-0013-05 had not yet been approved - not be edited
+    after the fact to say otherwise, even with an explanatory note attached.
+  confirmation: APR-0015 remains valid; the approval itself was not in question, only the after-the-fact edit
+    to IMP-0013-03.
+  disposition: Correct the CHG-0013 governance history without rewriting earlier truth. IMP-0013-03.yaml is
+    restored verbatim to its content as originally committed at a1d17a6 (outcome blocked, no after/
+    completed_at/blocker_resolved fields, source_revision.before as originally recorded). A new implementation
+    attempt records the now-authorized, passing state instead of overwriting IMP-0013-03. EVT-000129
+    ("validation_passed", which reported IMP-0013-03's outcome as passed) is left unedited as its own forensic
+    record of what this session reported at that time, and is superseded by this event and the one that follows
+    it, not rewritten.
