@@ -1,0 +1,33 @@
+id: IMP-0013-01
+change: CHG-0013
+proposal: PROP-0013-03
+attempt: 1
+started_at: '2026-09-17T10:46:07Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+approach: >-
+  Implement exactly PROP-0013-03's four items on dedicated branch claude/chg-0013-gameplay-batch, branched from
+  experiment/specforge-alpha16-wild at 35e97cf (APR-0014 recorded). (1) Add BJ.Config.physics.brickReboundZip =
+  { enabled: true, exitSpeedMultiplier: 1.15 }; add stateless BJ.Physics.applyBrickReboundZip(ball, targetSpeed,
+  config) computing exitSpeed = Math.max(incomingSpeed, targetSpeed * exitSpeedMultiplier) and applying it to
+  the ball via normalizeVelocity; call it from Game.prototype.handleBallBrickCollisions immediately after a
+  non-penetrating resolveBallRect; add one guard line in Game.prototype.updateBalls immediately before the
+  existing, unmodified decayPaddleSpeedBoost call. (2) Add Game.prototype.onlyRegeneratingBricksRemain(), shared
+  by Game.prototype.updateBricks and Game.prototype.updateFrenzyRegeneration to gate heal/respawn. (3) Add one
+  trailing call to the existing Game.prototype.checkLevelComplete() at the end of
+  Game.prototype.finishFrenzyRestore. (4) Rewrite only resolveBallRect()'s ambiguous-approach fallback branch to
+  depenetrate to the resolved boundary plus the existing 0.01 separation epsilon and force velocity away from
+  that face. Add batty-joe-dev-spec-v1.13.0.yaml (full_inheritance_with_explicit_change over v1.12.0) and rebind
+  specforge/project.yaml's specification.product_specification/current_version to it. Add all acceptance-test
+  categories from PROP-0013-03 to batty-joe-tests.js. No file outside PROP-0013-03's declared_scope/
+  artifacts_expected is touched.
+source_revision:
+  system: git
+  before: 5fec1961f03045503a979818a1911d76ff4d2c24
+outcome: in_progress
