@@ -1,0 +1,39 @@
+id: EVT-000123
+timestamp: '2026-09-17T11:29:06Z'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: review_finding_reported
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  reviewed_implementation: IMP-0013-02
+  reviewed_proposal: PROP-0013-04
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  reviewing_party_note: As with EVT-000118, this event records a finding relayed by Gary Burwood as product
+    owner; the reviewing party's identity is not asserted here, consistent with the correction already on
+    record at EVT-000114.
+  confirmation: Independent review confirms that IA-0013-04/PROP-0013-04's judgement - a new proposal and a
+    fresh approval are appropriate for the observable-displacement fix, rather than treating it as covered by
+    the existing APR-0014/PROP-0013-03 - is correct. IMP-0013-02/IA-0013-04/PROP-0013-04 are not withdrawn on
+    that basis.
+  finding_double_movement: >-
+    PROP-0013-04's supplemental movement in BJ.Physics.applyBrickReboundZip advanced the ball by a complete
+    extra exitSpeed * dt after the frame's own P.integrateBall call had already moved it once this frame. This
+    is a full second movement step, at the full exit speed, applied without any further collision detection
+    against other bricks, the boss, or playfield walls - not scaled to only the portion of speed the zip itself
+    contributed. Concretely: even in the degenerate case where the zip adds no boost at all (incoming speed
+    already at or above the configured floor, exitSpeed === incomingSpeed), the prior implementation still
+    added a full extra exitSpeed * dt of unshielded movement on every non-penetrating brick bounce - behaviour
+    with no floor-crossing justification at all, since nothing was actually "extra" in that case. Required fix -
+    scale the supplemental position update to only bonusSpeed = exitSpeed - incomingSpeed (zero whenever the
+    ball was already at or above the floor), not the full exitSpeed, so only the movement genuinely attributable
+    to the zip's boost is added.
+  disposition: Revise the proposal and implementation so only the additional movement attributable to the zip
+    is applied, not a complete second movement step. Preserve the corrected v1.13 non-regression specification.
+    Follow the SpecForge lifecycle and stop for approval again.
