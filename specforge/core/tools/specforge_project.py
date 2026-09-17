@@ -419,3 +419,308 @@ def verify_source_revision(
 
     blockers.append(f"source_revision_provider_unsupported:{provider}")
     return {"valid": False, "provider": provider, "blockers": blockers, "details": details}
+
+
+def approval_gate(layout, recs, chg):
+    """Verify an exact, digest-bound, human approval of the change's current proposal.
+
+    Shared by specforge-lifecycle.py, specforge_governance_tier.py and the governance-tier
+    CLI wrapper: a single implementation, imported everywhere it is needed.
+    """
+    blockers = []
+    proposal_id = (chg.get("proposal") or {}).get("current")
+    if not proposal_id or proposal_id not in recs:
+        return ["current_proposal_missing"]
+    _proposal, proposal_path = recs[proposal_id]
+    actual = canonical_artifact_digest(proposal_path)
+    valid = False
+    for approval_id in chg.get("approvals") or []:
+        if approval_id not in recs:
+            continue
+        approval, _ = recs[approval_id]
+        if approval.get("decision") != "approved" or approval.get("proposal") != proposal_id:
+            continue
+        if (approval.get("actor") or {}).get("type") != "human":
+            continue
+        evidence = approval.get("evidence") or {}
+        expected = evidence.get("proposal_digest") or (approval.get("scope") or {}).get("proposal_sha256")
+        if expected and expected == actual:
+            valid = True
+            break
+    if not valid:
+        blockers.append("valid_exact_human_approval_missing")
+    return blockers
+
+
+def proposal_ever_human_approved(recs, proposal_id):
+    """True if any record anywhere is a human, decision=approved approval of this proposal id.
+
+    Ignores whether the recorded digest still matches today's bytes: this is a historical
+    existence check, used to keep preparation from ever mutating a proposal that has already
+    been human-approved, even after its bytes were tampered with post-approval.
+    """
+    for _rid, item in recs.items():
+        data = item[0] if isinstance(item, tuple) else item
+        if not isinstance(data, dict):
+            continue
+        if data.get("proposal") != proposal_id:
+            continue
+        if data.get("decision") != "approved":
+            continue
+        if (data.get("actor") or {}).get("type") != "human":
+            continue
+        return True
+    return False
+
+
+def allocate_next_event_id(layout):
+    """Return the next unused EVT-NNNNNN id, scanning specforge/history/events/ for the current max."""
+    paths = layout.manifest.get("paths") or {}
+    history_root = (layout.root / paths.get("history", "specforge/history")).resolve()
+    events_root = history_root / "events"
+    pattern = re.compile(r"^EVT-(\d{6,})\.yaml$")
+    highest = 0
+    if events_root.is_dir():
+        for path in events_root.glob("EVT-*.yaml"):
+            match = pattern.match(path.name)
+            if match:
+                highest = max(highest, int(match.group(1)))
+    return f"EVT-{(highest + 1) if highest else 100000:06d}"
+
+
+def _evidence_root(layout) -> Path:
+    paths = layout.manifest.get("paths") or {}
+    return (layout.root / paths.get("evidence", "specforge/evidence")).resolve()
+
+
+def persist_material_manifest(layout) -> dict:
+    """Durably persist the current material snapshot's full path/digest manifest.
+
+    Digest-addressed and idempotent under specforge/evidence/material-manifests/<digest>.yaml,
+    so a snapshot-provider "before" state can later be reconstructed into add/modify/delete
+    entries even after the working tree has moved on. The real production hook for this is
+    specforge-revision.py's capture() command, not direct calls made ad hoc.
+    """
+    snapshot = material_snapshot(layout)
+    digest = snapshot["digest"]
+    manifest_root = _evidence_root(layout) / "material-manifests"
+    manifest_root.mkdir(parents=True, exist_ok=True)
+    target = manifest_root / f"{digest}.yaml"
+    if not target.is_file():
+        payload = {"revision": snapshot["revision"], "entries": snapshot["entries"]}
+        target.write_text(
+            yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+            newline="\n",
+        )
+    return {"digest": digest, "path": target}
+
+
+def read_material_manifest(layout, digest: str) -> dict | None:
+    """Read and digest-verify a manifest persisted by persist_material_manifest.
+
+    Returns None (fail closed for the caller) if the manifest is missing, malformed, or its
+    recomputed digest does not match the requested identity.
+    """
+    target = _evidence_root(layout) / "material-manifests" / f"{digest}.yaml"
+    if not target.is_file():
+        return None
+    try:
+        data = load_yaml(target)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    entries = data.get("entries")
+    if not isinstance(entries, list) or not all(isinstance(e, dict) and "path" in e and "sha256" in e for e in entries):
+        return None
+    manifest_bytes = "".join(f"{e['path']}\0{e['sha256']}\n" for e in sorted(entries, key=lambda e: e["path"])).encode("utf-8")
+    if hashlib.sha256(manifest_bytes).hexdigest() != digest:
+        return None
+    return {"revision": data.get("revision"), "entries": entries}
+
+
+GOVERNANCE_TIER_PROFILE_TO_LIFECYCLE = {"deterministic_tier_v1": "controlled_v2"}
+
+# Closed set of lifecycle_enforcement values recognised as governed and material-authorizing.
+# Shared wherever a change's declared profile must be checked against supported values, so an
+# unrecognised or future profile is never silently treated as governed or as an active material
+# authorization -- extend this set explicitly, never via a wildcard or prefix match.
+SUPPORTED_LIFECYCLE_ENFORCEMENT_PROFILES = frozenset({"controlled_v1", "controlled_v2"})
+
+
+def read_project_governance_tier_state(layout) -> dict:
+    """Read and integrity-verify this project's governance-tier activation state.
+
+    Returns {status, tier_enforcement_profile, effective_lifecycle_profile, grandfather_digests}.
+    status is one of "not_activated" (both project.yaml fields absent; controlled_v1 is the
+    only valid declaration), "active" (both fields present, internally consistent, and the
+    grandfather evidence file's recomputed digest matches the project.yaml anchor), or
+    "corrupted" (any other combination, including an unrecognised tier_enforcement_profile) —
+    corrupted always fails closed and is never conflated with not_activated.
+    """
+    manifest_tier = layout.manifest.get("governance_tier")
+    manifest_tier = manifest_tier if isinstance(manifest_tier, dict) else {}
+    tier_enforcement_profile = manifest_tier.get("enforcement_profile")
+    anchor = manifest_tier.get("grandfather_digest")
+
+    corrupted = {
+        "status": "corrupted",
+        "tier_enforcement_profile": tier_enforcement_profile,
+        "effective_lifecycle_profile": None,
+        "grandfather_digests": frozenset(),
+    }
+
+    if tier_enforcement_profile is None and anchor is None:
+        return {
+            "status": "not_activated",
+            "tier_enforcement_profile": None,
+            "effective_lifecycle_profile": "controlled_v1",
+            "grandfather_digests": frozenset(),
+        }
+    if tier_enforcement_profile is None or anchor is None:
+        return corrupted
+
+    effective_lifecycle_profile = GOVERNANCE_TIER_PROFILE_TO_LIFECYCLE.get(tier_enforcement_profile)
+    if effective_lifecycle_profile is None:
+        return corrupted
+
+    evidence_path = _evidence_root(layout) / "governance-tier-grandfather.yaml"
+    if not evidence_path.is_file():
+        return corrupted
+    try:
+        actual_digest = canonical_artifact_digest(evidence_path)
+        evidence = load_yaml(evidence_path)
+    except Exception:
+        return corrupted
+    if actual_digest != anchor or not isinstance(evidence, dict):
+        return corrupted
+
+    digests = evidence.get("proposal_digests")
+    if not isinstance(digests, list):
+        return corrupted
+
+    return {
+        "status": "active",
+        "tier_enforcement_profile": tier_enforcement_profile,
+        "effective_lifecycle_profile": effective_lifecycle_profile,
+        "grandfather_digests": frozenset(str(d) for d in digests),
+    }
+
+
+PRODUCT_SPEC_DOC_RE = re.compile(r"^specforge-core-product-spec-(.+)\.md$")
+PRODUCT_SPEC_DOC_TEMPLATE = "specforge-core-product-spec-{version}.md"
+CANONICAL_DATA_MODEL_DOC_RE = re.compile(r"^specforge-core-canonical-data-model-(.+)\.md$")
+CANONICAL_DATA_MODEL_DOC_TEMPLATE = "specforge-core-canonical-data-model-{version}.md"
+
+
+def read_installed_core_metadata(layout) -> dict:
+    """Read the actually-installed core.yaml/package.yaml beneath layout.core_root.
+
+    Returns {"core": dict|None, "package": dict|None}; either is None if the file is
+    missing or does not parse to a mapping (fail-soft: callers treat that as "nothing to
+    compare against" rather than a hard error of their own).
+    """
+    core_path = layout.core_root / "core.yaml"
+    package_path = layout.core_root / "package.yaml"
+    core = load_yaml(core_path) if core_path.is_file() else None
+    package = load_yaml(package_path) if package_path.is_file() else None
+    return {
+        "core": core if isinstance(core, dict) else None,
+        "package": package if isinstance(package, dict) else None,
+    }
+
+
+def self_referencing_core_doc_version(layout, value, pattern) -> str | None:
+    """Return the version embedded in a specification path's filename if `value` matches
+    `pattern` (PRODUCT_SPEC_DOC_RE or CANONICAL_DATA_MODEL_DOC_RE) and resolves beneath
+    layout.core_root/docs; otherwise None (not a self-reference to Core's own doc at all).
+
+    Matches by filename pattern and location only, never by project id, project name, or
+    any other identity signal.
+    """
+    if not value:
+        return None
+    match = pattern.match(Path(str(value)).name)
+    if not match:
+        return None
+    try:
+        resolved = (layout.root / str(value)).resolve()
+    except Exception:
+        return None
+    try:
+        resolved.relative_to((layout.core_root / "docs").resolve())
+    except ValueError:
+        return None
+    return match.group(1)
+
+
+def manifest_core_consistency_blockers(layout, manifest: dict | None = None) -> list[dict]:
+    """Compare a project manifest's declared Core/data-model/package identity, and any
+    recognised self-referencing specification field, against the actually-installed
+    core.yaml/package.yaml beneath layout.core_root.
+
+    Returns a list of blocker dicts, each {"code": str, ...context}; empty when fully
+    consistent. Shared, single-source-of-truth predicate: validate-specforge.py calls this
+    against the currently-installed manifest, and specforge-upgrade.py's pre-upgrade
+    preflight calls it against the manifest before any mutation -- at that point
+    layout.core_root still reflects the pre-upgrade installed Core, so both callers compare
+    against the same kind of ground truth without any special-casing.
+    """
+    manifest = manifest if manifest is not None else layout.manifest
+    installed = read_installed_core_metadata(layout)
+    core_meta = installed["core"] or {}
+    package_meta = installed["package"]
+
+    sf = manifest.get("specforge") or {}
+    spec = manifest.get("specification") or {}
+    declared_core_version = sf.get("core_version")
+    declared_data_model_version = sf.get("data_model_version")
+    installed_core_version = core_meta.get("core_version")
+    installed_data_model_version = core_meta.get("data_model_version")
+
+    blockers = []
+
+    if installed_core_version and declared_core_version != installed_core_version:
+        blockers.append({
+            "code": "core_version_inconsistent",
+            "declared_core_version": declared_core_version,
+            "installed_core_version": installed_core_version,
+        })
+
+    if installed_data_model_version and declared_data_model_version != installed_data_model_version:
+        blockers.append({
+            "code": "data_model_version_inconsistent",
+            "declared_data_model_version": declared_data_model_version,
+            "installed_data_model_version": installed_data_model_version,
+        })
+
+    if package_meta is not None and installed_core_version:
+        package_version = (package_meta.get("package") or {}).get("version")
+        if package_version != installed_core_version:
+            blockers.append({
+                "code": "package_core_version_inconsistent",
+                "package_version": package_version,
+                "installed_core_version": installed_core_version,
+            })
+
+    product_spec_embedded = self_referencing_core_doc_version(layout, spec.get("product_specification"), PRODUCT_SPEC_DOC_RE)
+    if product_spec_embedded is not None:
+        declared_current_version = spec.get("current_version")
+        if product_spec_embedded != declared_core_version or declared_current_version != declared_core_version:
+            blockers.append({
+                "code": "self_referencing_product_specification_inconsistent",
+                "embedded_version": product_spec_embedded,
+                "declared_core_version": declared_core_version,
+                "declared_current_version": declared_current_version,
+            })
+
+    data_model_embedded = self_referencing_core_doc_version(layout, spec.get("canonical_data_model"), CANONICAL_DATA_MODEL_DOC_RE)
+    if data_model_embedded is not None and data_model_embedded != declared_data_model_version:
+        blockers.append({
+            "code": "self_referencing_canonical_data_model_inconsistent",
+            "embedded_version": data_model_embedded,
+            "declared_data_model_version": declared_data_model_version,
+        })
+
+    return blockers

@@ -3,20 +3,20 @@ from pathlib import Path
 import json, os, shutil, subprocess, sys, tempfile, yaml
 
 CORE = Path(__file__).resolve().parents[1]
-TARGET_VERSION = yaml.safe_load((CORE / "core.yaml").read_text(encoding="utf-8"))["core_version"]
+CORE_META = yaml.safe_load((CORE / "core.yaml").read_text(encoding="utf-8"))
+TARGET_VERSION = CORE_META["core_version"]
+TARGET_DATA_MODEL_VERSION = CORE_META["data_model_version"]
+TARGET_DATA_MODEL_PATH = f"./specforge/core/docs/specforge-core-canonical-data-model-{TARGET_DATA_MODEL_VERSION}.md"
 
 
 def run(args, cwd=None):
     env=os.environ.copy(); env["PYTHONDONTWRITEBYTECODE"]="1"
     return subprocess.run(args,cwd=cwd,capture_output=True,text=True,env=env)
-
 def expect(condition,message):
     if not condition: raise AssertionError(message)
-
 def init_git(root):
     for command in (["git","init"],["git","config","user.email","specforge-tests@example.invalid"],["git","config","user.name","SpecForge Tests"],["git","add","."],["git","commit","-m","fixture"]):
         r=run(command,cwd=root); expect(r.returncode==0,f"git fixture setup failed: {command}: {r.stdout} {r.stderr}")
-
 def write_legacy_fixture(root,core_version):
     root.joinpath("SPECFORGE.md").write_text("# Legacy entry\n",encoding="utf-8")
     root.joinpath("batty-joe-dev-spec.yaml").write_text("application:\n  name: Batty Joe Fixture\n  version: 1.5.0\n",encoding="utf-8")
@@ -36,12 +36,10 @@ def write_legacy_fixture(root,core_version):
             rel=candidate_file.relative_to(candidate_dir); dst=root/key/rel; dst.parent.mkdir(parents=True,exist_ok=True); dst.write_text("legacy framework\n",encoding="utf-8")
     (root/"docs").mkdir(); (root/"docs"/"specforge-core-canonical-data-model-0.1.0-alpha.1.md").write_text("legacy model\n",encoding="utf-8")
     init_git(root)
-
 def stage_distribution(root):
     dist=root/"specforge-dist"/TARGET_VERSION/"core"
     shutil.copytree(CORE,dist,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
     return dist
-
 def migrate_fixture(core_version):
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp); write_legacy_fixture(root,core_version)
@@ -65,7 +63,7 @@ def migrate_fixture(core_version):
         manifest=(root/"specforge"/"project.yaml").read_text(encoding="utf-8")
         expect("./batty-joe-dev-spec.yaml" in manifest,"product specification authority not preserved")
         expect(TARGET_VERSION in manifest,"target Core version not installed")
-        expect("./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.3.md" in manifest,"canonical data model was not rebound to installed Core")
+        expect(TARGET_DATA_MODEL_PATH in manifest,"canonical data model was not rebound to installed Core")
         expect(not (root/"specforge.yaml").exists(),"legacy manifest still authoritative")
         expect(not (root/"rules"/"source-of-truth.md").exists(),"known legacy framework rule survived")
         expect(not (root/"tools"/"specforge_project.py").exists(),"known legacy framework tool survived")
@@ -80,7 +78,6 @@ def migrate_fixture(core_version):
         r=run([sys.executable,"-B",str(installed_tool),"plan","--root",str(root),"--json"])
         expect(r.returncode==0,f"post-migration plan failed without staging dir: {r.stdout} {r.stderr}")
         expect(json.loads(r.stdout).get("already_current") is True,"post-migration project not current")
-
 def ambiguous_source_fixture():
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp); write_legacy_fixture(root,"0.1.0-alpha.3"); dist=stage_distribution(root)
@@ -88,7 +85,6 @@ def ambiguous_source_fixture():
         tool=dist/"tools"/"specforge-migrate.py"; r=run([sys.executable,"-B",str(tool),"plan","--root",str(root),"--json"])
         expect(r.returncode!=0,"ambiguous project authority unexpectedly permitted")
         expect("source_authority_ambiguous" in json.loads(r.stdout).get("blockers",[]),f"wrong ambiguous blocker: {r.stdout}")
-
 def unsupported_fixture():
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp); write_legacy_fixture(root,"0.0.0-unknown"); before=(root/"specforge.yaml").read_bytes(); dist=stage_distribution(root); tool=dist/"tools"/"specforge-migrate.py"
@@ -96,7 +92,6 @@ def unsupported_fixture():
         expect(r.returncode!=0,"unsupported source unexpectedly permitted")
         expect("supported_migration_path_missing" in json.loads(r.stdout).get("blockers",[]),f"wrong blocker: {r.stdout}")
         expect((root/"specforge.yaml").read_bytes()==before,"planning mutated source")
-
 def main():
     migrate_fixture("0.1.0-alpha.4")
     migrate_fixture("0.1.0-alpha.3")

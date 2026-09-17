@@ -123,7 +123,7 @@
       "type": "object",
       "properties": {
         "lifecycle_enforcement": {
-          "type": "string"
+          "enum": ["controlled_v1", "controlled_v2"]
         },
         "enforced_from_change": {
           "type": "string"

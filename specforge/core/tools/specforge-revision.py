@@ -10,8 +10,10 @@ from specforge_project import (
     discover_layout,
     git_worktree_root,
     material_snapshot,
+    persist_material_manifest,
     verify_source_revision,
 )
+from specforge_integration import material_snapshot_for_git_revision
 
 
 def capture(layout):
@@ -44,10 +46,38 @@ def capture(layout):
         }
 
     snapshot = material_snapshot(layout)
+    persist_material_manifest(layout)
     return {
         "captured": True,
         "provider": "specforge_snapshot",
         "revision": snapshot["revision"],
+        "file_count": snapshot["file_count"],
+        "blockers": [],
+    }
+
+
+def material(layout, revision):
+    if git_worktree_root(layout) is None:
+        return {
+            "valid": False,
+            "provider": "git",
+            "revision": revision,
+            "blockers": ["source_revision_provider_unavailable:git"],
+        }
+    result = material_snapshot_for_git_revision(layout, revision)
+    if not result.get("valid"):
+        return {
+            "valid": False,
+            "provider": "git",
+            "revision": revision,
+            "blockers": result.get("blockers") or [],
+        }
+    snapshot = result["snapshot"]
+    return {
+        "valid": True,
+        "provider": "git",
+        "revision": result["revision"],
+        "material_revision": snapshot["revision"],
         "file_count": snapshot["file_count"],
         "blockers": [],
     }
@@ -81,6 +111,11 @@ def main():
     capture_parser.add_argument("--root", default=".")
     capture_parser.add_argument("--json", action="store_true")
 
+    material_parser = sub.add_parser("material")
+    material_parser.add_argument("--root", default=".")
+    material_parser.add_argument("--revision", required=True)
+    material_parser.add_argument("--json", action="store_true")
+
     verify_parser = sub.add_parser("verify")
     verify_parser.add_argument("--root", default=".")
     verify_parser.add_argument("--provider", required=True)
@@ -98,16 +133,27 @@ def main():
         print(json.dumps(out, indent=2) if getattr(args, "json", False) else "REFUSED\n - " + out["blockers"][0])
         sys.exit(1)
 
-    out = capture(layout) if args.command == "capture" else verify(layout, args)
-    ok = out.get("captured", out.get("valid", False))
+    if args.command == "capture":
+        out = capture(layout)
+        ok = out.get("captured", False)
+    elif args.command == "material":
+        out = material(layout, args.revision)
+        ok = out.get("valid", False)
+    else:
+        out = verify(layout, args)
+        ok = out.get("valid", False)
+
     if args.json:
         print(json.dumps(out, indent=2))
     else:
-        print(("CAPTURED" if args.command == "capture" else "VALID") if ok else "REFUSED")
+        state = "CAPTURED" if args.command == "capture" else ("VALID" if ok else "REFUSED")
+        print(state)
         for blocker in out.get("blockers") or []:
             print(" - " + blocker)
         if out.get("revision"):
             print(" revision: " + out["revision"])
+        if out.get("material_revision"):
+            print(" material: " + out["material_revision"])
     sys.exit(0 if ok else 1)
 
 

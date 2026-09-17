@@ -14,13 +14,17 @@ except ImportError:
     sys.exit(2)
 
 from specforge_project import (
+    approval_gate,
     canonical_artifact_digest,
     discover_layout,
     iter_record_files,
     load_yaml,
+    read_project_governance_tier_state,
     relative,
     verify_source_revision,
 )
+from specforge_integration import PROFILE as INTEGRATION_PROFILE, verify_integration_evidence
+from specforge_governance_tier import completion_tier, floor_check, stale_policy_check
 
 
 def records(layout):
@@ -49,6 +53,15 @@ def _python_env():
     return env
 
 
+def material_revision_profile(layout):
+    core = layout.core_root / "core.yaml"
+    try:
+        data = load_yaml(core)
+    except Exception:
+        return None
+    return ((data or {}).get("material_revision") or {}).get("verification_profile")
+
+
 def bootstrap(root):
     blockers = []
     details = {}
@@ -62,6 +75,7 @@ def bootstrap(root):
     sf = layout.manifest.get("specforge") or {}
     details["core_version"] = sf.get("core_version")
     details["project_format"] = sf.get("project_format")
+    details["material_revision_profile"] = material_revision_profile(layout)
 
     if layout.mode == "project_format_1":
         entry = layout.root / "specforge" / "SPECFORGE.md"
@@ -119,24 +133,85 @@ def bootstrap(root):
     return {"ready": not blockers, "blockers": blockers, "details": details}
 
 
-def approval_gate(layout, recs, chg):
+def _active_profile_and_v2_extras(layout, recs, chg, raw_profile):
+    """The controlled_v2 fresh-approval-only checks, run at target=='approved' for every
+    controlled change regardless of declared profile.
+
+    Applies the active-profile/grandfather rule uniformly first (a v2-active project must
+    refuse a fresh, ungrandfathered controlled_v1 declaration just as much as a mismatched
+    v2 one); only once that profile is accepted, and only if it is controlled_v2, does
+    preparation completeness / staleness / the floor additionally apply. Never re-run for
+    any later transition (in_progress, implemented, validated, completed).
+    """
     blockers = []
+    state = read_project_governance_tier_state(layout)
+    if state["status"] == "corrupted":
+        return ["governance_tier_activation_state_corrupted"]
+
     proposal_id = (chg.get("proposal") or {}).get("current")
-    if not proposal_id or proposal_id not in recs: return ["current_proposal_missing"]
-    _proposal, proposal_path = recs[proposal_id]
-    actual = canonical_artifact_digest(proposal_path)
-    valid = False
-    for approval_id in chg.get("approvals") or []:
-        if approval_id not in recs: continue
-        approval, _ = recs[approval_id]
-        if approval.get("decision") != "approved" or approval.get("proposal") != proposal_id: continue
-        if (approval.get("actor") or {}).get("type") != "human": continue
-        evidence = approval.get("evidence") or {}
-        expected = evidence.get("proposal_digest") or (approval.get("scope") or {}).get("proposal_sha256")
-        if expected and expected == actual:
-            valid = True; break
-    if not valid: blockers.append("valid_exact_human_approval_missing")
+    proposal_digest = None
+    if proposal_id in recs:
+        try:
+            proposal_digest = canonical_artifact_digest(recs[proposal_id][1])
+        except Exception:
+            proposal_digest = None
+    grandfathered = proposal_digest is not None and proposal_digest in state["grandfather_digests"]
+
+    if raw_profile != state["effective_lifecycle_profile"] and not grandfathered:
+        return ["governance_tier_profile_mismatch"]
+
+    if raw_profile != "controlled_v2":
+        return blockers
+
+    if proposal_id not in recs:
+        return ["current_proposal_missing"]
+    proposal, _ = recs[proposal_id]
+    if not (proposal.get("governance_tier") or {}).get("policy_digest"):
+        return ["governance_tier_not_prepared"]
+    blockers += stale_policy_check(layout, proposal)
+    blockers += floor_check(layout, proposal)
     return blockers
+
+
+def _implementation_verification(layout, implementation, historical_terminal):
+    source_revision = implementation.get("source_revision") or {}
+    integration = implementation.get("integration") or {}
+    declared_profile = integration.get("profile") or source_revision.get("verification_profile")
+    current_profile = material_revision_profile(layout)
+    material_effects = source_revision.get("material_effects", True) is not False
+
+    if historical_terminal:
+        if integration.get("profile") == INTEGRATION_PROFILE:
+            return verify_integration_evidence(layout, implementation, mode="static")
+        return verify_source_revision(
+            layout,
+            source_revision,
+            mode="static",
+            require_provider=False,
+        )
+
+    if current_profile == INTEGRATION_PROFILE:
+        if not material_effects:
+            return verify_source_revision(
+                layout,
+                source_revision,
+                mode="transition",
+                require_provider=True,
+            )
+        if declared_profile != INTEGRATION_PROFILE or integration.get("profile") != INTEGRATION_PROFILE:
+            return {
+                "valid": False,
+                "blockers": ["integration_evidence_required_by_current_material_profile"],
+                "details": {"required_profile": INTEGRATION_PROFILE, "declared_profile": declared_profile},
+            }
+        return verify_integration_evidence(layout, implementation, mode="transition")
+
+    return verify_source_revision(
+        layout,
+        source_revision,
+        mode="transition",
+        require_provider=True,
+    )
 
 
 def completion_gate(layout, recs, chg):
@@ -146,10 +221,6 @@ def completion_gate(layout, recs, chg):
     attempts = (chg.get("implementation") or {}).get("attempts") or []
     if not attempts: return blockers + ["implementation_attempt_missing"]
 
-    # A change already recorded as completed may carry pre-alpha.8 historical source
-    # evidence. Re-evaluating that terminal state must not retroactively require a
-    # live provider. A new transition to completed is strict and verifies that the
-    # current material tree is captured by the declared immutable after state.
     historical_terminal = chg.get("status") == "completed"
     passed = []
     source_blockers = []
@@ -164,17 +235,19 @@ def completion_gate(layout, recs, chg):
         test_ok = tests.get("status") == "passed" or (isinstance(tests.get("passed"), list) and tests.get("passed") and not tests.get("failed"))
         if not test_ok: continue
 
-        verification = verify_source_revision(
-            layout,
-            implementation.get("source_revision") or {},
-            mode="static" if historical_terminal else "transition",
-            require_provider=not historical_terminal,
-        )
+        verification = _implementation_verification(layout, implementation, historical_terminal)
         if not verification.get("valid"):
             source_blockers += verification.get("blockers") or []
             for path in (verification.get("details") or {}).get("material_differences") or []:
                 source_blockers.append("uncaptured_material_path:" + path)
             continue
+
+        if (chg.get("governance") or {}).get("lifecycle_enforcement") == "controlled_v2":
+            tier_result = completion_tier(layout, recs, implementation)
+            if not tier_result.get("valid") or tier_result.get("blockers"):
+                source_blockers += tier_result.get("blockers") or ["governance_tier_completion_check_failed"]
+                continue
+
         passed.append(implementation_id)
 
     if not passed:
@@ -189,10 +262,14 @@ def decision(root, change_id, target):
     recs = records(layout)
     if change_id not in recs: return {"permitted": False,"change": change_id,"target": target,"blockers": ["change_missing"]}
     chg, _ = recs[change_id]
-    governed = (chg.get("governance") or {}).get("lifecycle_enforcement") == "controlled_v1"
+    raw_profile = (chg.get("governance") or {}).get("lifecycle_enforcement")
+    governed = raw_profile in ("controlled_v1", "controlled_v2")
     blockers = []
+    if raw_profile and not governed:
+        blockers.append(f"unsupported_lifecycle_enforcement:{raw_profile}")
     if governed:
         if target in ("approved", "in_progress", "implemented", "validated", "completed"): blockers += approval_gate(layout, recs, chg)
+        if target == "approved": blockers += _active_profile_and_v2_extras(layout, recs, chg, raw_profile)
         if target == "completed": blockers = completion_gate(layout, recs, chg)
     return {"permitted": not blockers,"change": change_id,"current": chg.get("status"),"target": target,"governed": governed,"project_format_mode": layout.mode,"blockers": sorted(set(blockers))}
 

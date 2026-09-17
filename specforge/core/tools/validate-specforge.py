@@ -22,8 +22,18 @@ from specforge_project import (
     discover_layout,
     iter_record_files,
     load_yaml,
+    manifest_core_consistency_blockers,
+    read_project_governance_tier_state,
     relative,
     verify_source_revision,
+)
+from specforge_integration import PROFILE as INTEGRATION_PROFILE, verify_integration_evidence
+from specforge_governance_tier import (
+    TIER_ORDER,
+    GovernanceTierError,
+    classify_entries,
+    validate_declared_scope,
+    verify_policy_archive,
 )
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd().resolve()
@@ -101,6 +111,37 @@ for key in ("product_specification", "canonical_data_model"):
     target = (ROOT / value).resolve() if value else None
     if not target or not target.is_file():
         errors.append(f"Missing authoritative {key}: {value}")
+
+for consistency_blocker in manifest_core_consistency_blockers(layout):
+    code = consistency_blocker["code"]
+    if code == "core_version_inconsistent":
+        errors.append(
+            f"Manifest specforge.core_version ({consistency_blocker['declared_core_version']}) does not match "
+            f"actually-installed specforge/core/core.yaml's core_version ({consistency_blocker['installed_core_version']})"
+        )
+    elif code == "data_model_version_inconsistent":
+        errors.append(
+            f"Manifest specforge.data_model_version ({consistency_blocker['declared_data_model_version']}) does not "
+            f"match actually-installed specforge/core/core.yaml's data_model_version ({consistency_blocker['installed_data_model_version']})"
+        )
+    elif code == "package_core_version_inconsistent":
+        errors.append(
+            f"specforge/core/package.yaml's declared version ({consistency_blocker['package_version']}) does not "
+            f"match actually-installed specforge/core/core.yaml's core_version ({consistency_blocker['installed_core_version']})"
+        )
+    elif code == "self_referencing_product_specification_inconsistent":
+        errors.append(
+            f"specification.product_specification self-references a Core product-spec doc embedding version "
+            f"{consistency_blocker['embedded_version']}, but declared core_version is "
+            f"{consistency_blocker['declared_core_version']} and specification.current_version is "
+            f"{consistency_blocker['declared_current_version']} -- all three must agree"
+        )
+    elif code == "self_referencing_canonical_data_model_inconsistent":
+        errors.append(
+            f"specification.canonical_data_model self-references a Core canonical-data-model doc embedding version "
+            f"{consistency_blocker['embedded_version']}, but declared data_model_version is "
+            f"{consistency_blocker['declared_data_model_version']}"
+        )
 
 schemas = {}
 schema_value = (manifest.get("paths") or {}).get("schemas")
@@ -219,7 +260,7 @@ for rid, rec in records.items():
     if rec["kind"] != "change":
         continue
     d = rec["data"]
-    if (d.get("governance") or {}).get("lifecycle_enforcement") != "controlled_v1":
+    if (d.get("governance") or {}).get("lifecycle_enforcement") not in ("controlled_v1", "controlled_v2"):
         continue
     proposal_id = (d.get("proposal") or {}).get("current")
     valid_approval = False
@@ -260,21 +301,133 @@ for rid, rec in records.items():
                 and tests_passed
             ):
                 continue
-            revision = verify_source_revision(
-                layout,
-                attempt.get("source_revision") or {},
-                mode="static",
-                require_provider=False,
-            )
+            integration = attempt.get("integration") or {}
+            if integration.get("profile") == INTEGRATION_PROFILE:
+                revision = verify_integration_evidence(layout, attempt, mode="static")
+            else:
+                revision = verify_source_revision(
+                    layout,
+                    attempt.get("source_revision") or {},
+                    mode="static",
+                    require_provider=False,
+                )
             if revision.get("valid"):
                 supported = True
                 break
             revision_failures += revision.get("blockers") or []
         if not supported:
-            detail = ", ".join(sorted(set(revision_failures))) if revision_failures else "missing immutable source revision evidence"
+            detail = ", ".join(sorted(set(revision_failures))) if revision_failures else "missing immutable source/integration revision evidence"
             errors.append(
                 f"Lifecycle gate violation in {rec['path']}: completion lacks passing implementation, mandatory validation/test evidence, or verifiable material revision ({detail})"
             )
+
+governance_tier_state = read_project_governance_tier_state(layout)
+if governance_tier_state["status"] == "corrupted":
+    errors.append(
+        "Governance-tier activation state is corrupted: specforge/project.yaml's governance_tier fields and "
+        "specforge/evidence/governance-tier-grandfather.yaml are inconsistent (missing, digest mismatch, or an "
+        "unrecognised enforcement profile) rather than cleanly not-activated or validly active"
+    )
+
+policy_archive_root = (layout.root / (layout.manifest.get("paths") or {}).get("evidence", "specforge/evidence")).resolve() / "governance-tier-policy"
+if policy_archive_root.is_dir():
+    for archive_path in sorted(policy_archive_root.glob("*.yaml")):
+        claimed = archive_path.stem
+        actual = canonical_artifact_digest(archive_path)
+        if actual != claimed:
+            errors.append(
+                f"Governance-tier policy archive digest mismatch: {relative(layout, archive_path)} claims "
+                f"{claimed} but its actual content digest is {actual}"
+            )
+
+POST_APPROVAL_STATES = {"approved", "in_progress", "implemented", "validated", "completed"}
+for rid, rec in records.items():
+    if rec["kind"] != "change":
+        continue
+    d = rec["data"]
+    declared_profile = (d.get("governance") or {}).get("lifecycle_enforcement")
+    if declared_profile not in ("controlled_v1", "controlled_v2"):
+        continue
+    if d.get("status") not in POST_APPROVAL_STATES:
+        continue
+    if governance_tier_state["status"] == "corrupted":
+        continue
+
+    proposal_id = (d.get("proposal") or {}).get("current")
+    proposal_rec = records.get(str(proposal_id))
+    proposal_digest = canonical_artifact_digest(proposal_rec["file"]) if proposal_rec else None
+    grandfathered = (
+        governance_tier_state["status"] == "active"
+        and proposal_digest is not None
+        and proposal_digest in governance_tier_state["grandfather_digests"]
+    )
+
+    if not grandfathered and declared_profile != governance_tier_state["effective_lifecycle_profile"]:
+        errors.append(
+            f"Governance-tier profile mismatch in {rec['path']}: declares {declared_profile} but the project's "
+            f"effective lifecycle profile is {governance_tier_state['effective_lifecycle_profile']} and this "
+            f"change's exact current proposal digest is not present in the verified grandfather evidence"
+        )
+        continue
+
+    if declared_profile != "controlled_v2" or grandfathered:
+        continue
+    if not proposal_rec:
+        continue
+
+    proposal_data = proposal_rec["data"]
+    governance_tier = proposal_data.get("governance_tier") or {}
+    requested = governance_tier.get("requested")
+    policy_digest = governance_tier.get("policy_digest")
+
+    valid_approval = False
+    for approval_id in d.get("approvals") or []:
+        approval_rec = records.get(str(approval_id))
+        if not approval_rec:
+            continue
+        approval = approval_rec["data"]
+        if approval.get("decision") != "approved" or approval.get("proposal") != proposal_id:
+            continue
+        if (approval.get("actor") or {}).get("type") != "human":
+            continue
+        expected = (approval.get("evidence") or {}).get("proposal_digest") or (approval.get("scope") or {}).get("proposal_sha256")
+        if expected and expected == proposal_digest:
+            valid_approval = True
+            break
+    if not valid_approval:
+        errors.append(f"Governance-tier contract violation in {rec['path']}: no exact valid human approval of the current proposal")
+        continue
+
+    if requested not in TIER_ORDER:
+        errors.append(f"Governance-tier contract violation in {rec['path']}: governance_tier.requested is missing or invalid")
+        continue
+    if not policy_digest:
+        errors.append(f"Governance-tier contract violation in {rec['path']}: proposal was never prepared (governance_tier.policy_digest missing)")
+        continue
+
+    archived_policy = verify_policy_archive(layout, policy_digest)
+    if archived_policy is None:
+        errors.append(
+            f"Governance-tier contract violation in {rec['path']}: archived policy {policy_digest} is missing or "
+            f"its content digest no longer matches"
+        )
+        continue
+
+    try:
+        entries = validate_declared_scope(proposal_data.get("declared_scope"))
+        classification = classify_entries(entries, archived_policy, layout)
+        if classification.get("blocker"):
+            raise GovernanceTierError(classification["blocker"])
+    except GovernanceTierError as exc:
+        errors.append(f"Governance-tier contract violation in {rec['path']}: declared scope is missing, malformed, or unclassifiable ({exc})")
+        continue
+
+    minimum = classification["classification"]
+    if TIER_ORDER[requested] < TIER_ORDER[minimum]:
+        errors.append(
+            f"Governance-tier contract violation in {rec['path']}: requested_tier {requested} is below the "
+            f"archived-policy-recomputed floor {minimum}"
+        )
 
 if errors:
     print("SpecForge validation FAILED")

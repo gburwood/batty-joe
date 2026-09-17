@@ -40,4 +40,87 @@ with tempfile.TemporaryDirectory(prefix='specforge-auth-') as td:
     acc = guard_run('accept'); expect(acc.returncode == 0, 'trusted-baseline-advances-after-clean-commit', acc.stdout)
     expect(guard_run().returncode == 0, 'accepted-state-valid')
 
+# --- CHG-1017 revision 6: controlled_v2 active implementations ---
+
+with tempfile.TemporaryDirectory(prefix='specforge-auth-v2-git-') as td:
+    project = Path(td) / 'project'
+    state = create_project(project, CORE, git_backed=True)
+    trusted = state['trusted_revision']
+    guard = project / 'specforge/core/tools/specforge-authorization.py'
+    def guard_run(*extra): return run(sys.executable, '-B', str(guard), *extra, '--root', str(project), '--json')
+
+    install_controlled_change(project, 'CHG-9002', status='in_progress', attempt=True, before=trusted,
+                               outcome='in_progress', lifecycle_enforcement='controlled_v2')
+    git(project, 'add', 'specforge/changes'); git(project, 'commit', '-m', 'start git-backed controlled_v2 implementation')
+    readme = project / 'README.md'; original = readme.read_text(encoding='utf-8')
+    readme.write_text(original + '\ncontrolled_v2 authorized edit\n', encoding='utf-8')
+    a = guard_run(); expect(a.returncode == 0, 'git-backed-controlled-v2-material-permitted', a.stdout)
+    expect(json.loads(a.stdout).get('authorized') is True, 'git-backed-controlled-v2-authorization-reported', a.stdout)
+
+with tempfile.TemporaryDirectory(prefix='specforge-auth-v2-snapshot-') as td:
+    project = Path(td) / 'project'
+    create_project(project, CORE, git_backed=False)
+    guard = project / 'specforge/core/tools/specforge-authorization.py'
+    def guard_run(*extra): return run(sys.executable, '-B', str(guard), *extra, '--root', str(project), '--json')
+    sys.path.insert(0, str(CORE / 'tools'))
+    from specforge_project import discover_layout, material_snapshot
+    layout = discover_layout(project)
+    snapshot = material_snapshot(layout)
+    write_yaml(project / 'specforge/evidence/material-authority.yaml', {'version': 1, 'trusted': {'provider': 'specforge_snapshot', 'revision': snapshot['revision']}})
+    install_controlled_change(project, 'CHG-9003', status='in_progress', attempt=True, before=snapshot['revision'],
+                               outcome='in_progress', lifecycle_enforcement='controlled_v2')
+    imp_path = project / 'specforge/changes/CHG-9003/implementation/IMP-9003-01.yaml'
+    import yaml as _yaml
+    imp = _yaml.safe_load(imp_path.read_text(encoding='utf-8'))
+    imp['source_revision']['system'] = 'specforge_snapshot'
+    write_yaml(imp_path, imp)
+    readme = project / 'README.md'; readme.write_text(readme.read_text(encoding='utf-8') + '\nunmanaged controlled_v2 authorized edit\n', encoding='utf-8')
+    a = guard_run(); expect(a.returncode == 0, 'unmanaged-folder-controlled-v2-material-permitted', a.stdout)
+    expect(json.loads(a.stdout).get('authorized') is True, 'unmanaged-folder-controlled-v2-authorization-reported', a.stdout)
+
+with tempfile.TemporaryDirectory(prefix='specforge-auth-v2-unsupported-profile-') as td:
+    project = Path(td) / 'project'
+    state = create_project(project, CORE, git_backed=True)
+    trusted = state['trusted_revision']
+    guard = project / 'specforge/core/tools/specforge-authorization.py'
+    def guard_run(*extra): return run(sys.executable, '-B', str(guard), *extra, '--root', str(project), '--json')
+
+    install_controlled_change(project, 'CHG-9004', status='in_progress', attempt=True, before=trusted,
+                               outcome='in_progress', lifecycle_enforcement='controlled_v3_unsupported')
+    git(project, 'add', 'specforge/changes'); git(project, 'commit', '-m', 'start unsupported-profile implementation')
+    readme = project / 'README.md'; readme.write_text(readme.read_text(encoding='utf-8') + '\nunsupported profile edit\n', encoding='utf-8')
+    u = guard_run(); expect(u.returncode != 0, 'unsupported-lifecycle-profile-never-authorizes', u.stdout)
+
+with tempfile.TemporaryDirectory(prefix='specforge-auth-v2-mismatched-binding-') as td:
+    project = Path(td) / 'project'
+    state = create_project(project, CORE, git_backed=True)
+    trusted = state['trusted_revision']
+    guard = project / 'specforge/core/tools/specforge-authorization.py'
+    def guard_run(*extra): return run(sys.executable, '-B', str(guard), *extra, '--root', str(project), '--json')
+
+    install_controlled_change(project, 'CHG-9005', status='in_progress', attempt=True, before=trusted,
+                               outcome='in_progress', lifecycle_enforcement='controlled_v2')
+    # tamper with the approved proposal after its digest was bound, so exact_approval() no longer matches
+    prop_path = project / 'specforge/changes/CHG-9005/PROP-9005-01.yaml'
+    prop = prop_path.read_text(encoding='utf-8') + '\n# tampered after approval\n'
+    prop_path.write_text(prop, encoding='utf-8')
+    git(project, 'add', 'specforge/changes'); git(project, 'commit', '-m', 'start implementation with tampered proposal binding')
+    readme = project / 'README.md'; readme.write_text(readme.read_text(encoding='utf-8') + '\nunauthorized edit despite v2 status\n', encoding='utf-8')
+    u = guard_run(); expect(u.returncode != 0, 'controlled-v2-mismatched-proposal-binding-never-authorizes', u.stdout)
+    expect('unauthorized_material_changes' in u.stdout, 'controlled-v2-unauthorized-material-fails-closed', u.stdout)
+
+with tempfile.TemporaryDirectory(prefix='specforge-auth-v2-stale-baseline-') as td:
+    project = Path(td) / 'project'
+    state = create_project(project, CORE, git_backed=True)
+    trusted = state['trusted_revision']
+    guard = project / 'specforge/core/tools/specforge-authorization.py'
+    def guard_run(*extra): return run(sys.executable, '-B', str(guard), *extra, '--root', str(project), '--json')
+
+    # implementation-attempt's source_revision.before deliberately does not match the trusted baseline
+    install_controlled_change(project, 'CHG-9006', status='in_progress', attempt=True, before='0' * 40,
+                               outcome='in_progress', lifecycle_enforcement='controlled_v2')
+    git(project, 'add', 'specforge/changes'); git(project, 'commit', '-m', 'start implementation with stale trusted-baseline binding')
+    readme = project / 'README.md'; readme.write_text(readme.read_text(encoding='utf-8') + '\nunauthorized edit, stale baseline\n', encoding='utf-8')
+    u = guard_run(); expect(u.returncode != 0, 'controlled-v2-stale-trusted-baseline-never-authorizes', u.stdout)
+
 print('Authorization regression tests PASSED')

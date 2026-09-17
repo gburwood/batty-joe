@@ -4,7 +4,15 @@ from pathlib import Path
 import argparse, json, shutil, subprocess, tempfile
 import yaml
 
-from specforge_project import discover_layout
+from specforge_project import (
+    CANONICAL_DATA_MODEL_DOC_RE,
+    CANONICAL_DATA_MODEL_DOC_TEMPLATE,
+    PRODUCT_SPEC_DOC_RE,
+    PRODUCT_SPEC_DOC_TEMPLATE,
+    discover_layout,
+    manifest_core_consistency_blockers,
+    self_referencing_core_doc_version,
+)
 from specforge_distribution import discover_distribution
 from specforge_upgrade_authority import establish_upgrade_authority
 from specforge_authority import authority_path
@@ -27,6 +35,52 @@ def clean(root):
     return True
 
 
+def _format_consistency_blocker(blocker):
+    code=blocker["code"]
+    if code=="core_version_inconsistent":
+        return f"source_core_version_inconsistent:declared={blocker['declared_core_version']}:installed={blocker['installed_core_version']}"
+    if code=="data_model_version_inconsistent":
+        return f"source_data_model_version_inconsistent:declared={blocker['declared_data_model_version']}:installed={blocker['installed_data_model_version']}"
+    if code=="package_core_version_inconsistent":
+        return f"source_package_version_inconsistent:package={blocker['package_version']}:core={blocker['installed_core_version']}"
+    if code=="self_referencing_product_specification_inconsistent":
+        return (f"source_self_referencing_product_specification_inconsistent:embedded={blocker['embedded_version']}:"
+                f"core_version={blocker['declared_core_version']}:current_version={blocker['declared_current_version']}")
+    if code=="self_referencing_canonical_data_model_inconsistent":
+        return (f"source_self_referencing_canonical_data_model_inconsistent:embedded={blocker['embedded_version']}:"
+                f"data_model_version={blocker['declared_data_model_version']}")
+    return code
+
+
+def _self_referencing_rebind_plan(layout, distribution, target_core_version, target_data_model_version):
+    """Determine, per field and independently, whether an already-consistent self-referencing
+    specification field should be rebound to the candidate's equivalently-versioned doc.
+
+    Only called once manifest_core_consistency_blockers(layout) has already returned no
+    self-referencing blockers, so a field matching here is known to already be internally
+    consistent and therefore eligible for deterministic rebinding.
+    """
+    spec=layout.manifest.get("specification") or {}
+    blockers=[]; rebind={}
+
+    if self_referencing_core_doc_version(layout, spec.get("product_specification"), PRODUCT_SPEC_DOC_RE) is not None:
+        target_name=PRODUCT_SPEC_DOC_TEMPLATE.format(version=target_core_version)
+        if not (distribution.core_root/"docs"/target_name).is_file():
+            blockers.append(f"self_referencing_product_specification_target_doc_missing:{target_name}")
+        else:
+            rebind["product_specification"]="./specforge/core/docs/"+target_name
+            rebind["current_version"]=target_core_version
+
+    if self_referencing_core_doc_version(layout, spec.get("canonical_data_model"), CANONICAL_DATA_MODEL_DOC_RE) is not None:
+        target_name=CANONICAL_DATA_MODEL_DOC_TEMPLATE.format(version=target_data_model_version)
+        if not (distribution.core_root/"docs"/target_name).is_file():
+            blockers.append(f"self_referencing_canonical_data_model_target_doc_missing:{target_name}")
+        else:
+            rebind["canonical_data_model"]="./specforge/core/docs/"+target_name
+
+    return blockers, rebind
+
+
 def plan(root, distribution_path=None):
     try: layout=discover_layout(root)
     except Exception as e: return {"permitted":False,"blockers":[f"project_discovery_failed:{e}"]}
@@ -36,15 +90,30 @@ def plan(root, distribution_path=None):
     sf=layout.manifest.get("specforge") or {}; fmt=sf.get("project_format"); blockers=[]
     if fmt not in distribution.project_formats: blockers.append("target_core_incompatible_with_project_format")
     current=sf.get("core_version"); target=distribution.version
+    current_data_model=sf.get("data_model_version"); target_data_model=distribution.core.get("data_model_version")
+
+    # Source-state preflight: verify the source project's own installed-state coherence
+    # before authority establishment or any mutation, reusing validate-specforge.py's own
+    # predicate logic rather than duplicating it. Runs strictly before any write.
+    blockers += [_format_consistency_blocker(b) for b in manifest_core_consistency_blockers(layout)]
+
+    rebind={}
+    if not blockers:
+        rebind_blockers, rebind = _self_referencing_rebind_plan(layout, distribution, target, target_data_model)
+        blockers += rebind_blockers
+
     return {
         "permitted":not blockers,
         "already_current":current==target,
         "current_core_version":current,
         "target_core_version":target,
+        "current_data_model_version":current_data_model,
+        "target_data_model_version":target_data_model,
         "project_format":fmt,
         "candidate_distribution":{"version":target,"package":str(distribution.package_path),"core":str(distribution.core_root)},
         "replace":[str(layout.core_root.relative_to(layout.root)).replace('\\','/')],
         "preserve":["specforge/project.yaml","specforge/changes","specforge/decisions","specforge/history","specforge/evidence"],
+        "specification_rebind":rebind,
         "blockers":blockers,
     }
 
@@ -61,10 +130,13 @@ def write_evidence(layout,p):
         "operation":"core_upgrade",
         "from_core_version":p["current_core_version"],
         "to_core_version":p["target_core_version"],
+        "from_data_model_version":p.get("current_data_model_version"),
+        "to_data_model_version":p.get("target_data_model_version"),
         "project_format":p["project_format"],
         "candidate_distribution":p["candidate_distribution"],
         "replaced":p["replace"],
         "preserved":p["preserve"],
+        "specification_rebind":p.get("specification_rebind") or {},
         "authority":p.get("authority"),
         "result":"upgraded",
     }
@@ -108,7 +180,12 @@ def apply(root,distribution_path=None):
                 shutil.rmtree(target)
                 shutil.copytree(distribution.core_root,target,ignore=shutil.ignore_patterns("__pycache__","*.pyc","*.pyo"))
                 manifest=layout.manifest
-                manifest.setdefault("specforge",{})["core_version"]=p["target_core_version"]
+                sf=manifest.setdefault("specforge",{})
+                sf["core_version"]=p["target_core_version"]
+                sf["data_model_version"]=p["target_data_model_version"]
+                rebind=p.get("specification_rebind") or {}
+                if rebind:
+                    manifest.setdefault("specification",{}).update(rebind)
                 layout.manifest_path.write_text(yaml.safe_dump(manifest,sort_keys=False,allow_unicode=True),encoding="utf-8",newline="\n")
                 p["evidence"]=write_evidence(layout,p)
             except Exception:

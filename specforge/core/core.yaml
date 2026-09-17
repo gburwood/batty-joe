@@ -1,5 +1,5 @@
-core_version: 0.1.0-alpha.13
-data_model_version: 0.1.0-alpha.3
+core_version: 0.1.0-alpha.16
+data_model_version: 0.1.0-alpha.5
 compatibility:
   project_formats:
   - 1
@@ -18,11 +18,17 @@ canonical_integrity:
   encoding: utf-8
   strip_utf8_bom: true
   line_endings: lf
+governance_tier:
+  available_profiles:
+  - deterministic_tier_v1
 material_revision:
-  verification_profile: immutable_material_v2
+  verification_profile: immutable_material_v3
+  historical_profiles:
+  - immutable_material_v2
   fallback_provider: specforge_snapshot
   snapshot_algorithm: sha256
   trusted_baseline: required
+  integration_evidence: required_for_new_controlled_material_completion
 managed_upgrade:
   authorization_profile: bounded_core_upgrade_v1
 distributed_testing:

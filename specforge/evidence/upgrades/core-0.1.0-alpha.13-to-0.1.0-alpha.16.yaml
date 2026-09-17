@@ -1,0 +1,29 @@
+operation: core_upgrade
+from_core_version: 0.1.0-alpha.13
+to_core_version: 0.1.0-alpha.16
+from_data_model_version: 0.1.0-alpha.3
+to_data_model_version: 0.1.0-alpha.5
+project_format: 1
+candidate_distribution:
+  version: 0.1.0-alpha.16
+  package: C:\Users\Gary Burwood\repos\specForge\specforge\core\package.yaml
+  core: C:\Users\Gary Burwood\repos\specForge\specforge\core
+replaced:
+- specforge/core
+preserved:
+- specforge/project.yaml
+- specforge/changes
+- specforge/decisions
+- specforge/history
+- specforge/evidence
+specification_rebind:
+  canonical_data_model: ./specforge/core/docs/specforge-core-canonical-data-model-0.1.0-alpha.5.md
+authority:
+  type: core_upgrade
+  id: core-0.1.0-alpha.13-to-0.1.0-alpha.16
+  provider: git
+  before: dfa76a25c115d350bcc95ef43680ad1d0180bdfa
+  from_core_version: 0.1.0-alpha.13
+  to_core_version: 0.1.0-alpha.16
+  scope: framework_core_and_manifest
+result: upgraded

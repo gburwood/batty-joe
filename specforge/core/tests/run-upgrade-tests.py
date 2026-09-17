@@ -4,7 +4,11 @@ import hashlib, importlib.util, json, os, shutil, subprocess, sys, tempfile, yam
 
 CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from portable_fixture import create_project, git, install_controlled_change
+from portable_fixture import create_project, git, install_controlled_change, write_yaml
+
+CORE_META = yaml.safe_load((CORE / 'core.yaml').read_text(encoding='utf-8'))
+TARGET_CORE_VERSION = CORE_META['core_version']
+TARGET_DATA_MODEL_VERSION = CORE_META['data_model_version']
 
 
 def run(tool, args, cwd=None):
@@ -74,7 +78,9 @@ with tempfile.TemporaryDirectory() as td:
     fixture = base / 'batty-joe-shaped'
     create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.8')
     shutil.rmtree(fixture / 'specforge/packs'); shutil.rmtree(fixture / 'specforge/decisions')
-    install_controlled_change(fixture, 'CHG-0008', status='completed', attempt=False)
+    install_controlled_change(fixture, 'CHG-0008', status='approved', attempt=False)
+    (fixture / 'specforge/history/events').mkdir(parents=True, exist_ok=True)
+    (fixture / 'specforge/history/events/.gitkeep').write_text('', encoding='utf-8')
     product = fixture / 'product.txt'; product_before = digest(product)
     change = fixture / 'specforge/changes/CHG-0008.yaml'; change_before = digest(change)
     git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'Batty Joe shaped alpha.8 baseline')
@@ -88,14 +94,14 @@ with tempfile.TemporaryDirectory() as td:
     assert digest(product) == product_before and digest(change) == change_before
     assert not (fixture / 'specforge/packs').exists() and not (fixture / 'specforge/decisions').exists()
     validator = fixture / 'specforge/core/tools/validate-specforge.py'
-    result = run(validator, ['--root', str(fixture)])
+    result = run(validator, [str(fixture)])
     assert result.returncode == 0, result.stdout + result.stderr
     git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'Apply managed Core upgrade')
     checkout = base / 'fresh-checkout'
     result = subprocess.run(['git', 'clone', '--quiet', '--local', '--no-hardlinks', str(fixture), str(checkout)], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
     validator = checkout / 'specforge/core/tools/validate-specforge.py'
-    result = run(validator, ['--root', str(checkout)])
+    result = run(validator, [str(checkout)])
     assert result.returncode == 0, result.stdout + result.stderr
     authority = yaml.safe_load((checkout / 'specforge/evidence/material-authority.yaml').read_text(encoding='utf-8'))
     assert authority['active_operation']['type'] == 'core_upgrade'
@@ -147,5 +153,209 @@ with tempfile.TemporaryDirectory() as td:
     assert result['applied'] and result['authority']['type'] == 'core_upgrade'
     assert created
     assert_external(created, fixture)
+
+# --- CHG-1017: data_model_version transactional write; ordinary downstream fields untouched ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'downstream-plain'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4')
+    product_before = digest(fixture / 'product.txt'); model_before = digest(fixture / 'model.txt')
+    spec_before = yaml.safe_load((fixture / 'specforge/project.yaml').read_text(encoding='utf-8'))['specification']
+    # create_project already leaves a clean committed tree; nothing further to commit here.
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode == 0, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data['applied']
+    manifest = yaml.safe_load((fixture / 'specforge/project.yaml').read_text(encoding='utf-8'))
+    assert manifest['specforge']['core_version'] == TARGET_CORE_VERSION
+    assert manifest['specforge']['data_model_version'] == TARGET_DATA_MODEL_VERSION
+    assert manifest['specification'] == spec_before, 'ordinary downstream specification fields must be byte-identical'
+    assert digest(fixture / 'product.txt') == product_before and digest(fixture / 'model.txt') == model_before
+    validator = fixture / 'specforge/core/tools/validate-specforge.py'
+    vr = run(validator, [str(fixture)])
+    assert vr.returncode == 0, vr.stdout + vr.stderr
+
+# --- CHG-1017: product-spec self-reference rebinds itself and current_version together ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'self-ref-product-spec'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4',
+                   self_referencing_product_specification=True)
+    # create_project already leaves a clean committed tree; nothing further to commit here.
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode == 0, result.stdout + result.stderr
+    manifest = yaml.safe_load((fixture / 'specforge/project.yaml').read_text(encoding='utf-8'))
+    spec = manifest['specification']
+    assert spec['product_specification'] == f'./specforge/core/docs/specforge-core-product-spec-{TARGET_CORE_VERSION}.md'
+    assert spec['current_version'] == TARGET_CORE_VERSION
+    assert spec['canonical_data_model'] == './model.txt', 'canonical_data_model must stay untouched when only product_specification self-references'
+    validator = fixture / 'specforge/core/tools/validate-specforge.py'
+    vr = run(validator, [str(fixture)])
+    assert vr.returncode == 0, vr.stdout + vr.stderr
+
+# --- CHG-1017: canonical-data-model self-reference rebinds alone; Batty-Joe-shaped mixed case ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'self-ref-data-model-mixed'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4',
+                   self_referencing_canonical_data_model=True)
+    manifest_path = fixture / 'specforge/project.yaml'
+    manifest = yaml.safe_load(manifest_path.read_text(encoding='utf-8'))
+    manifest['specification']['current_version'] = '1.5.0'
+    write_yaml(manifest_path, manifest)
+    git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'Batty-Joe-shaped mixed baseline: own spec, Core data model, own version')
+    new_head = git(fixture, 'rev-parse', 'HEAD').stdout.strip()
+    write_yaml(fixture / 'specforge/evidence/material-authority.yaml', {'version': 1, 'trusted': {'provider': 'git', 'revision': new_head}})
+    git(fixture, 'add', 'specforge/evidence/material-authority.yaml'); git(fixture, 'commit', '-m', 'anchor trusted baseline for test fixture')
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode == 0, result.stdout + result.stderr
+    manifest = yaml.safe_load(manifest_path.read_text(encoding='utf-8'))
+    spec = manifest['specification']
+    assert spec['canonical_data_model'] == f'./specforge/core/docs/specforge-core-canonical-data-model-{TARGET_DATA_MODEL_VERSION}.md'
+    assert spec['product_specification'] == './product.txt', 'own product specification must remain untouched'
+    assert spec['current_version'] == '1.5.0', 'own current_version must remain untouched by a canonical_data_model-only rebind'
+    validator = fixture / 'specforge/core/tools/validate-specforge.py'
+    vr = run(validator, [str(fixture)])
+    assert vr.returncode == 0, vr.stdout + vr.stderr
+
+# --- CHG-1017: both fields self-reference simultaneously and independently ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'self-ref-both'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4',
+                   self_referencing_product_specification=True, self_referencing_canonical_data_model=True)
+    # create_project already leaves a clean committed tree; nothing further to commit here.
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode == 0, result.stdout + result.stderr
+    manifest = yaml.safe_load((fixture / 'specforge/project.yaml').read_text(encoding='utf-8'))
+    spec = manifest['specification']
+    assert spec['product_specification'] == f'./specforge/core/docs/specforge-core-product-spec-{TARGET_CORE_VERSION}.md'
+    assert spec['canonical_data_model'] == f'./specforge/core/docs/specforge-core-canonical-data-model-{TARGET_DATA_MODEL_VERSION}.md'
+    assert spec['current_version'] == TARGET_CORE_VERSION
+    validator = fixture / 'specforge/core/tools/validate-specforge.py'
+    vr = run(validator, [str(fixture)])
+    assert vr.returncode == 0, vr.stdout + vr.stderr
+
+# --- CHG-1017: missing candidate target doc refuses the whole upgrade before any mutation ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'self-ref-target-doc-missing'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4',
+                   self_referencing_product_specification=True)
+    # create_project already leaves a clean committed tree; nothing further to commit here.
+    core_before = tree_digest(fixture / 'specforge/core')
+    manifest_path = fixture / 'specforge/project.yaml'; manifest_before = manifest_path.read_bytes()
+    candidate = stage_distribution(fixture, '0.1.0-alpha.99-missing-doc-test', [1])
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert not data.get('applied')
+    assert any('self_referencing_product_specification_target_doc_missing' in b for b in data['blockers']), data['blockers']
+    assert tree_digest(fixture / 'specforge/core') == core_before
+    assert manifest_path.read_bytes() == manifest_before
+    upgrades_dir = fixture / 'specforge/evidence/upgrades'
+    assert not upgrades_dir.exists() or not list(upgrades_dir.glob('*.yaml'))
+
+# --- CHG-1017: source-state preflight -- project/core version drift blocks before authority, all files unchanged ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'source-core-drift'
+    create_project(fixture, CORE, git_backed=True)
+    manifest_path = fixture / 'specforge/project.yaml'
+    manifest = yaml.safe_load(manifest_path.read_text(encoding='utf-8'))
+    manifest['specforge']['core_version'] = '0.1.0-alpha.14'
+    write_yaml(manifest_path, manifest)
+    git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'introduce project/core version drift')
+    core_before = tree_digest(fixture / 'specforge/core')
+    manifest_before = manifest_path.read_bytes()
+    authority_path = fixture / 'specforge/evidence/material-authority.yaml'; authority_before = authority_path.read_bytes()
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert not data.get('applied')
+    assert any(b.startswith('source_core_version_inconsistent:') for b in data['blockers']), data['blockers']
+    assert 'authority' not in data, 'authority must never be established when the source-state preflight refuses'
+    assert tree_digest(fixture / 'specforge/core') == core_before
+    assert manifest_path.read_bytes() == manifest_before
+    assert authority_path.read_bytes() == authority_before
+    assert not (fixture / 'specforge/evidence/upgrades').exists()
+
+# --- CHG-1017: source-state preflight -- package/core version drift blocks before mutation ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'source-package-drift'
+    create_project(fixture, CORE, git_backed=True)
+    package_path = fixture / 'specforge/core/package.yaml'
+    package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
+    package['package']['version'] = '0.1.0-alpha.14'
+    write_yaml(package_path, package)
+    git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'introduce package/core version drift')
+    core_before = tree_digest(fixture / 'specforge/core')
+    manifest_path = fixture / 'specforge/project.yaml'; manifest_before = manifest_path.read_bytes()
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert not data.get('applied')
+    assert any(b.startswith('source_package_version_inconsistent:') for b in data['blockers']), data['blockers']
+    assert tree_digest(fixture / 'specforge/core') == core_before
+    assert manifest_path.read_bytes() == manifest_before
+
+# --- CHG-1017: source-state preflight -- data-model version drift blocks before mutation ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'source-data-model-drift'
+    create_project(fixture, CORE, git_backed=True)
+    manifest_path = fixture / 'specforge/project.yaml'
+    manifest = yaml.safe_load(manifest_path.read_text(encoding='utf-8'))
+    manifest['specforge']['data_model_version'] = '0.1.0-alpha.4'
+    write_yaml(manifest_path, manifest)
+    git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'introduce data-model version drift')
+    core_before = tree_digest(fixture / 'specforge/core')
+    manifest_before = manifest_path.read_bytes()
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert not data.get('applied')
+    assert any(b.startswith('source_data_model_version_inconsistent:') for b in data['blockers']), data['blockers']
+    assert tree_digest(fixture / 'specforge/core') == core_before
+    assert manifest_path.read_bytes() == manifest_before
+
+# --- CHG-1017: source-state preflight -- stale self-referencing field blocks before mutation, never silently repaired ---
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    fixture = base / 'source-self-ref-stale'
+    create_project(fixture, CORE, git_backed=True, declared_core_version='0.1.0-alpha.14', declared_data_model_version='0.1.0-alpha.4',
+                   self_referencing_product_specification=True)
+    manifest_path = fixture / 'specforge/project.yaml'
+    manifest = yaml.safe_load(manifest_path.read_text(encoding='utf-8'))
+    manifest['specification']['product_specification'] = './specforge/core/docs/specforge-core-product-spec-0.1.0-alpha.13.md'
+    write_yaml(manifest_path, manifest)
+    git(fixture, 'add', '.'); git(fixture, 'commit', '-m', 'introduce stale self-referencing product-spec path')
+    core_before = tree_digest(fixture / 'specforge/core')
+    manifest_before = manifest_path.read_bytes()
+    candidate = base / 'candidate' / 'core'; shutil.copytree(CORE, candidate, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    tool = candidate / 'tools/specforge-upgrade.py'
+    result = run(tool, ['upgrade', '--root', str(fixture), '--distribution', str(candidate), '--apply', '--json'])
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert not data.get('applied')
+    assert any(b.startswith('source_self_referencing_product_specification_inconsistent:') for b in data['blockers']), data['blockers']
+    assert tree_digest(fixture / 'specforge/core') == core_before
+    assert manifest_path.read_bytes() == manifest_before
 
 print('Upgrade tests PASSED')

@@ -1,6 +1,6 @@
 from pathlib import Path
 import subprocess, yaml
-from specforge_project import canonical_artifact_digest, git_worktree_root, is_governance_bookkeeping_path, iter_record_files, load_yaml, material_snapshot
+from specforge_project import canonical_artifact_digest, git_worktree_root, is_governance_bookkeeping_path, iter_record_files, load_yaml, material_snapshot, SUPPORTED_LIFECYCLE_ENFORCEMENT_PROFILES
 
 def run_git(layout,*args):
     return subprocess.run(['git','-C',str(layout.root),*args],capture_output=True,text=True)
@@ -65,7 +65,7 @@ def exact_approval(layout,recs,change):
 def active_implementations(layout,recs):
     items=[]
     for rid,(chg,_) in recs.items():
-        if not rid.startswith('CHG-') or (chg.get('governance') or {}).get('lifecycle_enforcement')!='controlled_v1': continue
+        if not rid.startswith('CHG-') or (chg.get('governance') or {}).get('lifecycle_enforcement') not in SUPPORTED_LIFECYCLE_ENFORCEMENT_PROFILES: continue
         if chg.get('status') not in {'in_progress','implemented','validated'}: continue
         ap=exact_approval(layout,recs,chg)
         if not ap: continue

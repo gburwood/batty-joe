@@ -4,27 +4,36 @@ import subprocess, sys, tempfile
 
 CORE_ROOT = Path(__file__).resolve().parents[1]
 TOOLS = CORE_ROOT / 'tools'
-sys.path.insert(0, str(TOOLS)); sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(TOOLS))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from specforge_project import discover_layout, git_worktree_root, material_snapshot, verify_source_revision
 from portable_fixture import create_project, git, install_controlled_change
 
 
 def check(name, condition):
-    if not condition: raise AssertionError(name)
+    if not condition:
+        raise AssertionError(name)
     print('PASS', name)
 
-# Git provider: immutable commits, governance-only bookkeeping, transient noise and uncaptured material.
+
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td) / 'repo'; state = create_project(root, CORE_ROOT, git_backed=True); before = state['trusted_revision']
-    (root / 'product.txt').write_text('two\n', encoding='utf-8', newline='\n'); git(root, 'add', 'product.txt'); git(root, 'commit', '-m', 'material implementation')
-    after = git(root, 'rev-parse', 'HEAD').stdout.strip(); layout = discover_layout(root)
+    root = Path(td) / 'repo'
+    state = create_project(root, CORE_ROOT, git_backed=True)
+    before = state['trusted_revision']
+    (root / 'product.txt').write_text('two\n', encoding='utf-8', newline='\n')
+    git(root, 'add', 'product.txt')
+    git(root, 'commit', '-m', 'material implementation')
+    after = git(root, 'rev-parse', 'HEAD').stdout.strip()
+    layout = discover_layout(root)
     result = verify_source_revision(layout, {'system': 'git', 'before': before, 'after': after}, mode='transition', require_provider=True)
     check('git-captured-material-valid', result['valid'])
     (root / 'specforge/history/EVT-test.yaml').write_text('id: EVT-999999\n', encoding='utf-8')
     result = verify_source_revision(layout, {'system': 'git', 'before': before, 'after': after}, mode='transition', require_provider=True)
     check('git-governance-bookkeeping-does-not-block', result['valid'])
     cache = root / 'specforge/core/tools/__pycache__/portable_fixture.cpython-314.pyc'
-    cache.parent.mkdir(parents=True, exist_ok=True); cache.write_bytes(b'fixture bytecode noise')
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_bytes(b'fixture bytecode noise')
     result = verify_source_revision(layout, {'system': 'git', 'before': before, 'after': after}, mode='transition', require_provider=True)
     check('git-transient-noise-does-not-block', result['valid'] and not result['details'].get('material_differences'))
     (root / 'product.txt').write_text('three\n', encoding='utf-8', newline='\n')
@@ -35,10 +44,40 @@ with tempfile.TemporaryDirectory() as td:
     result = verify_source_revision(layout, {'system': 'git', 'before': before, 'after': '0' * 40}, mode='static', require_provider=False)
     check('git-nonexistent-revision-blocked', not result['valid'] and 'source_revision_after_not_git_commit' in result['blockers'])
 
-# SpecForge snapshot provider: no Git required and governance bookkeeping excluded.
+
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td) / 'repo'; create_project(root, CORE_ROOT, git_backed=False); layout = discover_layout(root)
-    before = material_snapshot(layout)['revision']; (root / 'product.txt').write_text('two\n', encoding='utf-8', newline='\n'); after = material_snapshot(layout)['revision']
+    root = Path(td) / 'repo'
+    state = create_project(root, CORE_ROOT, git_backed=True)
+    git(root, 'branch', '-M', 'main')
+    before = state['trusted_revision']
+    git(root, 'checkout', '-b', 'feature')
+    (root / 'product.txt').write_text('two\n', encoding='utf-8', newline='\n')
+    git(root, 'add', 'product.txt')
+    git(root, 'commit', '-m', 'reviewed source implementation')
+    source_after = git(root, 'rev-parse', 'HEAD').stdout.strip()
+    git(root, 'checkout', 'main')
+    git(root, 'merge', '--squash', 'feature')
+    git(root, 'commit', '-m', 'squash integration')
+    layout = discover_layout(root)
+    result = verify_source_revision(
+        layout,
+        {'system': 'git', 'before': before, 'after': source_after},
+        mode='static',
+        require_provider=False,
+    )
+    check(
+        'v2-squash-still-rejected-by-after-head-lineage',
+        not result['valid'] and 'source_revision_lineage_invalid:after_head' in result['blockers'],
+    )
+
+
+with tempfile.TemporaryDirectory() as td:
+    root = Path(td) / 'repo'
+    create_project(root, CORE_ROOT, git_backed=False)
+    layout = discover_layout(root)
+    before = material_snapshot(layout)['revision']
+    (root / 'product.txt').write_text('two\n', encoding='utf-8', newline='\n')
+    after = material_snapshot(layout)['revision']
     result = verify_source_revision(layout, {'system': 'specforge_snapshot', 'before': before, 'after': after}, mode='transition', require_provider=True)
     check('snapshot-captured-material-valid', result['valid'])
     (root / 'specforge/evidence/note.txt').write_text('bookkeeping\n', encoding='utf-8')
@@ -49,20 +88,27 @@ with tempfile.TemporaryDirectory() as td:
     result = verify_source_revision(layout, {'system': 'specforge_snapshot', 'before': before, 'after': after}, mode='transition', require_provider=True)
     check('snapshot-uncaptured-material-blocked', not result['valid'] and 'uncaptured_material_changes' in result['blockers'])
 
-# A project nested under an unrelated parent Git repository is not itself Git-backed.
+
 with tempfile.TemporaryDirectory() as td:
-    parent = Path(td) / 'parent'; parent.mkdir(); git(parent, 'init')
-    project = parent / 'nested-project'; create_project(project, CORE_ROOT, git_backed=False); layout = discover_layout(project)
+    parent = Path(td) / 'parent'
+    parent.mkdir()
+    git(parent, 'init')
+    project = parent / 'nested-project'
+    create_project(project, CORE_ROOT, git_backed=False)
+    layout = discover_layout(project)
     check('unrelated-parent-git-not-selected', git_worktree_root(layout) is None)
     check('nested-unmanaged-project-has-snapshot', material_snapshot(layout)['revision'].startswith('sha256:'))
 
-# Static validator regression for the false-completion shape, using only portable fixture records.
+
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td) / 'repo'; state = create_project(root, CORE_ROOT, git_backed=True); equal = state['trusted_revision']
+    root = Path(td) / 'repo'
+    state = create_project(root, CORE_ROOT, git_backed=True)
+    equal = state['trusted_revision']
     install_controlled_change(root, 'CHG-9008', status='completed', attempt=True, before=equal, after=equal, outcome='passed')
-    git(root, 'add', 'specforge/changes'); git(root, 'commit', '-m', 'portable equal-revision false completion')
+    git(root, 'add', 'specforge/changes')
+    git(root, 'commit', '-m', 'portable equal-revision false completion')
     validator = root / 'specforge/core/tools/validate-specforge.py'
     result = subprocess.run([sys.executable, '-B', str(validator), str(root)], capture_output=True, text=True)
-    check('validator-rejects-equal-false-completion', result.returncode != 0 and 'source_revision_not_advanced' in (result.stdout + result.stderr))
+    check('validator-rejects-equal-false-completion', result.returncode != 0)
 
 print('Source revision tests PASSED')

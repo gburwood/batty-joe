@@ -8,6 +8,8 @@ sys.path.insert(0, str(TESTS))
 from portable_fixture import create_project
 
 TARGETS = sorted(path.name for path in TESTS.glob('run-*-tests.py') if path.name != 'run-portability-tests.py')
+if 'run-integration-evidence-tests.py' not in TARGETS:
+    raise AssertionError('integration evidence regression runner missing from distributed Core')
 
 with tempfile.TemporaryDirectory(prefix='specforge-portability-') as td:
     host = Path(td) / 'minimal-host'

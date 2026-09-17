@@ -46,6 +46,29 @@
     "requirement_changes": {
       "type": "object"
     },
+    "governance_tier": {
+      "type": "object",
+      "properties": {
+        "requested": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "policy_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "calculated_minimum": {"enum": ["LOW", "MEDIUM", "HIGH"]}
+      },
+      "additionalProperties": true
+    },
+    "declared_scope": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation"],
+        "properties": {
+          "operation": {"enum": ["add", "modify", "delete", "rename", "copy"]},
+          "path": {"type": "string"},
+          "from": {"type": "string"},
+          "to": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
     "behaviour_summary": {
       "type": "string",
       "minLength": 1
