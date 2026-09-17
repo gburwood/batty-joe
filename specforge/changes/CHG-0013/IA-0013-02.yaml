@@ -1,0 +1,168 @@
+id: IA-0013-02
+change: CHG-0013
+revision: 2
+supersedes: IA-0013-01
+created_at: '2026-09-17T10:20:43Z'
+affected:
+  requirements: []
+  components:
+  - ball_brick_rebound_physics
+  - paddle_velocity_transfer_physics
+  - regenerating_brick_lifecycle
+  - frenzy_regeneration
+  - frenzy_timeout_exit
+  - level_completion
+  - rectangular_collision_resolution
+  artifacts:
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-config.js
+  - batty-joe-tests.js
+  - batty-joe-dev-spec-v1.13.0.yaml (new, future implementation only)
+  - specforge/project.yaml (specification rebind, future implementation only)
+  tests:
+    required:
+    - Unchanged from IA-0013-01 for items 2-4 (regenerating-brick lock, frenzy-timeout completion,
+      resolveBallRect depenetration). See "unchanged_from_ia_0013_01" below.
+    - A new physics-level test proves a single non-penetrating brick bounce leaves the ball's speed, measured
+      immediately after the collision resolves, higher than the current ordinary target speed by the configured
+      exitSpeedMultiplier - i.e. the bounce is measurably more energetic than today's incoming-speed-preserving
+      behaviour.
+    - A new game-level test proves that exactly one simulation frame after such a bounce (with no further brick
+      contact and no paddle contact), the ball's speed has already returned to the ordinary target-speed-driven
+      value - not a value partway through a multi-frame decay curve.
+    - A new physics-level or game-level test proves that a rapid sequence of several consecutive brick bounces
+      (no intervening frames) never produces a ball speed higher than target * exitSpeedMultiplier - i.e. the
+      effect does not ratchet or compound across repeated collisions.
+    - A new game-level test proves the paddle-hit boost is completely unaffected - a paddle contact that
+      immediately follows a brick-bounce frame still produces exactly the same boostPercent/decay behaviour as
+      the existing "moving paddle temporarily boosts ball speed" / "temporary paddle speed boost decays toward
+      current target speed" tests already prove, with no interaction from the brick zip mechanism.
+    - The full existing batty-joe-tests.js suite, and every acceptance test already listed under IA-0013-01 for
+      items 2-4, remain required and green.
+compatibility:
+  breaking: false
+  notes: All four items remain additive or corrective within existing systems. No existing public Game/Physics
+    method signature is removed. One small new BJ.Physics function is added (stateless, no new ball fields).
+    handleBallBrickCollisions gains a targetSpeed parameter it does not currently take. updateBalls gains one
+    guard line ahead of its existing, unmodified decayPaddleSpeedBoost call. finishFrenzyRestore still gains one
+    trailing call to checkLevelComplete, unchanged from IA-0013-01.
+migration:
+  required: false
+  notes: Unchanged from IA-0013-01. No ball scratch field is added by this revision - the zip mechanism carries
+    no per-ball state at all, which is stronger than IA-0013-01's original non-persistence claim for
+    paddleSpeedBoost-style bookkeeping.
+zip_redesign:
+  product_owner_clarification: >-
+    The product owner has resolved the ambiguity flagged as RISK-0013-06 (and the open question raised in
+    PROP-0013-01) in favour of option 2: the ball should leave a brick collision faster/sharper so the rebound
+    visibly has more energy, but there must be no lingering speed boost. The PROP-0013-01 design
+    (ball.reboundSpeedBoost, accumulated boost percentage, a configured maximum, a decay half-life, per-frame
+    decay, and arbitration against paddleSpeedBoost) is explicitly rejected as a persistent second speed-boost
+    system and is withdrawn from the proposed design. This analysis replaces it with a stateless, one-shot
+    collision-response mechanism.
+  structural_finding: >-
+    Re-reading BJ.Physics.decayPaddleSpeedBoost (batty-joe-physics.js:215-236) closely: it does not gate its
+    decay behaviour on whether ball.paddleSpeedBoost is currently non-zero. It decays *any* situation where the
+    ball's current speed (length(ball.vx, ball.vy)) exceeds targetSpeed, using the paddle system's own
+    configured decayHalfLifeSeconds, regardless of what caused the excess speed. This is called unconditionally,
+    every frame, for every ball, in Game.prototype.updateBalls (batty-joe-game.js:417-428), before any brick
+    collision for that frame has even been evaluated. Consequence: if a brick-bounce "zip" effect were to leave
+    the ball's stored velocity magnitude elevated above target at the end of a frame (as PROP-0013-01's rejected
+    design did, and as a naive "just multiply exit speed" implementation would also do), the very next frame's
+    unconditional decayPaddleSpeedBoost call would silently start gradually decaying it using the *paddle*
+    system's half-life - producing exactly the multi-frame "carrying a decaying boost" behaviour the product
+    owner has now explicitly ruled out, and doing so through a coupling into the paddle-transfer system that
+    must not be modified. This is the central design constraint this revision solves for: any zip mechanism that
+    leaves ball speed elevated across a frame boundary will be involuntarily absorbed into the existing paddle
+    decay curve, whether or not that is the intent, because decayPaddleSpeedBoost cannot distinguish the source
+    of excess speed. There is no ball.paddleSpeedBoost-style field to check the source with, and the product
+    owner has ruled out adding an equivalent field for zip.
+  rejected_alternatives:
+  - alternative: Multiply the ball's exit velocity by a configured factor in resolveBallRect/applyReboundCharacter
+      and leave it as the ball's ongoing speed, relying on decayPaddleSpeedBoost's existing blanket
+      excess-speed decay to bring it back down over time.
+    rejected_because: This is exactly the structural finding above - it reintroduces a multi-frame decaying tail
+      (using the paddle system's own half-life, which this change must not alter or depend on for a different
+      purpose), i.e. it still "carries a decaying boost" in substance even without a dedicated
+      reboundSpeedBoost field, and it makes the zip effect's felt duration silently dependent on
+      physics.paddleVelocityTransfer.decayHalfLifeSeconds - an unrelated paddle-tuning value.
+  - alternative: A pure positional "extra separation" nudge at the moment of depenetration, leaving ball
+      velocity completely untouched.
+    rejected_because: Fully stateless and immune to the decay-coupling problem, but does not produce a
+      measurably higher exit *speed*, which the product owner's acceptance intent ("leave a brick collision
+      faster... exits more energetically") calls for directly. Considered too weak a reading of the requirement
+      to propose as the primary mechanism; not required once the guard below removes the decay-coupling problem
+      for a velocity-based approach.
+  chosen_design: >-
+    A two-part, fully stateless, deterministic mechanism, detailed in PROP-0013-02:
+    (a) at the moment of a non-penetrating brick bounce, set the ball's exit speed to
+    targetSpeed * physics.brickReboundZip.exitSpeedMultiplier, computed fresh from the current target speed
+    every time (never from the ball's current/incoming speed), so repeated consecutive bounces always produce
+    the same fixed exit speed and can never ratchet upward; and
+    (b) add one guard line to Game.prototype.updateBalls, executed before the existing (unmodified)
+    decayPaddleSpeedBoost call, that renormalises the ball to exactly targetSpeed whenever ball.paddleSpeedBoost
+    is falsy. Because ball.paddleSpeedBoost is already zero for every ball that is not currently riding a real
+    paddle boost (existing, unmodified invariant), this guard is a provable no-op on every frame today - the
+    ball's speed is already exactly targetSpeed-consistent by the time this line runs, for every ball, under
+    every existing test. It only has an observable effect on the one new case this revision introduces: a ball
+    whose speed was left elevated by a zip bounce on the immediately preceding frame. That ball is snapped back
+    to standard target speed at the very next opportunity the speed model has to act - one frame after the
+    bounce, not a decaying window - and before decayPaddleSpeedBoost (or anything else) can misidentify the
+    elevated speed as a paddle boost to gradually wind down.
+risks:
+- id: RISK-0013-07
+  description: If the new pre-guard in updateBalls were instead placed after decayPaddleSpeedBoost, or keyed on
+    the wrong condition, it could interfere with an in-progress paddle boost decay (resetting speed to target
+    mid-decay) or fail to catch a zip-elevated ball before decayPaddleSpeedBoost misclassifies it.
+  severity: medium
+  mitigation: The guard is keyed strictly on ball.paddleSpeedBoost being falsy (an existing field this change
+    never writes to) and runs strictly before the existing decayPaddleSpeedBoost call in the same function, so
+    it can never fire while a real paddle boost is active, and it always has first opportunity to neutralise any
+    zip leftover before decayPaddleSpeedBoost inspects current-vs-target speed. Acceptance criteria include a
+    dedicated test that a paddle hit immediately after a brick-zip frame behaves identically to today.
+- id: RISK-0013-08
+  description: Applying the fixed exitSpeedMultiplier from targetSpeed rather than from incoming/current speed
+    could, in principle, produce a *lower* exit speed than the ball actually had on entry if the ball entered
+    the collision already moving faster than target for some other legitimate reason (e.g. mid paddle-boost
+    decay), which would visually read as the bounce "slowing the ball down" rather than "more energy".
+  severity: low
+  mitigation: Non-penetrating brick collisions are the same code path already gated by
+    Game.prototype.handleBallBrickCollisions, which runs after any paddle-boost decay for that frame has already
+    been applied; in practice a ball is only ever meaningfully above target speed while actively riding a
+    recently-decaying paddle boost, and the zip multiplier's default (documented in PROP-0013-02) is chosen to
+    stay comfortably above typical mid-decay paddle speeds. This is flagged for product-owner awareness rather
+    than solved with additional conditional logic, to keep the mechanism the smallest possible deterministic
+    change; if real play-testing shows the effect reads as a slowdown in that narrow overlap case, the
+    multiplier can be tuned without any structural change.
+unchanged_from_ia_0013_01:
+  regenerating_brick_lock: >-
+    Confirmed by the product owner exactly as analysed in IA-0013-01: "remaining" destructible bricks are those
+    that are alive, or are respawn-mode regenerating bricks currently awaiting their respawn delay (the only
+    kind of destroyed brick still "in play"); regeneration (heal and respawn alike) is suppressed only when that
+    set is non-empty and consists entirely of regenerating-type bricks; any surviving ordinary destructible
+    brick leaves regeneration fully active; the same predicate applies identically in updateBricks (ordinary)
+    and updateFrenzyRegeneration (frenzy). No change to this analysis.
+  frenzy_timeout_completion: Unchanged from IA-0013-01 - finishFrenzyRestore still never calls
+    checkLevelComplete today, and the proposed fix (one trailing call to the existing method) is unaffected by
+    the zip clarification.
+  resolve_ball_rect_depenetration: Unchanged from IA-0013-01 - the confirmed diagnosis and the proposed general
+    fix to resolveBallRect()'s ambiguous-approach fallback branch are unaffected by the zip clarification.
+open_changes:
+  overlaps_with: []
+summary: >-
+  This revision replaces IA-0013-01's rebound-speed-boost analysis (section 1) following explicit product-owner
+  rejection of the persistent-boost design, while leaving IA-0013-01's analysis of items 2-4 in force unchanged
+  (item 2's interpretation is now explicitly confirmed by the product owner rather than merely proposed).
+  The key new finding is structural: BJ.Physics.decayPaddleSpeedBoost decays any current-speed-above-target
+  situation using the paddle system's own half-life, regardless of cause, because it has no way to distinguish
+  a paddle-caused boost from any other source of elevated speed. This means a naive velocity-based zip
+  implementation would be involuntarily absorbed into the paddle system's own decay curve on the very next
+  frame, reproducing the rejected "carrying a decaying boost" behaviour by accident, through code the product
+  owner has said must not be modified. The revised design resolves this with two small, fully stateless
+  changes - a fixed, target-speed-relative (never current-speed-relative) exit-speed multiplier applied once at
+  the moment of a brick bounce, and one guard line ahead of the existing decayPaddleSpeedBoost call that snaps
+  any zip leftover back to standard target speed on the very next frame, proven to be a no-op under every
+  existing (non-zip) condition. No ball field is added; no decay function is added; no interaction/arbitration
+  logic against paddleSpeedBoost is needed because the guard makes the two mechanisms mutually exclusive in time
+  by construction (the guard only ever fires when paddleSpeedBoost is inactive).

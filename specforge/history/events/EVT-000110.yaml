@@ -1,0 +1,31 @@
+id: EVT-000110
+timestamp: '2026-09-17T10:23:01Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: proposal_created
+entity:
+  type: proposal
+  id: PROP-0013-02
+related:
+  change: CHG-0013
+  impact_analysis: IA-0013-02
+  supersedes: PROP-0013-01
+resulting_state:
+  proposal_status: awaiting_approval
+  change_status: awaiting_approval
+  proposed_specification_version: 1.13.0
+evidence:
+  scope: Item 1 (brick-rebound zip) redesigned as a fully stateless, one-shot collision-response mechanism - a
+    target-speed-relative exit-speed multiplier applied once per brick bounce, plus one guard line in
+    updateBalls (proven a no-op under existing conditions) that returns the ball to standard target speed one
+    frame after the bounce, with no ball field, no decay function and no arbitration logic against
+    paddleSpeedBoost. Items 2-4 unchanged from PROP-0013-01. No product code is modified by this
+    proposal-preparation session; artifacts_expected declares what an approved implementation attempt would
+    touch. specforge/decisions/.gitkeep, unrelated bootstrap hygiene bundled into CHG-0013's prior commit in
+    error, has been removed from tracking as part of this revision's governance corrections (see EVT-000107).

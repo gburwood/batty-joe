@@ -1,0 +1,46 @@
+id: EVT-000107
+timestamp: '2026-09-17T10:20:29Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: forensic_record_correction
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  corrected_records:
+  - CHG-0013
+  - IA-0013-01
+  - PROP-0013-01
+  - EVT-000104
+  - EVT-000105
+  - EVT-000106
+corrects: EVT-000104
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  finding_1_invented_timestamps: >-
+    CHG-0013.yaml, IA-0013-01.yaml, PROP-0013-01.yaml and forensic events EVT-000104 through EVT-000106 were
+    written with staged, round-numbered timestamps (09:00, 09:20, 09:40 on 2026-09-17) rather than this
+    session's actual machine time at the moment each record was authored. Per forensic-traceability.md ("do not
+    silently rewrite history; corrections create a new revision, superseding record, or corrective event") and
+    source-of-truth.md, those original records are left exactly as originally written rather than having their
+    timestamps rewritten. This event is the corrective evidence: it records the finding and establishes that
+    every SpecForge record authored by this session from this point forward (IA-0013-02, PROP-0013-02, and
+    their forensic events) uses this session's actual machine time (captured via `date -u`), not an invented or
+    staged time.
+  finding_2_unrelated_scope_expansion: >-
+    The same prior work session also created specforge/decisions/.gitkeep as bootstrap-readiness housekeeping
+    (the directory was declared in specforge/project.yaml's manifest paths but had never been created across 12
+    prior completed changes). That housekeeping was unrelated to CHG-0013's four gameplay requirements and
+    should not have been bundled into this change's diff. specforge/decisions/.gitkeep (and the now-empty
+    specforge/decisions/ directory) has been removed by this correction so CHG-0013's tracked changes are
+    scoped strictly to the governed gameplay work. specforge/packs/ remains a genuine, separate, pre-existing
+    bootstrap gap (framework-owned material requiring an authorized core-material change to create) and is left
+    unaddressed here as out of scope for a gameplay change, exactly as previously reported.

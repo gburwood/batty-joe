@@ -1,0 +1,221 @@
+id: PROP-0013-02
+change: CHG-0013
+revision: 2
+supersedes: PROP-0013-01
+status: awaiting_approval
+created_at: '2026-09-17T10:21:35Z'
+based_on_impact_analysis:
+- IA-0013-02
+proposed_specification_version: 1.13.0
+behaviour_summary: >-
+  Four independent, additive/corrective gameplay changes, none of which alters the base difficulty speed curve,
+  frenzy sub-game physics, or existing paddle-boost behaviour. Item 1 is a complete redesign relative to
+  PROP-0013-01, per explicit product-owner rejection of that revision's persistent-boost design; items 2-4 are
+  unchanged in substance from PROP-0013-01, with item 2's interpretation now explicitly confirmed rather than
+  proposed.
+
+
+  (1) Brick-rebound "zip" (redesigned, replaces PROP-0013-01 section 1 entirely) - a stateless, one-shot,
+  deterministic collision-response effect, not a persistent ball state or second speed-boost system.
+  ball.reboundSpeedBoost, accumulated boost percentages, a maximum-boost state, a decay half-life, per-frame
+  decay, and any arbitration logic against paddleSpeedBoost - all of PROP-0013-01's rejected design - are
+  removed from the proposed design and do not appear anywhere below. The replacement mechanism has two parts:
+    (a) A new, pure, stateless function, BJ.Physics.applyBrickReboundZip(ball, targetSpeed, config), called once
+    from Game.prototype.handleBallBrickCollisions immediately after a non-penetrating brick's
+    BJ.Physics.resolveBallRect call resolves the rebound direction. It sets the ball's velocity magnitude to
+    targetSpeed * config.exitSpeedMultiplier, in the direction resolveBallRect already computed, and returns
+    that value. Critically, it is computed from targetSpeed (the ball's current, already-established target
+    speed for this frame - the same value already threaded through updateBalls today), never from the ball's
+    current/incoming speed, so a rapid sequence of consecutive brick bounces always produces the identical fixed
+    exit speed and can never compound or ratchet upward across repeated hits. No field is written to the ball
+    object by this function; it only sets ball.vx/ball.vy, exactly as every other rebound function already does.
+    (b) One guard line added to Game.prototype.updateBalls, immediately before its existing, unmodified call to
+    BJ.Physics.decayPaddleSpeedBoost: `if (!ball.paddleSpeedBoost) P.normalizeVelocity(ball, targetSpeed);`.
+    This exists solely to guarantee the zip effect cannot linger: BJ.Physics.decayPaddleSpeedBoost (untouched by
+    this change) decays *any* current-speed-above-target situation using the paddle system's own configured
+    half-life, regardless of cause, because it has no way to tell a paddle-caused boost from any other source of
+    elevated speed (see IA-0013-02's structural_finding). Without this guard, a zip-elevated ball would be
+    silently absorbed into the paddle system's own decay curve on the very next frame, reproducing exactly the
+    "carrying a decaying boost" behaviour the product owner has ruled out - through code this change must not
+    modify. The guard is a provable no-op under every existing (non-zip) condition, because ball.paddleSpeedBoost
+    is already zero for every ball not currently riding a genuine paddle boost, and such a ball's speed is
+    already exactly targetSpeed-consistent by the time this line runs today. It only has an observable effect on
+    a ball left zip-elevated by the immediately preceding frame's brick bounce, which it snaps back to standard
+    target speed at the very next opportunity - one frame after the bounce, not a decaying window, and before
+    decayPaddleSpeedBoost ever inspects it.
+    New config block: BJ.Config.physics.brickReboundZip = { enabled: true, exitSpeedMultiplier: <configured,
+    e.g. 1.15> }, sibling to (but structurally simpler than, and independent of) the existing
+    physics.paddleVelocityTransfer block. Applies uniformly to any non-penetrating brick bounce in ordinary
+    play; paddle bounces (bounceFromPaddle/decayPaddleSpeedBoost, untouched) and every frenzy sub-game's own
+    physics (pinball restitution, grid runner stepping, etc., all untouched) are unaffected, since
+    handleBallBrickCollisions is not part of any frenzy sub-game's update path.
+
+
+  (2) Regenerating-brick completion lock - unchanged from PROP-0013-01. New Game.prototype.onlyRegeneratingBricksRemain(),
+  computing the set of non-indestructible bricks that are either alive or are respawn-mode regenerating bricks
+  currently awaiting their respawn delay (the only kind of destroyed brick still "in play"), returning true only
+  when that set is non-empty and every member is type 'regenerating'. Game.prototype.updateBricks's existing
+  heal/respawn branch and Game.prototype.updateFrenzyRegeneration's existing heal/respawn branch each gate their
+  heal and respawn actions on this predicate being false, computed once per call. The product owner has now
+  explicitly confirmed this interpretation, including that a destroyed respawn-mode regenerating brick still
+  counts as part of the remaining regenerating set (it is not "gone" - it is still in play, awaiting respawn).
+  No other behaviour of either function changes.
+
+
+  (3) Frenzy-timeout auto-completion - unchanged from PROP-0013-01. Game.prototype.finishFrenzyRestore gains one
+  trailing call to the existing Game.prototype.checkLevelComplete(), placed after ordinary state restoration,
+  state reset to getBasePlayState(), and autosave('frenzy_end'). No new completion predicate is introduced.
+  Normal frenzy snapshot restoration is unchanged.
+
+
+  (4) resolveBallRect() depenetration fix - unchanged from PROP-0013-01. Only the function's final "else"
+  (ambiguous-approach) fallback branch is rewritten to snap ball position to the resolved boundary plus a fixed
+  small separation epsilon and force outgoing velocity away from that face, matching the style of the four
+  single-axis branches above it. Applies generally to every resolveBallRect caller (bricks and boss alike); no
+  brick-type-specific branching is added.
+requirement_changes:
+  add: []
+  modify: []
+  deprecate: []
+  supersede: []
+resolved_ambiguities: >-
+  The product owner has resolved both ambiguities this revision exists to address: (1) "more zip off the
+  bounce" means option 2 - a non-lingering, immediate-collision-response effect, not a persistent speed boost;
+  RISK-0013-06 and PROP-0013-01's behaviour_summary_open_question are resolved by this choice, and the
+  brick-type-scope question is resolved as "applies to any non-penetrating brick bounce, regardless of brick
+  type" (unchanged from PROP-0013-01's default, which is retained since nothing in the clarification narrowed
+  it). (2) The regenerating-brick completion-lock interpretation from IA-0013-01/PROP-0013-01, including
+  destroyed respawn-mode bricks counting as "remaining", is confirmed as-is.
+declared_scope:
+- operation: modify
+  path: batty-joe-config.js
+- operation: modify
+  path: batty-joe-physics.js
+- operation: modify
+  path: batty-joe-game.js
+- operation: modify
+  path: batty-joe-tests.js
+- operation: add
+  path: batty-joe-dev-spec-v1.13.0.yaml
+- operation: modify
+  path: specforge/project.yaml
+acceptance_criteria:
+  brick_rebound_zip:
+  - A single non-penetrating brick bounce leaves the ball's speed, measured immediately after
+    BJ.Physics.resolveBallRect/applyBrickReboundZip resolve, equal to targetSpeed * config.exitSpeedMultiplier -
+    measurably higher than the current target speed and higher than today's incoming-speed-preserving behaviour.
+  - Calling BJ.Physics.applyBrickReboundZip directly with a given targetSpeed always returns the same exit
+    speed for that targetSpeed, regardless of the ball's incoming speed beforehand (proving it is computed from
+    target, not from current/incoming speed).
+  - Disabling physics.brickReboundZip.enabled leaves brick bounces producing no speed change at all (only the
+    existing imperfect-rebound/spin angle effects), matching the existing "disabled paddle velocity transfer
+    restores no-boost behaviour" test's pattern.
+  no_lingering_boost_and_immediate_return:
+  - A game-level test drives one brick bounce via Game.prototype.update(), confirms the ball's speed that frame
+    exceeds target, then advances exactly one further simulation frame with no further brick or paddle contact
+    and confirms the ball's speed has already returned to the ordinary target-speed-consistent value - not a
+    value partway through a multi-frame decay curve, and not still elevated.
+  - The same test inspects ball.paddleSpeedBoost across those frames and confirms it remains 0 throughout,
+    proving the zip effect never touches or is mistaken for the paddle-boost bookkeeping field.
+  no_ratchet_on_repeated_collisions:
+  - A test simulates several consecutive brick bounces in immediate succession (no intervening decay-relevant
+    frames) and confirms the ball's speed after every single bounce is exactly targetSpeed * exitSpeedMultiplier
+    - never higher, and never a compounding multiple of it.
+  paddle_system_independence:
+  - A game-level test drives a brick-zip bounce immediately followed, on a later frame, by a paddle contact, and
+    confirms the paddle contact produces exactly the same boostPercent/resulting speed the existing
+    "moving paddle temporarily boosts ball speed" test already proves for an unmodified ball - proving the new
+    updateBalls guard line has no effect once a real paddle boost is active.
+  - The full existing paddle-boost test block (batty-joe-tests.js:459-520 - moving paddle imparts signed ball
+    spin / moving paddle temporarily boosts ball speed / faster paddle produces greater temporary speed boost /
+    edge paddle contact boosts more than centre contact / stationary paddle creates no motion-derived speed
+    boost / temporary paddle speed boost decays toward current target speed / disabled paddle velocity transfer
+    restores no-boost behaviour) passes completely unmodified.
+  regenerating_brick_completion_lock:
+  - In ordinary play, with a level reduced to exactly one alive heal-mode regenerating brick as the only
+    non-indestructible brick remaining, advancing time past its configured heal interval after damaging it (but
+    not destroying it) leaves its hits unchanged (no heal), where the same setup today would heal it.
+  - In ordinary play, with a level reduced to exactly one respawn-mode regenerating brick as the only
+    non-indestructible brick remaining, destroying it and then advancing time past its configured respawn delay
+    leaves it not alive (no respawn), where the same setup today would respawn it.
+  - The same two checks, driven through Game.prototype.updateFrenzyRegeneration instead of updateBricks, hold
+    equivalently while a frenzy is active.
+  - A control case with at least one surviving normal (non-regenerating, non-indestructible) brick alongside a
+    regenerating brick shows the regenerating brick continuing to heal/respawn normally, in both ordinary play
+    and frenzy.
+  frenzy_timeout_completion:
+  - Entering a frenzy, reducing the level to zero alive non-indestructible bricks by whatever means the active
+    frenzy sub-game destroys bricks, then calling exitFrenzy(game, 'timeout') results in game.state ===
+    BJ.State.LEVEL_COMPLETE once the transition-out completes.
+  - The identical setup, but with at least one non-indestructible required brick still alive when the frenzy
+    times out, results in game.state being the base play state (not LEVEL_COMPLETE) once the transition-out
+    completes.
+  - The existing "frenzy restores exact held-ball and paddle snapshot" test (batty-joe-tests.js:121-137) and the
+    existing "frenzy full clear completes level" test (batty-joe-tests.js:379-385) both continue to pass
+    unmodified.
+  resolve_ball_rect_depenetration:
+  - Constructing a ball whose current position fully overlaps a rectangle on more than one axis (so none of
+    wasLeft/wasRight/wasAbove/wasBelow is true against a supplied previous position) and calling
+    BJ.Physics.resolveBallRect leaves BJ.Physics.circleRect(ball, rect) false immediately afterward.
+  - The ball's position after resolution sits outside the rectangle by at least the same small separation
+    epsilon already used by the existing single-axis branches, along the axis of minimum penetration.
+  - The ball's outgoing velocity component on the resolved axis points away from the rectangle.
+  - Repeatedly calling resolveBallRect for several consecutive simulated frames against a static indestructible
+    brick, starting from an embedded/overlapping state, converges to zero overlap within a small bounded number
+    of calls and does not oscillate.
+  - An integration-level test driving Game.prototype.update() for several seconds with a ball placed touching an
+    indestructible brick shows the ball's distance from the brick's rectangle increasing away from zero within a
+    small number of frames, rather than remaining pinned at/near zero for the duration of the run.
+  non_regression:
+  - No change to Game.prototype.getTargetBallSpeed, BJ.Physics.acceleratedSpeed, BJ.Physics.bounceFromPaddle's
+    own boost computation, or BJ.Physics.decayPaddleSpeedBoost's own decay computation (function body untouched).
+  - No new field is added to the ball object by this change.
+  - No change to any frenzy sub-game's own physics.
+  - No change to the four single-axis branches (wasLeft/wasRight/wasAbove/wasBelow) of resolveBallRect().
+  - No change to BJ.Levels.countRequired() or its indestructible-exclusion semantics.
+  - The full existing batty-joe-tests.js suite passes unmodified, run in full.
+  verification:
+  - Run the full batty-joe-tests.js suite (via batty-joe-tests.html) and confirm every existing test still
+    passes alongside all new tests listed above.
+  - SpecForge repository validation (validate-specforge.py) passes.
+artifacts_expected:
+  modify:
+  - batty-joe-config.js
+  - batty-joe-physics.js
+  - batty-joe-game.js
+  - batty-joe-tests.js
+  - specforge/project.yaml
+  add:
+  - batty-joe-dev-spec-v1.13.0.yaml
+  - specforge/changes/CHG-0013/implementation/IMP-0013-01.yaml
+  - forensic events under specforge/history/events/ recording implementation start, validation and completion
+    for CHG-0013, allocated sequentially at implementation time, using actual machine time
+implementation_constraints:
+- Implementation must not begin until this exact proposal revision is explicitly approved by a human and an
+  approval record binds its digest.
+- Follow the SpecForge bootstrap, authorization, implementation-attempt, validation and completion lifecycle
+  (governance.lifecycle_enforcement set to controlled_v1, as already in effect from CHG-0009) on a dedicated
+  branch.
+  Do not activate the experimental deterministic governance-tier classifier introduced by CHG-0012.
+- BJ.Physics.bounceFromPaddle and BJ.Physics.decayPaddleSpeedBoost's function bodies must not be modified by
+  this change. The only change touching the paddle-boost code path is the one new guard line in
+  Game.prototype.updateBalls specified above, placed immediately before the existing decayPaddleSpeedBoost call.
+- No field named reboundSpeedBoost, or any other new persistent scratch field, may be added to the ball object
+  by this change. The zip effect must be fully stateless.
+- BJ.Physics.applyBrickReboundZip must compute its exit speed from the targetSpeed parameter passed to it, never
+  from the ball's current/incoming speed, so repeated collisions cannot ratchet.
+- Game.prototype.onlyRegeneratingBricksRemain (or equivalently named helper) must be shared/reused by both
+  updateBricks and updateFrenzyRegeneration rather than reimplemented twice.
+- The resolveBallRect() fix must live entirely inside the function's existing ambiguous-approach fallback
+  branch; no brick-type-conditional branch may be added anywhere in resolveBallRect(),
+  handleBallBrickCollisions, or the boss collision call site.
+- batty-joe-dev-spec-v1.13.0.yaml must use the same full_inheritance_with_explicit_change composition pattern as
+  batty-joe-dev-spec-v1.12.0.yaml, inheriting it in full and stating only this change's four deltas explicitly.
+- specforge/project.yaml's specification.product_specification and specification.current_version must be
+  rebound to batty-joe-dev-spec-v1.13.0.yaml / 1.13.0 only as part of the approved implementation attempt, not
+  before.
+- Implementation-time forensic records must use actual machine time, not invented or staged timestamps (per
+  EVT-000107).
+- Implementation scope is strictly the four gameplay requirements and their declared artifacts; no unrelated
+  repository or bootstrap tidy-up may be bundled into this change (per EVT-000107).
+approvals: []

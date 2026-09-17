@@ -1,0 +1,28 @@
+id: EVT-000109
+timestamp: '2026-09-17T10:22:54Z'
+actor:
+  type: ai
+  id: claude
+  display_name: Claude Code
+  ai:
+    provider: anthropic
+    tool: Claude Code
+    model: claude-sonnet-5
+event_type: impact_analysis_created
+entity:
+  type: impact_analysis
+  id: IA-0013-02
+related:
+  change: CHG-0013
+  supersedes: IA-0013-01
+resulting_state:
+  change_status: analysed
+evidence:
+  reproduction: Re-read BJ.Physics.decayPaddleSpeedBoost and Game.prototype.updateBalls in full to design a
+    stateless replacement for the rejected persistent-boost mechanism. Confirmed decayPaddleSpeedBoost decays
+    any current-speed-above-target situation using the paddle system's own half-life regardless of cause, which
+    would silently absorb a naive velocity-based zip effect into the paddle decay curve on the next frame.
+    Designed a two-part fix (target-speed-relative one-shot exit multiplier, plus a guard line proven to be a
+    no-op under every existing condition) that avoids this coupling without adding any new ball field or
+    modifying the paddle system's own functions. Confirmed items 2-4 of IA-0013-01 require no change; item 2 is
+    now explicitly confirmed by the product owner rather than proposed.

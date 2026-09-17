@@ -1,0 +1,27 @@
+id: EVT-000108
+timestamp: '2026-09-17T10:22:43Z'
+actor:
+  type: human
+  id: gary_burwood
+  display_name: Gary Burwood
+event_type: clarification_resolved
+entity:
+  type: change
+  id: CHG-0013
+related:
+  change: CHG-0013
+  superseded_impact_analysis: IA-0013-01
+  superseded_proposal: PROP-0013-01
+resulting_state:
+  change_status: awaiting_approval
+evidence:
+  zip_clarification: >-
+    "The ball needs more zip off the bounce" is confirmed to mean the ball should leave a brick collision
+    faster/sharper so the rebound visibly has more energy, with no lingering speed boost. PROP-0013-01's design
+    (ball.reboundSpeedBoost, accumulated boost percentage, a maximum-boost state, a decay half-life, per-frame
+    decay, and arbitration against paddleSpeedBoost) is rejected as a persistent second speed-boost system and
+    is withdrawn from the proposed design. PROP-0013-01 is preserved unmodified as the superseded first
+    proposal; IA-0013-02 and PROP-0013-02 are the replacement revisions.
+  regenerating_brick_clarification: IA-0013-01/PROP-0013-01's interpretation is confirmed exactly as analysed,
+    including that a destroyed respawn-mode regenerating brick still counts as part of the remaining
+    regenerating set.
