@@ -1,6 +1,6 @@
 {
   "run_id": "XPV-RUN-20260924-002",
-  "status": "IN_PROGRESS",
+  "status": "COMPLETE",
   "protocol": {
     "id": "SF-XPV-PROT-001",
     "version": "0.1.0"
@@ -106,5 +106,32 @@
       "baseline_repair_performed": false
     }
   },
-  "created_at": "2026-09-24T17:16:54+01:00"
+  "created_at": "2026-09-24T17:16:54+01:00",
+  "completed_at": "2026-09-24T17:30:40+01:00",
+  "result_summary": {
+    "pass": 0,
+    "pass_with_observations": 1,
+    "fail": 0,
+    "blocked": 5,
+    "total": 6
+  },
+  "run_summary_file": "XPV-RUN-20260924-002-summary.json",
+  "closure": {
+    "basis_revision": "34a4039c314b4cff7cd89c380fd6f04ddcdd04ab",
+    "main_untouched": true,
+    "product_material_modified": false,
+    "baseline_repair_performed": false,
+    "primary_blocker": "missing_path:packs + missing_path:decisions"
+  },
+  "performance": {
+    "commits_from_baseline_through_scenario_results": 3,
+    "closure_bookkeeping_commits": 1,
+    "total_commits_from_baseline_after_closure": 4,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": "NOT AVAILABLE",
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": "NOT AVAILABLE",
+    "ci_runs": 0,
+    "validator_runtime_executions": 0
+  }
 }

@@ -1,0 +1,100 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "status": "COMPLETE",
+  "programme": {
+    "id": "SF-XPV-PROG-001",
+    "version": "0.1.0"
+  },
+  "protocol": {
+    "id": "SF-XPV-PROT-001",
+    "version": "0.1.0"
+  },
+  "project": {
+    "repository": "gburwood/batty-joe",
+    "type": "mature_game",
+    "baseline_branch": "main",
+    "validation_branch": "validation/xpv-run-20260924-002-batty-joe",
+    "baseline_revision": "300b4c2e3031ebb224fa583807ed6169b3b071fb",
+    "trusted_material_revision": "5fec1961f03045503a979818a1911d76ff4d2c24",
+    "framework": {
+      "core_version": "0.1.0-alpha.16",
+      "data_model_version": "0.1.0-alpha.5"
+    }
+  },
+  "scenario_results": {
+    "XPV-S01": "PASS WITH OBSERVATIONS",
+    "XPV-S03": "BLOCKED",
+    "XPV-S04": "BLOCKED",
+    "XPV-S07": "BLOCKED",
+    "XPV-S09": "BLOCKED",
+    "XPV-S11": "BLOCKED"
+  },
+  "counts": {
+    "pass": 0,
+    "pass_with_observations": 1,
+    "fail": 0,
+    "blocked": 5,
+    "not_applicable": 0,
+    "total": 6
+  },
+  "primary_finding": {
+    "classification": "XPV-PORT",
+    "severity": "Medium",
+    "scope": "fresh_clone_repository_completeness",
+    "summary": "Batty Joe's installed alpha.16 project-format-1 bootstrap requires specforge/packs and specforge/decisions to exist, but Git does not preserve those empty directories and they are absent from the repository.",
+    "consequence": "A genuine fresh checkout is not bootstrap-ready. The defect blocks ordinary governed mutation and therefore prevents S03, S04, S07, S09 and runtime S11 from being exercised without first repairing the baseline."
+  },
+  "positive_evidence": [
+    {
+      "scenario": "XPV-S01",
+      "summary": "A cold agent correctly reconstructed the project, lifecycle and bootstrap blockers without procedural assistance and made no changes."
+    },
+    {
+      "scenario": "XPV-S11",
+      "summary": "The alpha.16 lifecycle tool blob is byte-identical between Batty Joe and SpecForge despite different CHG/EVT namespaces, and record discovery is manifest/path driven. This is positive static isolation evidence, but not sufficient for a runtime pass."
+    }
+  ],
+  "final_repository_state": {
+    "main_untouched": true,
+    "validation_branch_head_before_closure": "34a4039c314b4cff7cd89c380fd6f04ddcdd04ab",
+    "validation_branch_commits_before_closure": 3,
+    "product_material_modified": false,
+    "governed_changes_created": 0,
+    "baseline_repair_performed": false,
+    "only_validation_evidence_added": true
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0,
+    "note": "No human procedural rescue was used. Scenarios that required baseline repair were left blocked."
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": "NOT AVAILABLE",
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": "NOT AVAILABLE",
+    "commits_from_baseline_through_scenario_results": 3,
+    "closure_bookkeeping_commits": 1,
+    "total_commits_from_baseline_after_closure": 4,
+    "pull_requests": 0,
+    "ci_runs": 0,
+    "validator_runtime_executions": 0,
+    "interruptions": 0,
+    "agent_replacements": 0,
+    "recovery_operations": 0
+  },
+  "completion_criteria": {
+    "all_planned_scenarios_have_result": true,
+    "final_repository_state_recorded": true,
+    "failures_classified": true,
+    "material_observations_captured": true,
+    "operational_metrics_captured_where_available": true,
+    "reconstructable_from_repository_evidence": true,
+    "no_temporary_test_fixture_active": true
+  },
+  "completed_at": "2026-09-24T17:30:40+01:00",
+  "conclusion": "The Batty Joe baseline is complete but heavily constrained. Cold bootstrap reconstruction succeeds, yet the installed alpha.16 repository-completeness contract makes a genuine fresh checkout not ready for governed work. Five planned scenarios are therefore blocked rather than coached around the defect."
+}
