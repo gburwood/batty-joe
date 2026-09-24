@@ -1,0 +1,79 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "status": "IN_PROGRESS",
+  "protocol": {
+    "id": "SF-XPV-PROT-001",
+    "version": "0.1.0"
+  },
+  "programme": {
+    "id": "SF-XPV-PROG-001",
+    "version": "0.1.0"
+  },
+  "project": {
+    "repository": "gburwood/batty-joe",
+    "type": "mature_game",
+    "baseline_branch": "main",
+    "validation_branch": "validation/xpv-run-20260924-002-batty-joe",
+    "baseline_revision": "300b4c2e3031ebb224fa583807ed6169b3b071fb",
+    "trusted_material_revision": "5fec1961f03045503a979818a1911d76ff4d2c24"
+  },
+  "framework": {
+    "core_version": "0.1.0-alpha.16",
+    "data_model_version": "0.1.0-alpha.5",
+    "project_format": 1
+  },
+  "agent_sequence": {
+    "s01": {
+      "provider": "openai",
+      "product": "ChatGPT",
+      "model": "GPT-5.6 Sol",
+      "cold_start": true,
+      "prior_relevant_context": false
+    },
+    "continuing_agent": {
+      "provider": "openai",
+      "product": "ChatGPT",
+      "model": "GPT-5.6 Sol",
+      "cold_start": false,
+      "prior_relevant_context": true
+    }
+  },
+  "baseline_integrity": {
+    "lifecycle_state": "all CHG-0001 through CHG-0012 completed",
+    "product_material_drift_after_trusted_revision": false,
+    "fresh_clone_bootstrap_ready": false,
+    "blockers": [
+      "missing_path:packs",
+      "missing_path:decisions"
+    ],
+    "blocker_repair_performed": false,
+    "note": "Baseline condition is preserved and must not be silently repaired during the run."
+  },
+  "scenarios": {
+    "XPV-S01": {
+      "status": "PASS WITH OBSERVATIONS",
+      "result_file": "XPV-S01-result.json",
+      "finding": {
+        "classification": "XPV-PORT",
+        "severity": "Medium",
+        "summary": "Fresh checkout is not alpha.16-bootstrap-ready because required empty packs/decisions paths are absent from Git."
+      }
+    },
+    "XPV-S03": {
+      "status": "PLANNED"
+    },
+    "XPV-S04": {
+      "status": "PLANNED"
+    },
+    "XPV-S07": {
+      "status": "PLANNED"
+    },
+    "XPV-S09": {
+      "status": "PLANNED"
+    },
+    "XPV-S11": {
+      "status": "PLANNED"
+    }
+  },
+  "created_at": "2026-09-24T17:16:54+01:00"
+}

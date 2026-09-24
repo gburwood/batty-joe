@@ -1,0 +1,94 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S01",
+  "project": "gburwood/batty-joe",
+  "project_type": "mature_game",
+  "specforge_version": "0.1.0-alpha.16",
+  "data_model_version": "0.1.0-alpha.5",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "main",
+    "revision": "300b4c2e3031ebb224fa583807ed6169b3b071fb",
+    "trusted_material_revision": "5fec1961f03045503a979818a1911d76ff4d2c24"
+  },
+  "stimulus": {
+    "instruction": "Read specforge/SPECFORGE.md and bootstrap this project according to its instructions. Treat the repository as the authoritative source of truth. Report project status before making any changes.",
+    "fresh_conversation": true,
+    "prior_relevant_context": false
+  },
+  "expected_outcome": {
+    "behaviour": "Reconstruct the current SpecForge/project state from repository evidence, identify any incomplete lifecycle work or bootstrap blockers, report the correct next action, and make no changes."
+  },
+  "actual_outcome": {
+    "selected_branch": "main",
+    "selected_revision": "300b4c2e3031ebb224fa583807ed6169b3b071fb",
+    "project_identified": "PRJ-0001 Batty Joe",
+    "product_version": "1.12.0",
+    "core_version": "0.1.0-alpha.16",
+    "data_model_version": "0.1.0-alpha.5",
+    "completed_changes": "CHG-0001 through CHG-0012",
+    "non_terminal_changes": 0,
+    "continuation_required": false,
+    "repository_mutated": false,
+    "fresh_clone_bootstrap_ready": false,
+    "blockers": [
+      "missing_path:packs",
+      "missing_path:decisions"
+    ],
+    "blocker_paths": [
+      "specforge/packs/",
+      "specforge/decisions/"
+    ]
+  },
+  "corroboration": {
+    "project_manifest_declares_packs_path": true,
+    "project_manifest_declares_decisions_path": true,
+    "packs_path_present_in_git": false,
+    "decisions_path_present_in_git": false,
+    "lifecycle_bootstrap_requires_project_format_1_paths": [
+      "core",
+      "packs",
+      "decisions",
+      "evidence",
+      "rules",
+      "workflows",
+      "changes",
+      "history"
+    ],
+    "lifecycle_bootstrap_source_lines": "specforge/core/tools/specforge-lifecycle.py:93-97",
+    "runtime_bootstrap_executed": false,
+    "note": "The fresh agent reconstructed the condition by repository inspection. Current Core source deterministically corroborates that a fresh checkout would return ready=false for the two absent paths."
+  },
+  "governance": {
+    "classification": "bootstrap_validation",
+    "proposal_required": false,
+    "approval_required": false,
+    "assurance": "repository reconstruction plus static bootstrap-contract corroboration"
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 1,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "ci_runs": 0,
+    "validator_runtime_executions": 0
+  },
+  "findings": [
+    {
+      "classification": "XPV-PORT",
+      "severity": "Medium",
+      "scope": "fresh_clone_repository_completeness",
+      "summary": "Batty Joe declares specforge/packs and specforge/decisions as required project-format-1 paths, but both are absent from Git because empty directories are not preserved.",
+      "consequence": "A genuine fresh checkout cannot satisfy the installed alpha.16 bootstrap readiness check even though historical working checkouts could have contained the empty directories locally."
+    }
+  ],
+  "result": "PASS WITH OBSERVATIONS",
+  "rationale": "The cold agent correctly reconstructed the authoritative project and lifecycle state, identified the fresh-clone bootstrap blockers without procedural assistance, and made no changes. The bootstrap readiness defect belongs to the host repository/framework portability dimension rather than representing an S01 agent-reconstruction failure."
+}
