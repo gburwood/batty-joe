@@ -60,7 +60,17 @@
       }
     },
     "XPV-S03": {
-      "status": "PLANNED"
+      "status": "BLOCKED",
+      "request": "Show the current difficulty on the pause panel alongside the existing seed, level, score and lives.",
+      "result_file": "XPV-S03-result.json",
+      "blocked_by": "XPV-S01 fresh-clone repository-completeness defect",
+      "governed_change_created": false,
+      "baseline_repair_performed": false,
+      "finding": {
+        "classification": "XPV-PORT",
+        "severity": "Medium",
+        "inherited_from": "XPV-S01"
+      }
     },
     "XPV-S04": {
       "status": "PLANNED"

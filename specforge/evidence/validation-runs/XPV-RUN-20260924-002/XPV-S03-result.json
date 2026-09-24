@@ -1,0 +1,97 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S03",
+  "project": "gburwood/batty-joe",
+  "project_type": "mature_game",
+  "specforge_version": "0.1.0-alpha.16",
+  "data_model_version": "0.1.0-alpha.5",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "validation/xpv-run-20260924-002-batty-joe",
+    "revision": "fde14a63810fed3b56d616bd232b2b9a028159c8",
+    "inherited_bootstrap_condition": {
+      "ready": false,
+      "blockers": [
+        "missing_path:packs",
+        "missing_path:decisions"
+      ],
+      "source_scenario": "XPV-S01"
+    }
+  },
+  "request": "Show the current difficulty on the pause panel alongside the existing seed, level, score and lives.",
+  "expected_outcome": {
+    "governance": "Treat as a low-risk functional UI change with limited blast radius.",
+    "implementation": "Update the pause-panel display using the game's existing difficulty state, add focused assurance, and complete through proportionate governance.",
+    "assurance": "Focused product checks plus required SpecForge lifecycle validation."
+  },
+  "scope_evidence": {
+    "existing_pause_rendering": {
+      "file": "batty-joe.js",
+      "lines": "279-282",
+      "fields": [
+        "pauseSeed",
+        "pauseLevel",
+        "pauseScore",
+        "pauseLives"
+      ]
+    },
+    "existing_pause_markup": {
+      "file": "batty-joe.html",
+      "lines": "56-57"
+    },
+    "existing_difficulty_state": {
+      "file": "batty-joe.js",
+      "examples": [
+        "this.game.difficulty",
+        "difficultySelect"
+      ]
+    }
+  },
+  "actual_outcome": {
+    "governed_change_created": false,
+    "proposal_created": false,
+    "material_modified": false,
+    "reason": "The repository's mandatory bootstrap prerequisite is not satisfied on a fresh checkout. specforge/SPECFORGE.md requires bootstrap/status before governed mutation, and installed alpha.16 bootstrap requires the missing packs and decisions paths.",
+    "attempted_baseline_repair": false
+  },
+  "blocker_corroboration": {
+    "entrypoint_requirement": "Run bootstrap/status before governed mutation.",
+    "lifecycle_tool": "specforge/core/tools/specforge-lifecycle.py",
+    "required_path_logic": "project-format-1 bootstrap requires core, packs, decisions, evidence, rules, workflows, changes and history.",
+    "absent_git_paths": [
+      "specforge/packs/",
+      "specforge/decisions/"
+    ],
+    "runtime_bootstrap_executed": false,
+    "note": "Static repository evidence is sufficient to determine that bootstrap would return ready=false. The run intentionally does not fabricate or recreate the missing directories."
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 1,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "commits": 0,
+    "ci_runs": 0,
+    "validator_runtime_executions": 0
+  },
+  "findings": [
+    {
+      "classification": "XPV-PORT",
+      "severity": "Medium",
+      "scope": "baseline_dependency",
+      "inherited_from": "XPV-S01",
+      "summary": "The known fresh-clone repository-completeness defect prevents a normal governed S03 change from starting without first repairing the baseline.",
+      "consequence": "Low-risk functional change behaviour cannot be evaluated independently on this baseline. Repairing the missing paths during the scenario would violate the protocol's instruction not to silently repair an invalid baseline."
+    }
+  ],
+  "observed_at": "2026-09-24T17:25:32+01:00",
+  "result": "BLOCKED",
+  "rationale": "S03 cannot validly begin from the preserved Batty Joe baseline because mandatory bootstrap readiness fails before governed mutation. The scenario is blocked by the pre-existing XPV-S01 portability defect, not by the proposed product change."
+}
