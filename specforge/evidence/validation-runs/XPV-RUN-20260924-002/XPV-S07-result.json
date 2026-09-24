@@ -1,0 +1,53 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S07",
+  "project": "gburwood/batty-joe",
+  "specforge_version": "0.1.0-alpha.16",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "validation/xpv-run-20260924-002-batty-joe",
+    "revision": "06f5777f927d26dc17659473274e5a73cc70cc71",
+    "inherited_bootstrap_condition": {
+      "ready": false,
+      "blockers": [
+        "missing_path:packs",
+        "missing_path:decisions"
+      ],
+      "source_scenario": "XPV-S01"
+    }
+  },
+  "objective": "Interrupt implementation after it begins but before completion, then verify repository-based recovery.",
+  "dependency": {
+    "requires": "a valid governed implementation to reach in_progress",
+    "available": false,
+    "blocked_by": [
+      "XPV-S01 fresh-clone repository-completeness defect",
+      "mandatory bootstrap prerequisite"
+    ]
+  },
+  "actual_outcome": {
+    "implementation_started": false,
+    "interruption_fixture_created": false,
+    "fresh_agent_resume_attempted": false,
+    "baseline_repair_performed": false
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 0,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "commits": 0,
+    "interruptions": 0,
+    "agent_replacements": 0
+  },
+  "observed_at": "2026-09-24T17:29:40+01:00",
+  "result": "BLOCKED",
+  "rationale": "S07 cannot create a legitimate interruption point because no governed implementation may validly start while the preserved alpha.16 bootstrap baseline remains not ready."
+}

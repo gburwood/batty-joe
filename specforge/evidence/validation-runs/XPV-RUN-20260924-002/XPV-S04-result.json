@@ -1,0 +1,68 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S04",
+  "project": "gburwood/batty-joe",
+  "specforge_version": "0.1.0-alpha.16",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "validation/xpv-run-20260924-002-batty-joe",
+    "revision": "06f5777f927d26dc17659473274e5a73cc70cc71",
+    "inherited_bootstrap_condition": {
+      "ready": false,
+      "blockers": [
+        "missing_path:packs",
+        "missing_path:decisions"
+      ],
+      "source_scenario": "XPV-S01"
+    }
+  },
+  "request": "Add a visible countdown timer to the normal gameplay HUD whenever a frenzy is active, showing the remaining frenzy time in seconds and disappearing when the frenzy ends.",
+  "expected_outcome": {
+    "lifecycle": [
+      "change creation",
+      "impact analysis",
+      "proposal",
+      "human approval",
+      "implementation",
+      "validation",
+      "evidence",
+      "checkpoint or completion boundary"
+    ],
+    "human_approval_before_material_implementation": true
+  },
+  "actual_outcome": {
+    "governed_change_created": false,
+    "proposal_created": false,
+    "approval_requested": false,
+    "material_modified": false,
+    "reason": "Mandatory bootstrap readiness is false on the preserved fresh-checkout baseline, so the full controlled lifecycle cannot validly begin."
+  },
+  "blocker": {
+    "classification": "XPV-PORT",
+    "severity": "Medium",
+    "inherited_from": "XPV-S01",
+    "blockers": [
+      "missing_path:packs",
+      "missing_path:decisions"
+    ],
+    "baseline_repair_performed": false
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 0,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "commits": 0,
+    "ci_runs": 0
+  },
+  "observed_at": "2026-09-24T17:29:40+01:00",
+  "result": "BLOCKED",
+  "rationale": "S04 requires a governed material lifecycle. The installed alpha.16 entrypoint requires bootstrap before governed mutation, and bootstrap is deterministically not ready because two required repository paths are absent. Repairing the baseline inside the scenario would invalidate the baseline."
+}

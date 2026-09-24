@@ -73,16 +73,37 @@
       }
     },
     "XPV-S04": {
-      "status": "PLANNED"
+      "status": "BLOCKED",
+      "request": "Add a visible countdown timer to the normal gameplay HUD whenever a frenzy is active, showing the remaining frenzy time in seconds and disappearing when the frenzy ends.",
+      "result_file": "XPV-S04-result.json",
+      "blocked_by": "XPV-S01 fresh-clone repository-completeness defect",
+      "governed_change_created": false,
+      "baseline_repair_performed": false
     },
     "XPV-S07": {
-      "status": "PLANNED"
+      "status": "BLOCKED",
+      "result_file": "XPV-S07-result.json",
+      "blocked_by": "No valid governed implementation can start while bootstrap is not ready",
+      "interruption_fixture_created": false,
+      "baseline_repair_performed": false
     },
     "XPV-S09": {
-      "status": "PLANNED"
+      "status": "BLOCKED",
+      "result_file": "XPV-S09-result.json",
+      "blocked_by": "XPV-S07 / mandatory bootstrap prerequisite",
+      "different_agent_resume_attempted": false,
+      "baseline_repair_performed": false
     },
     "XPV-S11": {
-      "status": "PLANNED"
+      "status": "BLOCKED",
+      "result_file": "XPV-S11-result.json",
+      "blocked_by": "Runtime-equivalence validation cannot execute on the preserved alpha.16 fresh-checkout baseline",
+      "static_isolation_evidence": {
+        "same_alpha16_lifecycle_blob": true,
+        "different_change_event_namespaces": true,
+        "manifest_driven_record_discovery": true
+      },
+      "baseline_repair_performed": false
     }
   },
   "created_at": "2026-09-24T17:16:54+01:00"

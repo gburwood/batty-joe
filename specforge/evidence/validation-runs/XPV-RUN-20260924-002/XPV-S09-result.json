@@ -1,0 +1,52 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S09",
+  "project": "gburwood/batty-joe",
+  "specforge_version": "0.1.0-alpha.16",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "validation/xpv-run-20260924-002-batty-joe",
+    "revision": "06f5777f927d26dc17659473274e5a73cc70cc71",
+    "inherited_bootstrap_condition": {
+      "ready": false,
+      "blockers": [
+        "missing_path:packs",
+        "missing_path:decisions"
+      ],
+      "source_scenario": "XPV-S01"
+    }
+  },
+  "objective": "Have a different agent resume a lifecycle from repository evidence only.",
+  "dependency": {
+    "requires": "an active governed lifecycle created by Agent A",
+    "available": false,
+    "blocked_by": [
+      "XPV-S07 cannot establish an interrupted implementation",
+      "mandatory bootstrap prerequisite"
+    ]
+  },
+  "actual_outcome": {
+    "agent_a_lifecycle_started": false,
+    "agent_b_resume_attempted": false,
+    "human_procedural_rescue": false,
+    "baseline_repair_performed": false
+  },
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 0,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "commits": 0,
+    "agent_replacements": 0
+  },
+  "observed_at": "2026-09-24T17:29:40+01:00",
+  "result": "BLOCKED",
+  "rationale": "S09 requires a live lifecycle for a second agent to resume. The preserved baseline prevents Agent A from validly starting governed implementation, so no meaningful different-agent resume can be staged."
+}

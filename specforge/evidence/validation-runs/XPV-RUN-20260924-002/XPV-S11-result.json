@@ -1,0 +1,88 @@
+{
+  "run_id": "XPV-RUN-20260924-002",
+  "scenario": "XPV-S11",
+  "project": "gburwood/batty-joe",
+  "specforge_version": "0.1.0-alpha.16",
+  "protocol_version": "0.1.0",
+  "baseline": {
+    "branch": "validation/xpv-run-20260924-002-batty-joe",
+    "revision": "06f5777f927d26dc17659473274e5a73cc70cc71",
+    "inherited_bootstrap_condition": {
+      "ready": false,
+      "blockers": [
+        "missing_path:packs",
+        "missing_path:decisions"
+      ],
+      "source_scenario": "XPV-S01"
+    }
+  },
+  "objective": "Detect accidental coupling between SpecForge Core and host-project history.",
+  "comparative_evidence": {
+    "peer_repository": "gburwood/specForge",
+    "peer_revision": "4e2727075a5aa35d284dbb229e467a0ce0c9d3c1",
+    "peer_core_version": "0.1.0-alpha.16",
+    "lifecycle_tool": {
+      "path": "specforge/core/tools/specforge-lifecycle.py",
+      "batty_joe_blob_sha": "f59a454053410daf75d335748028a62eabe30695",
+      "specforge_blob_sha": "f59a454053410daf75d335748028a62eabe30695",
+      "byte_identical": true
+    },
+    "host_histories": {
+      "batty_joe": {
+        "change_range": "CHG-0001..CHG-0012",
+        "change_count": 12,
+        "event_range": "EVT-000001..EVT-000103",
+        "event_count": 103
+      },
+      "specforge": {
+        "change_range": "CHG-1000..CHG-1017",
+        "change_count": 18,
+        "event_range": "EVT-100000..EVT-100155",
+        "event_count": 156
+      }
+    },
+    "discovery_contract": {
+      "record_loading": "specforge-lifecycle.py records() iterates iter_record_files(layout) and keys records by each YAML record's id.",
+      "layout_loading": "specforge_project.py discover_layout() resolves changes, decisions, history and evidence roots from project.yaml rather than fixed host paths.",
+      "canonical_text": "specforge_project.py canonical_artifact_bytes() normalizes CRLF/CR to LF before governed-artifact digesting.",
+      "hard_coded_batty_joe_ids_found": false,
+      "hard_coded_specforge_change_namespace_found": false
+    }
+  },
+  "execution_limit": {
+    "equivalent_runtime_validation_executed": false,
+    "reason": "Batty Joe cannot satisfy the installed alpha.16 bootstrap prerequisite on a fresh checkout because specforge/packs and specforge/decisions are absent.",
+    "baseline_repair_performed": false
+  },
+  "observations": [
+    {
+      "classification": "XPV-PORT",
+      "severity": "Informational",
+      "summary": "Static alpha.16 Core evidence is host-data driven and the same lifecycle implementation is installed in repositories with different change/event namespaces."
+    },
+    {
+      "classification": "XPV-PORT",
+      "severity": "Medium",
+      "inherited_from": "XPV-S01",
+      "summary": "The fresh-clone repository-completeness defect prevents the runtime-equivalence portion of S11."
+    }
+  ],
+  "human_interaction": {
+    "H0": 0,
+    "H1": 0,
+    "H2": 0,
+    "H3": 0,
+    "H4": 0
+  },
+  "performance": {
+    "agent_turns": "NOT AVAILABLE",
+    "human_turns": 0,
+    "repository_reads": "NOT AVAILABLE",
+    "repository_writes": 0,
+    "commits": 0,
+    "validator_runtime_executions": 0
+  },
+  "observed_at": "2026-09-24T17:29:40+01:00",
+  "result": "BLOCKED",
+  "rationale": "The available static evidence argues against hard-coded Batty Joe/SpecForge coupling, but S11 requires equivalent validation execution across differing hosts. Because the preserved Batty Joe baseline cannot bootstrap, the execution criterion cannot be met and the scenario is not credited with a pass."
+}
